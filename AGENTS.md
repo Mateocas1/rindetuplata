@@ -23,6 +23,7 @@ daily history, simulates amount + days, and sends alerts.
 ./mvnw test                       # unit + integration tests (starts Postgres via Testcontainers)
 ./mvnw spring-boot:test-run       # run locally with a Testcontainers Postgres (TestRindetuplataApplication)
 docker compose up -d postgres     # standalone local database (compose.yaml)
+capture/test/capture_test.sh      # daily raw capture tests (bash + jq + python3, no network)
 ```
 
 ## Conventions
