@@ -21,7 +21,7 @@ Owner: Mateo. Built with AI under ODD. Read every section until `## Log` before 
 
 | ID | Specs | Task | Route | Status | Commit |
 |---|---|---|---|---|---|
-| T1 | S7, S1 | Bootstrap: Spring Boot 4.1.1 / Java 21 skeleton (web, validation, JPA, PostgreSQL, Flyway, actuator, Testcontainers), compose.yaml, AGENTS.md, this document | inline | done | see Log |
+| T1 | S7, S1 | Bootstrap: Spring Boot 4.1.1 / Java 21 skeleton (web, validation, JPA, PostgreSQL, Flyway, actuator, Testcontainers), compose.yaml, AGENTS.md, this document | inline | done | dc8ede2 |
 | T2 | S3, S4 | Domain math: `Money`/rate value objects on `BigDecimal`, TNA→TEA, compound interest, real return vs monthly inflation, simulator for amount + days; exhaustive unit tests incl. rounding and day-count conventions | worker | pending | |
 | T3 | S3, S5 | Source adapters behind one port per data kind: plazo fijo by bank, money-market FCI cuotapartes, crypto/fintech yields, monthly inflation, dólar MEP, BCRA variables; recorded JSON fixtures, contract tests, no live calls in tests | worker | pending | |
 | T4 | S1, S3, S4, S5 | Persistence + daily ingestion: Flyway schema for instruments and daily snapshots, idempotent Spring Batch (or scheduled) jobs that accumulate history, FCI yield derived from cuotaparte deltas | worker | pending | |
@@ -57,4 +57,4 @@ ArgentinaDatos is a community aggregator: keep one adapter per source so a prima
 - **L3** (user): "siii. me encanta la 1, vamos por esa!" — accepts idea 1, the yield comparator, as proposed.
 - **L4** (user): "si rey, vamos con eso, me interesa que crees lo necesario para poder ir directamente a crear una sesion directamente en ese dir y avanzar desde ahi" — accepts the name `rindetuplata` and the adapter-per-source approach.
 - **L5** (evidence, 2026-10-14): data sources above verified live. Best plazo fijo TNA ~23% vs September inflation 1.9% monthly (~25% annualized): real return about zero, a product hook.
-- **L6** (T1): skeleton generated from start.spring.io (Boot 4.1.1, Java 21, Maven wrapper); Testcontainers image pinned to `postgres:18-alpine`; `./mvnw test` result and commit recorded below.
+- **L6** (T1): skeleton generated from start.spring.io (Boot 4.1.1, Java 21, Maven wrapper); Testcontainers image pinned to `postgres:18-alpine`; `./mvnw test` passed (1 test, context loads against a real Postgres container, 18 s). Commit dc8ede2.
