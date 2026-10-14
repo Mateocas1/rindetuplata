@@ -51,6 +51,29 @@ Run the prompt step with `bash_background` for long tasks. Measure a pane's real
 `~/.pi/agent/sessions/--home-picala-code-rindetuplata--/` (assistant `usage`: input + cacheRead + cacheWrite).
 The parent always verifies pane output (diff scope, tests) and makes the commit.
 
+Pane prompt checklist (learned in T4 with DeepSeek v4 flash; each item cost an avoidable iteration):
+
+- **Blocking prompts.** `herdr agent prompt --wait` also returns when the pane is *blocked* on a pi permission prompt
+  (e.g. "Allow recognized data-loss command?" for `rm -rf /tmp/scratch`). Check the `herdr agent read` tail before
+  trusting an exit; unblock with `herdr pane send-keys <pane> enter`, re-wait with `herdr agent wait <name>`.
+  Prevent it in the prompt: "inspect jars with `javap -classpath <jar>` / `unzip -l`; never extract jars or `rm -rf`".
+- **Steering.** `herdr pane send-text <pane> "..."` + `send-keys enter` queues a message while it works.
+- **Final answer.** `herdr agent read` is wrapped terminal text; read the last assistant text from the pane's session
+  file (grep the prompt's first line, skip the parent's own session).
+- **Test-first must be explicit.** Without it the pane writes production code first (T4a). Say: "write the test, run
+  it, paste the RED output, only then create the production class"; a stub that throws counts only if a later
+  assertion RED follows.
+- **Name the API traps of this stack up front:** Spring Boot 4.1.1 + Spring Batch 6 moved packages (`JobOperator`
+  replaces `JobLauncher`); Jackson 3 (`tools.jackson`) has different node accessors; Boot 4.1.1 has no
+  `RestClient.Builder` bean; `spring.main.allow-bean-definition-overriding` does not replace real port beans in tests
+  (use `@Primary` stubs or remove the definitions); a component with two constructors breaks the context.
+- **Point to exact files** to read first; exploration dominates cost (T4d, a 1-listener task, peaked at 170k tokens;
+  T4c 227k, T4a 137k, T4b 66k).
+- **Parallel Maven panes** need separate worktrees under `.worktrees/` (excluded in `.git/info/exclude`) so they never
+  share `target/`.
+- **What works well:** allowed edit surfaces are respected; asking for "deviations from the notes" gets honest,
+  useful reports.
+
 ## Conventions
 
 - Money and rates are `BigDecimal`, never `double`/`float`. State rounding mode and scale explicitly.
