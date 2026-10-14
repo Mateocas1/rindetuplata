@@ -26,6 +26,31 @@ docker compose up -d postgres     # standalone local database (compose.yaml)
 capture/test/capture_test.sh      # daily raw capture tests (bash + jq + python3, no network)
 ```
 
+## Model routing and delegation
+
+The parent session orchestrates; it keeps its own context thin (delegate before ~150k tokens). Route by the
+shape of the work, handing off by reference (`odd/tasks/rindetuplata-mvp.md`, task, specs), never by paraphrase:
+
+| Route | Use for | Limits |
+|---|---|---|
+| Sonnet 5.5 medium, `gentle-ai-worker` subagent | Units that really merit it: multi-file features, delicate reasoning (domain math, adapters) | Shares the Claude quota |
+| Haiku 5.5 xhigh, herdr pane | Super-bounded edits: 1-2 files, one rule, explicit allowed paths | Stay under 100k tokens; a fresh pi session already uses ~50k, a 3-rule task peaked at ~105k; shares the Claude quota |
+| DeepSeek v4 flash, herdr pane | Speed: fast reads over large context (1M), summaries, bulk lookups, mechanical edits | Max 16.4K output tokens per reply: write big files in several edits; does not use the Claude quota |
+
+Herdr pane recipe (only inside herdr, `HERDR_ENV=1`):
+
+```bash
+pane=$(herdr pane split --current --direction right --cwd "$PWD" --no-focus | jq -r .result.pane.pane_id)
+herdr agent start <name> --kind pi --pane "$pane" -- --model claude-bridge/claude-haiku-5-5:xhigh   # or nan/deepseek-v4-flash
+herdr agent prompt <name> "<bounded task: files allowed, test-first, no commit, short reply>" --wait --timeout 1500000
+herdr agent read <name> | tail -40   # plain terminal text, not JSON
+herdr pane close "$pane"
+```
+
+Run the prompt step with `bash_background` for long tasks. Measure a pane's real context from its session file in
+`~/.pi/agent/sessions/--home-picala-code-rindetuplata--/` (assistant `usage`: input + cacheRead + cacheWrite).
+The parent always verifies pane output (diff scope, tests) and makes the commit.
+
 ## Conventions
 
 - Money and rates are `BigDecimal`, never `double`/`float`. State rounding mode and scale explicitly.
