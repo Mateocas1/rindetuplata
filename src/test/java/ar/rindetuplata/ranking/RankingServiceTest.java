@@ -263,6 +263,46 @@ class RankingServiceTest {
 	}
 
 	@Test
+	void fciBackedWalletIsShownOnceWhenWalletsAndFundsAreRanked() {
+		seedFund("Mercado Fondo - Clase A", LocalDate.parse("2026-10-13"), "1000");
+		seedFund("Mercado Fondo - Clase A", ASOF, "1000.5");
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-13"), "1000");
+		seedFund("Fondo Test - Clase A", ASOF, "1000.4");
+
+		RankingResult result = service.rank(query(RankedKind.WALLET, RankedKind.FUND));
+
+		assertThat(result.ranked()).extracting(RankedEntry::kind, RankedEntry::name).containsExactly(
+				tuple(RankedKind.WALLET, "Mercado Pago"), tuple(RankedKind.FUND, "Fondo Test - Clase A"));
+		assertThat(result.ranked().get(0).entity()).isEqualTo("Mercado Fondo - Clase A");
+		assertThat(result.excluded()).isEmpty();
+		assertThat(result.totals()).isEqualTo(new RankingTotals(2, 0, 0));
+	}
+
+	@Test
+	void fciBackedFundClassIsListedWhenOnlyFundsAreRanked() {
+		seedFund("Mercado Fondo - Clase A", LocalDate.parse("2026-10-13"), "1000");
+		seedFund("Mercado Fondo - Clase A", ASOF, "1000.5");
+
+		RankingResult result = service.rank(query(RankedKind.FUND));
+
+		assertThat(result.ranked()).extracting(RankedEntry::kind, RankedEntry::name)
+				.containsExactly(tuple(RankedKind.FUND, "Mercado Fondo - Clase A"));
+		assertThat(result.totals()).isEqualTo(new RankingTotals(1, 0, 0));
+	}
+
+	@Test
+	void fciBackedFundClassIsNotExcludedTwiceWhenItsHistoryIsShort() {
+		seedFund("Mercado Fondo - Clase A", ASOF, "1000.5");
+
+		RankingResult result = service.rank(query(RankedKind.WALLET, RankedKind.FUND));
+
+		assertThat(result.ranked()).isEmpty();
+		assertThat(result.excluded()).extracting(ExcludedEntry::kind, ExcludedEntry::name, ExcludedEntry::reason)
+				.containsExactly(tuple(RankedKind.WALLET, "Mercado Pago", ExcludedReason.INSUFFICIENT_HISTORY));
+		assertThat(result.totals()).isEqualTo(new RankingTotals(0, 0, 1));
+	}
+
+	@Test
 	void fundClassUsesTheYieldOfItsTwoLatestQuotes() {
 		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-08"), "900");
 		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-13"), "1000");
