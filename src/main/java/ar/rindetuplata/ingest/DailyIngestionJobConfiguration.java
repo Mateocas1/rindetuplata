@@ -1,5 +1,6 @@
 package ar.rindetuplata.ingest;
 
+import ar.rindetuplata.alert.AlertEvaluationListener;
 import ar.rindetuplata.store.RunMode;
 import java.time.LocalDate;
 import java.util.function.BiConsumer;
@@ -28,7 +29,7 @@ class DailyIngestionJobConfiguration {
 
 	@Bean
 	Job dailyIngestionJob(JobRepository jobRepository, PlatformTransactionManager transactionManager,
-			IngestionSteps steps, RebuildHookListener rebuildHook) {
+			IngestionSteps steps, RebuildHookListener rebuildHook, AlertEvaluationListener alertEvaluation) {
 		return new JobBuilder(IngestionService.JOB_NAME, jobRepository)
 			.start(step("plazoFijoStep", jobRepository, transactionManager, steps::plazoFijo))
 			.next(step("fundsStep", jobRepository, transactionManager, steps::funds))
@@ -37,6 +38,7 @@ class DailyIngestionJobConfiguration {
 			.next(step("dollarStep", jobRepository, transactionManager, steps::dollar))
 			.next(step("walletsStep", jobRepository, transactionManager, steps::wallets))
 			.listener(rebuildHook)
+			.listener(alertEvaluation)
 			.build();
 	}
 
