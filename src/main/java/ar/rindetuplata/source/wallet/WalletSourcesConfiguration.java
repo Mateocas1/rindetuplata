@@ -6,7 +6,7 @@ import java.time.Clock;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.simple.JdbcClient;
 
 @Configuration
 @EnableConfigurationProperties(SourcesProperties.class)
@@ -17,9 +17,10 @@ class WalletSourcesConfiguration {
         return new UalaWalletAdapter(SourceClients.create(properties, properties.ualaUrl()), Clock.systemUTC());
     }
 
+    /** The curated rates come from the V4 table, not from the retired classpath seed (T6b, S12). */
     @Bean
-    CuratedWalletRateAdapter curatedWalletRateAdapter() {
-        return new CuratedWalletRateAdapter(new ClassPathResource("curated-wallet-rates.json"), Clock.systemUTC());
+    CuratedWalletRateAdapter curatedWalletRateAdapter(JdbcClient jdbc, Clock clock) {
+        return new CuratedWalletRateAdapter(jdbc, clock);
     }
 
     @Bean
