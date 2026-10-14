@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 /**
@@ -134,7 +135,14 @@ public class RankingService {
 			}
 		}
 		if (kinds.contains(RankedKind.FUND)) {
+			// An FCI-backed wallet is the same money as its fund class: when wallets are ranked too, show it once.
+			Set<String> walletClasses = kinds.contains(RankedKind.WALLET)
+					? fciWallets.mappings().stream().map(FciBackedWalletMapping::fundClass).collect(Collectors.toSet())
+					: Set.of();
 			for (Map.Entry<Long, List<RankingReader.StoredQuote>> series : funds.entrySet()) {
+				if (walletClasses.contains(series.getValue().get(0).displayName())) {
+					continue;
+				}
 				collectFund(series.getKey(), series.getValue(), asOf, candidates, excluded);
 			}
 		}
