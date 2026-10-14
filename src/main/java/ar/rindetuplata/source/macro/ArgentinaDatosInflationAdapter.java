@@ -11,8 +11,8 @@ import ar.rindetuplata.source.ValidationFlag;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
@@ -50,13 +50,18 @@ public class ArgentinaDatosInflationAdapter implements MacroSource {
         List<MacroObservation> observations = new ArrayList<>();
         for (JsonNode row : rows) {
             BigDecimal value = Units.percentToFraction(JsonSupport.decimal(SOURCE, row, "valor"));
-            List<ValidationFlag> flags = value == null
-                    ? List.of(new ValidationFlag(FlagCode.MISSING_VALUE, Severity.INVALID, "Observation has no value"))
-                    : List.of();
-            observations.add(new MacroObservation(SOURCE, MacroVariable.MONTHLY_INFLATION,
-                    JsonSupport.date(SOURCE, row, "fecha"), value, fetchedAt, Confidence.AGGREGATOR_AUTOMATIC, flags));
+            LocalDate date = JsonSupport.date(SOURCE, row, "fecha");
+            List<ValidationFlag> flags = new ArrayList<>();
+            if (value == null) {
+                flags.add(new ValidationFlag(FlagCode.MISSING_VALUE, Severity.INVALID, "Observation has no value"));
+            }
+            if (date == null) {
+                flags.add(new ValidationFlag(FlagCode.MISSING_VALUE, Severity.INVALID, "Observation has no date"));
+            }
+            observations.add(new MacroObservation(SOURCE, MacroVariable.MONTHLY_INFLATION, date, value, fetchedAt,
+                    Confidence.AGGREGATOR_AUTOMATIC, flags));
         }
-        observations.sort(Comparator.comparing(MacroObservation::date).reversed());
+        observations.sort(MacroObservations.NEWEST_FIRST);
         return observations;
     }
 }

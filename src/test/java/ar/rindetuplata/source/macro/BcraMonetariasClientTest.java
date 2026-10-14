@@ -106,6 +106,31 @@ class BcraMonetariasClientTest {
     }
 
     @Test
+    void aRowWithoutFechaIsInvalidInsteadOfCrashingTheSort() {
+        String json = """
+                {"status":200,"results":[{"idVariable":27,"detalle":[
+                  {"valor":1.9},
+                  {"fecha":"2026-08-31","valor":2.1},
+                  {"fecha":"2026-09-30","valor":1.9}]}]}
+                """;
+
+        List<MacroObservation> parsed = BcraMonetariasClient.parse(json.getBytes(StandardCharsets.UTF_8),
+                MacroVariable.MONTHLY_INFLATION, FETCHED_AT);
+
+        assertThat(parsed).hasSize(3);
+        assertThat(parsed.subList(0, 2)).extracting(MacroObservation::date)
+                .containsExactly(LocalDate.parse("2026-09-30"), LocalDate.parse("2026-08-31"));
+        MacroObservation undated = parsed.get(2);
+        assertThat(undated.date()).isNull();
+        assertThat(undated.isInvalid()).isTrue();
+        assertThat(undated.flags()).singleElement().satisfies(f -> {
+            assertThat(f.code()).isEqualTo(FlagCode.MISSING_VALUE);
+            assertThat(f.severity()).isEqualTo(Severity.INVALID);
+            assertThat(f.message()).contains("date");
+        });
+    }
+
+    @Test
     void emptyResultsGiveNoObservations() {
         assertThat(BcraMonetariasClient.parse("{\"status\":200,\"results\":[]}".getBytes(StandardCharsets.UTF_8),
                 MacroVariable.MONTHLY_INFLATION, FETCHED_AT)).isEmpty();
