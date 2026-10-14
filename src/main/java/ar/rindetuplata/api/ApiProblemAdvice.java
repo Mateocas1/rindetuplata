@@ -3,6 +3,7 @@ package ar.rindetuplata.api;
 import java.util.Arrays;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -31,6 +32,12 @@ public class ApiProblemAdvice {
 			detail += "; allowed values are " + Arrays.toString(required.getEnumConstants());
 		}
 		return problem(HttpStatus.BAD_REQUEST, exception.getName(), detail);
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	ProblemDetail onMissingParameter(MissingServletRequestParameterException exception) {
+		return problem(HttpStatus.BAD_REQUEST, exception.getParameterName(),
+				"Required parameter '" + exception.getParameterName() + "' is missing");
 	}
 
 	private static ProblemDetail problem(HttpStatus status, String parameter, String detail) {
