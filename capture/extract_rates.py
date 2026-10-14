@@ -3,6 +3,9 @@
 Reads HTML on stdin and prints a JSON array of unique snippets, in page order. Script and style
 contents are ignored; block-level elements split the text into snippets so each one keeps its
 own condition (for example "Si tenés entre $10.000 y $1.000.000 ... rinden 19% TNA").
+
+The input must be valid UTF-8: anything else fails with a message on stderr and a non-zero exit,
+so a mojibake page is never archived as if it were a clean capture. Output is UTF-8.
 """
 
 import json
@@ -49,9 +52,18 @@ class SnippetParser(HTMLParser):
             self.current.append(data)
 
 
+def read_html():
+    raw = sys.stdin.buffer.read()
+    try:
+        return raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        print(f"invalid utf-8 input: byte 0x{raw[exc.start]:02x} at offset {exc.start}", file=sys.stderr)
+        sys.exit(2)
+
+
 def main():
     parser = SnippetParser()
-    parser.feed(sys.stdin.read())
+    parser.feed(read_html())
     parser.close()
     parser.flush()
     seen = set()
@@ -60,7 +72,7 @@ def main():
         if RATE.search(snippet) and snippet not in seen:
             seen.add(snippet)
             matches.append(snippet)
-    json.dump(matches, sys.stdout, ensure_ascii=False)
+    sys.stdout.buffer.write(json.dumps(matches, ensure_ascii=False).encode("utf-8"))
 
 
 if __name__ == "__main__":
