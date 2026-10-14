@@ -26,6 +26,7 @@ public record PlazoFijo(String id, String name, AnnualRate tna, int minimumDays,
 
     @Override
     public Evaluation evaluate(Money amount, int days) {
+        Instrument.requirePositiveInput(amount, days);
         if (days < minimumDays) {
             return new Ineligible(Ineligible.Reason.MINIMUM_TERM,
                     "Minimum term is " + minimumDays + " days, requested " + days);

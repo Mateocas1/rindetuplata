@@ -16,6 +16,9 @@ public final class Inflation {
      * (1 + r)^(days/365) − 1. Never a linear division.
      */
     public static BigDecimal overHorizon(BigDecimal twelveMonthRate, int days) {
+        if (days < 0) {
+            throw new IllegalArgumentException("days must not be negative");
+        }
         BigDecimal exponent = BigDecimal.valueOf(days).divide(DAYS_IN_YEAR, Money.MATH);
         return DecimalMath.pow(BigDecimal.ONE.add(twelveMonthRate), exponent, Money.MATH).subtract(BigDecimal.ONE);
     }

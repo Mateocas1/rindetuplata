@@ -33,6 +33,7 @@ public record RemuneratedAccount(String id, String name, List<RateTier> tiers, L
 
     @Override
     public Evaluation evaluate(Money amount, int days) {
+        Instrument.requirePositiveInput(amount, days);
         Money finalAmount = accrue(tiers, amount, days);
         Optional<ConditionalOutcome> upTo = conditionalRates.stream()
                 .map(c -> new ConditionalOutcome(c.condition(), accrue(c.tiers(), amount, days)))

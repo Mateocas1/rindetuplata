@@ -12,4 +12,14 @@ public interface Instrument {
 
     /** Simulates the instrument, or explains why the amount/term is not eligible. */
     Evaluation evaluate(Money amount, int days);
+
+    /** Shared input check for every instrument: the amount and the term must be positive. */
+    static void requirePositiveInput(Money amount, int days) {
+        if (!amount.isPositive()) {
+            throw new IllegalArgumentException("amount must be positive");
+        }
+        if (days <= 0) {
+            throw new IllegalArgumentException("days must be positive");
+        }
+    }
 }

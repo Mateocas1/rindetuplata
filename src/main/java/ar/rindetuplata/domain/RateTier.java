@@ -11,6 +11,9 @@ public record RateTier(Money ceiling, AnnualRate rate) {
 
     public RateTier {
         Objects.requireNonNull(rate, "rate");
+        if (ceiling != null && !ceiling.isPositive()) {
+            throw new IllegalArgumentException("ceiling must be positive");
+        }
     }
 
     public static RateTier upTo(Money ceiling, AnnualRate rate) {
