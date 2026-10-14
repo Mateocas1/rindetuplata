@@ -50,12 +50,12 @@ class AccountAuthorizationApiTest extends AccountIntegrationTest {
 	}
 
 	@Test
-	void anAdminPassesAuthorizationIntoTheYetUnmappedCurationApi() throws Exception {
+	void anAdminPassesAuthorizationIntoTheCurationApiT6bAdded() throws Exception {
 		Cookie session = loginNewSession(ADMIN_EMAIL);
 
-		// T6b adds the curation endpoints; until then an authorized admin reaches the dispatcher and gets a 404,
-		// never a 403, which is exactly what proves the role check.
+		// T6a asserted the placeholder 404 of the then-unmapped path; T6b mapped it, so the same request must now
+		// reach the handler and answer 200, which still proves the ROLE_ADMIN check passed.
 		mockMvc.perform(get("/api/v1/admin/wallet-rates").cookie(session))
-				.andExpect(status().isNotFound());
+				.andExpect(status().isOk());
 	}
 }
