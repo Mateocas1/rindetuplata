@@ -13,8 +13,8 @@ import ar.rindetuplata.source.ValidationFlag;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import org.springframework.web.client.RestClient;
 import tools.jackson.core.JacksonException;
@@ -62,14 +62,19 @@ public class BcraMonetariasClient implements MacroSource {
             }
             for (JsonNode point : JsonSupport.array(SOURCE, result, "detalle")) {
                 BigDecimal value = Units.percentToFraction(JsonSupport.decimal(SOURCE, point, "valor"));
-                List<ValidationFlag> flags = value == null
-                        ? List.of(new ValidationFlag(FlagCode.MISSING_VALUE, Severity.INVALID, "Observation has no value"))
-                        : List.of();
-                observations.add(new MacroObservation(SOURCE, variable, JsonSupport.date(SOURCE, point, "fecha"), value,
-                        fetchedAt, Confidence.OFFICIAL_AUTOMATIC, flags));
+                LocalDate date = JsonSupport.date(SOURCE, point, "fecha");
+                List<ValidationFlag> flags = new ArrayList<>();
+                if (value == null) {
+                    flags.add(new ValidationFlag(FlagCode.MISSING_VALUE, Severity.INVALID, "Observation has no value"));
+                }
+                if (date == null) {
+                    flags.add(new ValidationFlag(FlagCode.MISSING_VALUE, Severity.INVALID, "Observation has no date"));
+                }
+                observations.add(new MacroObservation(SOURCE, variable, date, value, fetchedAt,
+                        Confidence.OFFICIAL_AUTOMATIC, flags));
             }
         }
-        observations.sort(Comparator.comparing(MacroObservation::date).reversed());
+        observations.sort(MacroObservations.NEWEST_FIRST);
         return observations;
     }
 
