@@ -1,0 +1,14 @@
+{
+  "wallets": [
+    {
+      "id": "naranja-x",
+      "name": "Naranja X",
+      "verifiedAt": "2026-10-13",
+      "tiers": [
+        { "ceiling": 1000000, "tnaPercent": 20 }
+      ],
+      "conditions": [],
+      "note": "Balance above the ceiling earns nothing. Manual activation. Owner-verified; matches TN, La Voz and Diario Huarpe. naranjax.com blocks automation."
+    }
+  ]
+}
