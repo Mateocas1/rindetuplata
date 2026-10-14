@@ -1,12 +1,12 @@
 {
   "date": "2026-10-14",
-  "captured_at": "2026-10-14T07:33:20Z",
+  "captured_at": "2026-10-14T19:06:23Z",
   "sources": [
     {
       "name": "bcra-transparencia-plazos-fijos",
       "url": "https://api.bcra.gob.ar/transparencia/v1.0/PlazosFijos",
       "status": "ok",
-      "sha256": "0032c17ca0dd6657b8de92913fc87d9a6d582dd26e84e294562b9ac5a0932fda",
+      "sha256": "7e7aa78431e04078175d654a3eb6c21e3ac5871be33f44cc55d5b4977df30b7a",
       "bytes": 393501
     },
     {
@@ -20,14 +20,14 @@
       "name": "argentinadatos-rendimientos",
       "url": "https://api.argentinadatos.com/v1/finanzas/rendimientos",
       "status": "ok",
-      "sha256": "68deb4c37aa85b9375946cfefbbee20b976827ae3b4ad9e0051baa480430afe3",
-      "bytes": 7327
+      "sha256": "e39f3b448d4724c44d5bd79c6f9d89ec0f9f49e2e6ee56ae5ad0806e3f9abb18",
+      "bytes": 7227
     },
     {
       "name": "uala-cuenta-remunerada",
       "url": "https://www.uala.com.ar/inversiones/cuenta-remunerada",
       "status": "ok",
-      "sha256": "5a2bf4a9d2130148cf8aeaa15543012c1171212da290c42b6cb164bb1562ae9f",
+      "sha256": "f83a8a4dfb1c80dc2921bf4f82d21692f0311b3dffaea8b7ecbaca95ca68c9e7",
       "bytes": 765
     }
   ]
