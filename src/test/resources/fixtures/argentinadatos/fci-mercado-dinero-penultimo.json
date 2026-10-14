@@ -1,0 +1,258 @@
+[
+  {
+    "fondo": "1810 Ahorro",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 241174.839,
+    "ccp": 6513647.165054519,
+    "patrimonio": 1570927806334.83
+  },
+  {
+    "fondo": "Balanz Capital Money Market - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 12633.034,
+    "ccp": 19420293.049413152,
+    "patrimonio": 245337222383.2
+  },
+  {
+    "fondo": "Balanz Capital Money Market - Clase B",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 12982.996,
+    "ccp": 11006588.939815586,
+    "patrimonio": 142898500179.27
+  },
+  {
+    "fondo": "Balanz Capital Money Market - Clase C",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 13379.058,
+    "ccp": 10842661.915090734,
+    "patrimonio": 145064602636.39
+  },
+  {
+    "fondo": "Balanz Capital Money Market - Clase D",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 13214.658,
+    "ccp": 19182056.484468233,
+    "patrimonio": 253484316178.93
+  },
+  {
+    "fondo": "Balanz Capital Money Market - Clase E",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 1000,
+    "ccp": null,
+    "patrimonio": null
+  },
+  {
+    "fondo": "Balanz Capital Money Market - Clase F",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 1000,
+    "ccp": null,
+    "patrimonio": null
+  },
+  {
+    "fondo": "Balanz Capital Money Market - Clase H",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 1022.633,
+    "ccp": 6573.990982102084,
+    "patrimonio": 6722780.12
+  },
+  {
+    "fondo": "Balanz Capital Money Market - Clase L Ley N° 27.743",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 1724.809,
+    "ccp": 23.91975575266595,
+    "patrimonio": 41257.01
+  },
+  {
+    "fondo": "Cocos Ahorro - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 2414.222,
+    "ccp": 1552682.0857153982,
+    "patrimonio": 3748519250.34
+  },
+  {
+    "fondo": "Cocos Ahorro - Clase B",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 2447.542,
+    "ccp": 17919496.274458215,
+    "patrimonio": 43858719750.58
+  },
+  {
+    "fondo": "Cocos Ahorro - Clase C",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 2041.781,
+    "ccp": 21712641.633495465,
+    "patrimonio": 44332459147.08
+  },
+  {
+    "fondo": "Cocos Ahorro - Clase D",
+    "horizonte": "corto",
+    "fecha": "2024-10-09",
+    "vcp": 1000,
+    "ccp": null,
+    "patrimonio": null
+  },
+  {
+    "fondo": "Cocos Ahorro - Clase Ley N° 27.743",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 1599.526,
+    "ccp": 154.8397462748339,
+    "patrimonio": 247670.2
+  },
+  {
+    "fondo": "Fima Premium - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 85692.822,
+    "ccp": 44762819.88542121,
+    "patrimonio": 3835852356659.46
+  },
+  {
+    "fondo": "Fima Premium - Clase B",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 103565.177,
+    "ccp": 44943910.51512962,
+    "patrimonio": 4654624047571.56
+  },
+  {
+    "fondo": "Fima Premium - Clase C",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 105241.492,
+    "ccp": 9512774.599040747,
+    "patrimonio": 1001138591862.75
+  },
+  {
+    "fondo": "Fima Premium - Clase N",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 93083.401,
+    "ccp": 2317521.661836142,
+    "patrimonio": 215722798174.88
+  },
+  {
+    "fondo": "Fima Premium - Clase P",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 76123.386,
+    "ccp": null,
+    "patrimonio": null
+  },
+  {
+    "fondo": "Fima Premium Dólares - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 1015.389,
+    "ccp": 2094309.196416349,
+    "patrimonio": 2126538520.64
+  },
+  {
+    "fondo": "Fima Premium Dólares - Clase B",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 1015.394,
+    "ccp": 457.9987866778807,
+    "patrimonio": 465049.22
+  },
+  {
+    "fondo": "Fima Premium Dólares - Clase C",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 1015.39,
+    "ccp": 2516.0847851564426,
+    "patrimonio": 2554807.33
+  },
+  {
+    "fondo": "Fima Premium Dólares - Clase L",
+    "horizonte": null,
+    "fecha": "2026-01-06",
+    "vcp": 1010.501,
+    "ccp": null,
+    "patrimonio": null
+  },
+  {
+    "fondo": "Fima Premium Dólares - Clase N",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 1002.525,
+    "ccp": 66840.06578389567,
+    "patrimonio": 67008836.95
+  },
+  {
+    "fondo": "Mercado Fondo - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 25923.768,
+    "ccp": 368768783.11510235,
+    "patrimonio": 9559876379118.23
+  },
+  {
+    "fondo": "Mercado Fondo - Clase B",
+    "horizonte": "corto",
+    "fecha": "2025-05-29",
+    "vcp": 1128.223,
+    "ccp": null,
+    "patrimonio": null
+  },
+  {
+    "fondo": "Mercado Fondo - Clase C",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 12523.729,
+    "ccp": 4553391.973644591,
+    "patrimonio": 57025447108.7
+  },
+  {
+    "fondo": "Ualintec Ahorro Pesos - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 8658.963,
+    "ccp": 19321650.262817845,
+    "patrimonio": 167305454724.68
+  },
+  {
+    "fondo": "Ualintec Ahorro Pesos - Clase B",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 4749.524,
+    "ccp": 10987127.302460203,
+    "patrimonio": 52183624814.09
+  },
+  {
+    "fondo": "Ualintec Ahorro Pesos - Clase C",
+    "horizonte": "corto",
+    "fecha": "2026-10-08",
+    "vcp": 9000.122,
+    "ccp": 584598.7606845774,
+    "patrimonio": 5261460167.21
+  },
+  {
+    "fondo": "Alianza de Capitales RP",
+    "horizonte": "corto",
+    "fecha": "2020-04-28",
+    "vcp": 15831.569,
+    "ccp": 3509.7729959677404,
+    "patrimonio": 55565213.36
+  },
+  {
+    "fondo": "Axis Ahorro Plus - Clase A",
+    "horizonte": "corto",
+    "fecha": "2020-06-24",
+    "vcp": 2166.249,
+    "ccp": 0.0016987890127127586,
+    "patrimonio": 3.68
+  }
+]
