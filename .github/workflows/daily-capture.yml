@@ -1,0 +1,56 @@
+name: Daily raw capture
+
+# Archives today's raw responses of sources that keep no history (see capture/sources.conf)
+# on the orphan `data` branch. The Spring ingestion replays this archive later.
+on:
+  schedule:
+    - cron: "0 15 * * *" # 12:00 in Argentina (UTC-3)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-capture
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out capture scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check out data branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: data
+          path: data-branch
+
+      - name: Capture sources
+        id: capture
+        continue-on-error: true
+        run: |
+          day="$(TZ=America/Argentina/Buenos_Aires date +%F)"
+          echo "day=$day" >> "$GITHUB_OUTPUT"
+          capture/capture.sh capture/sources.conf data-branch "$day"
+
+      - name: Commit captured data
+        working-directory: data-branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add raw
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+            exit 0
+          fi
+          git commit -m "data: capture ${{ steps.capture.outputs.day }}"
+          git push origin HEAD:data
+
+      - name: Fail when a source failed
+        if: steps.capture.outcome == 'failure'
+        run: |
+          echo "::error::at least one source failed; see raw/.../manifest.json on the data branch"
+          exit 1
