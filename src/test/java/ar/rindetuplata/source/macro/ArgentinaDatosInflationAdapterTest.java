@@ -7,6 +7,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import ar.rindetuplata.source.Confidence;
 import ar.rindetuplata.source.Fixtures;
+import ar.rindetuplata.source.FlagCode;
+import ar.rindetuplata.source.Severity;
 import ar.rindetuplata.source.SourceException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -42,6 +44,28 @@ class ArgentinaDatosInflationAdapterTest {
             assertThat(o.confidence()).isEqualTo(Confidence.AGGREGATOR_AUTOMATIC);
             assertThat(o.source().official()).isFalse();
             assertThat(o.flags()).isEmpty();
+        });
+    }
+
+    @Test
+    void aRowWithoutFechaIsInvalidInsteadOfCrashingTheSort() {
+        String json = """
+                [{"fecha":null,"valor":1.9},{"fecha":"2026-08-31","valor":2.1},{"fecha":"2026-09-30","valor":1.9}]
+                """;
+
+        List<MacroObservation> parsed = ArgentinaDatosInflationAdapter.parse(json.getBytes(StandardCharsets.UTF_8),
+                FETCHED_AT);
+
+        assertThat(parsed).hasSize(3);
+        assertThat(parsed.subList(0, 2)).extracting(MacroObservation::date)
+                .containsExactly(LocalDate.parse("2026-09-30"), LocalDate.parse("2026-08-31"));
+        MacroObservation undated = parsed.get(2);
+        assertThat(undated.date()).isNull();
+        assertThat(undated.isInvalid()).isTrue();
+        assertThat(undated.flags()).singleElement().satisfies(f -> {
+            assertThat(f.code()).isEqualTo(FlagCode.MISSING_VALUE);
+            assertThat(f.severity()).isEqualTo(Severity.INVALID);
+            assertThat(f.message()).contains("date");
         });
     }
 
