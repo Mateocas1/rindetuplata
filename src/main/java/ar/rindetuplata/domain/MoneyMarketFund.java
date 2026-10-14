@@ -15,6 +15,7 @@ public record MoneyMarketFund(String id, String name, AnnualRate tna) implements
 
     @Override
     public Evaluation evaluate(Money amount, int days) {
+        Instrument.requirePositiveInput(amount, days);
         BigDecimal growth = tna.dailyCompoundingGrowth(days);
         return new Simulation(amount, amount.times(growth), days, Optional.empty());
     }

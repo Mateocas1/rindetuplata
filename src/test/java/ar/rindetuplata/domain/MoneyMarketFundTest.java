@@ -1,6 +1,7 @@
 package ar.rindetuplata.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 import java.math.BigDecimal;
@@ -37,5 +38,21 @@ class MoneyMarketFundTest {
         Simulation result = (Simulation) fund.evaluate(Money.ars("2000000"), 30);
 
         assertThat(result.earned().presented()).isEqualTo(new BigDecimal("24805.03"));
+    }
+
+    @Test
+    void rejectsNonPositiveAmountAndDays() {
+        assertThatThrownBy(() -> fund.evaluate(Money.ars("0"), 30))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("amount must be positive");
+        assertThatThrownBy(() -> fund.evaluate(Money.ars("-1"), 30))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("amount must be positive");
+        assertThatThrownBy(() -> fund.evaluate(Money.ars("1000000"), 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("days must be positive");
+        assertThatThrownBy(() -> fund.evaluate(Money.ars("1000000"), -1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("days must be positive");
     }
 }

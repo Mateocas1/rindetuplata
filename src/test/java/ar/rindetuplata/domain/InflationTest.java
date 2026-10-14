@@ -69,4 +69,11 @@ class InflationTest {
         assertThatThrownBy(() -> Inflation.realReturn(new BigDecimal("0.01"), new BigDecimal("-1")))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void rejectsNegativeDays() {
+        assertThatThrownBy(() -> Inflation.overHorizon(new BigDecimal("0.211"), -1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("days must not be negative");
+    }
 }

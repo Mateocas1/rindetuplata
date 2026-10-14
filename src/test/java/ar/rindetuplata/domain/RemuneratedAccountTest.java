@@ -160,4 +160,20 @@ class RemuneratedAccountTest {
         assertThatThrownBy(() -> new RemuneratedAccount("t", "T", List.of(), List.of()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void rejectsNonPositiveAmountAndDays() {
+        assertThatThrownBy(() -> naranja.evaluate(Money.ars("0"), 30))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("amount must be positive");
+        assertThatThrownBy(() -> naranja.evaluate(Money.ars("-1"), 30))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("amount must be positive");
+        assertThatThrownBy(() -> naranja.evaluate(Money.ars("1000000"), 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("days must be positive");
+        assertThatThrownBy(() -> naranja.evaluate(Money.ars("1000000"), -1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("days must be positive");
+    }
 }

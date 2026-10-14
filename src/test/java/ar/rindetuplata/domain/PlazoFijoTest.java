@@ -1,6 +1,7 @@
 package ar.rindetuplata.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
@@ -72,5 +73,21 @@ class PlazoFijoTest {
     @Test
     void hasNoConditionalOutcome() {
         assertThat(simulation(bank.evaluate(Money.ars("1000000"), 30)).conditional()).isEmpty();
+    }
+
+    @Test
+    void rejectsNonPositiveAmountAndDays() {
+        assertThatThrownBy(() -> bank.evaluate(Money.ars("0"), 30))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("amount must be positive");
+        assertThatThrownBy(() -> bank.evaluate(Money.ars("-1"), 30))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("amount must be positive");
+        assertThatThrownBy(() -> bank.evaluate(Money.ars("1000000"), 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("days must be positive");
+        assertThatThrownBy(() -> bank.evaluate(Money.ars("1000000"), -1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("days must be positive");
     }
 }
