@@ -1,0 +1,5 @@
+{
+  "wallets": [
+    { "id": "mercado-pago", "name": "Mercado Pago", "fund": "Mercado Fondo - Clase A" }
+  ]
+}
