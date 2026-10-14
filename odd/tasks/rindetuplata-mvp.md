@@ -34,7 +34,7 @@ Order of work: T9 first (history clock), then T2 onward.
 | ID | Specs | Task | Route | Status | Commit |
 |---|---|---|---|---|---|
 | T1 | S7, S1 | Bootstrap: Spring Boot 4.1.1 / Java 21 skeleton (web, validation, JPA, PostgreSQL, Flyway, actuator, Testcontainers), compose.yaml, AGENTS.md, this document | inline | done | dc8ede2 |
-| T9 | S17, S5, S12 | Daily raw capture: public `Mateocas1/rindetuplata` repo with a scheduled Actions workflow that archives dated raw responses of non-recoverable sources (BCRA transparency PlazosFijos, ArgentinaDatos plazoFijo and rendimientos, Ualá rate extract) plus a per-day manifest; independent failure per source; deterministic test with fixtures | inline | pending | |
+| T9 | S17, S5, S12 | Daily raw capture: public `Mateocas1/rindetuplata` repo with a scheduled Actions workflow that archives dated raw responses of non-recoverable sources (BCRA transparency PlazosFijos, ArgentinaDatos plazoFijo and rendimientos, Ualá rate extract) plus a per-day manifest; independent failure per source; deterministic test with fixtures | inline | done | f475ac7 |
 | T2 | S3, S4, S8, S10, S15 | Domain math: `Money`/rate value objects on `BigDecimal`, TNA→TEA, compound interest, daily-accrual accounts, caps/tiers/conditions, REM horizon conversion, real return, simulation-based personalized ranking; exhaustive unit tests incl. rounding and day-count conventions | worker | pending | |
 | T3 | S3, S5, S9, S12 | Source adapters behind one port per data kind: plazo fijo (BCRA transparency primary, ArgentinaDatos secondary), money-market FCI cuotapartes, crypto/fintech yields, inflation (BCRA 27) and REM (29), PSP benchmark (1196), dólar MEP, wallet rates (scraper where possible + curated); validation layer that flags bad rows; confidence level per rate; recorded fixtures, no live calls in tests | worker | pending | |
 | T4 | S1, S3, S4, S5, S17 | Persistence + daily ingestion: Flyway schema for instruments and daily snapshots, idempotent jobs that accumulate history, replay of the T9 raw archive, FCI yield from cuotaparte deltas, trigger static-site rebuild after ingestion | worker | pending | |
@@ -61,7 +61,7 @@ Order of work: T9 first (history clock), then T2 onward.
 | L-E | Sources lag and mix dates (FCI, BCRA transparency rows) | Show data date per row; validation layer |
 | L-F | Fine print (caps, tiers, conditions, minimum terms) | Modeled in the domain (T2), visual in UI |
 | L-G | Perceived financial advice | Neutral product (S11), disclaimer, informational wording |
-| L-H | Argentine government APIs may block foreign IPs | T9 runs on US GitHub runners: first run doubles as the geo-block test before renting the VPS |
+| L-H | Argentine government APIs may block foreign IPs | Not blocked from GitHub's US runners (L23); re-check from the VPS region before renting |
 
 ## Verified data sources (2026-10-14, live)
 
@@ -104,3 +104,4 @@ ArgentinaDatos is a community aggregator: keep one adapter per source so a prima
 - **L20** (user): "se, esta bien vps propio. me cierran los 5-8 usd, de todas formas, me interesaria poder probarlo local quizas al inicio, algo como en docker quizas? para no arrancar con 5-8 usd en "perdida" al no lanzarlo directamente, se entiende?"
 - **L21** (user): "se, es una buena opcion ir por publico, esta bueno hacerlo opensource, why not? por otro lado, super lo de github actions, es algo como lo que hicimos con ofertasuper, perfecto! vamos con eso!"
 - **L22** (user, capture location): "dale, vamos con b" — option (b): publish the main repo as public and store captures on an orphan `data` branch.
+- **L23** (evidence, T9): capture tests 43/43 locally and in CI (`Capture tests` run on push); independent verify found no blocking defect, its non-blocking findings #2-#5 and #7 were fixed test-first (kept file sha256 in manifest, write-failure exits, source name validation, `--url`, CRLF/indented comments, 45 s per request, 20 min job). Repo published public at https://github.com/Mateocas1/rindetuplata; orphan `data` branch created; first `Daily raw capture` run 38529063474 (workflow_dispatch) captured 4/4 sources from GitHub runners and committed `raw/2026/10/14/` (BCRA transparency 393501 B, ArgentinaDatos plazo fijo 20511 B and rendimientos 7327 B, Ualá extract 765 B, manifest). BCRA does not block GitHub's US runners. Commit f475ac7.
