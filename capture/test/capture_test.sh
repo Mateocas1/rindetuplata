@@ -107,6 +107,140 @@ check "nodir: exit 2" '[ "$code" -eq 2 ]'
 check "nodir: message on stderr" 'grep -q "cannot create output directory" "$work/nodir.stderr"'
 check "nodir: no summary on stdout" '[ ! -s "$work/nodir.stdout" ]'
 
+# --- empty or comment-only sources file ------------------------------------------
+: > "$work/empty.conf"
+"$script" "$work/empty.conf" "$work/empty-out" "$day" >"$work/empty.stdout" 2>"$work/empty.stderr"; code=$?
+check "empty: empty sources file exit 2" '[ "$code" -eq 2 ]'
+check "empty: empty sources file message on stderr" 'grep -q "no sources in sources file" "$work/empty.stderr"'
+check "empty: empty sources file writes nothing" '[ ! -e "$work/empty-out" ]'
+check "empty: no summary on stdout" '[ ! -s "$work/empty.stdout" ]'
+
+printf '# only comments\n\n   \n' > "$work/comments.conf"
+"$script" "$work/comments.conf" "$work/comments-out" "$day" >/dev/null 2>"$work/comments.stderr"; code=$?
+check "empty: comment-only sources file exit 2" '[ "$code" -eq 2 ]'
+check "empty: comment-only writes nothing" '[ ! -e "$work/comments-out" ]'
+
+# --- degraded-but-valid json never replaces a good capture ------------------------
+cat > "$work/degraded.conf" <<EOF
+bcra-plazos-fijos|json|file://$fixtures/degraded.json
+EOF
+cat > "$work/degraded-results.conf" <<EOF
+bcra-plazos-fijos|json|file://$fixtures/degraded-results.json
+EOF
+
+degraded="$work/degraded"
+"$script" "$work/ok.conf" "$degraded" "$day" >/dev/null 2>&1
+"$script" "$work/degraded.conf" "$degraded" "$day" >"$work/degraded.stdout" 2>"$work/degraded.stderr"; code=$?
+check "degraded: empty json body exit 1" '[ "$code" -eq 1 ]'
+check "degraded: good capture kept" 'cmp -s "$fixtures/plazos-fijos.json" "$degraded/$day_dir/bcra-plazos-fijos.json"'
+check "degraded: manifest keeps previous capture" '[ "$(jq -r ".sources[] | select(.name == \"bcra-plazos-fijos\") | .kept_previous" "$degraded/$day_dir/manifest.json")" = "true" ]'
+check "degraded: reason names the degraded body" '[ "$(jq -r ".sources[] | select(.name == \"bcra-plazos-fijos\") | .error" "$degraded/$day_dir/manifest.json")" = "degraded json: empty body" ]'
+check "degraded: kept sha256 is of the kept file" '[ "$(jq -r ".sources[] | select(.name == \"bcra-plazos-fijos\") | .sha256" "$degraded/$day_dir/manifest.json")" = "$(sha256sum "$degraded/$day_dir/bcra-plazos-fijos.json" | cut -d" " -f1)" ]'
+check "degraded: reported on stderr" 'grep -q "failed: bcra-plazos-fijos (degraded json: empty body)" "$work/degraded.stderr"'
+
+"$script" "$work/degraded-results.conf" "$degraded" "$day" >/dev/null 2>&1; code=$?
+check "degraded: a 200 with an empty results list is degraded too" '[ "$code" -eq 1 ] && cmp -s "$fixtures/plazos-fijos.json" "$degraded/$day_dir/bcra-plazos-fijos.json"'
+
+"$script" "$work/degraded.conf" "$work/degraded-first" "$day" >/dev/null 2>&1; code=$?
+check "degraded: degraded body never stored as a capture" '[ "$code" -eq 1 ] && [ ! -e "$work/degraded-first/$day_dir/bcra-plazos-fijos.json" ]'
+
+# --- strict UTF-8 decoding in extract_rates.py ------------------------------------
+python3 -I "$here/../extract_rates.py" < "$fixtures/invalid-utf8.html" >/dev/null 2>"$work/utf8.raw.err"; code=$?
+check "utf8: extract_rates.py exits non-zero on invalid bytes" '[ "$code" -ne 0 ]'
+check "utf8: extract_rates.py message names invalid utf-8" 'grep -q "invalid utf-8 input" "$work/utf8.raw.err"'
+check "utf8: extract_rates.py prints no traceback" '! grep -q "Traceback" "$work/utf8.raw.err"'
+
+cat > "$work/utf8.conf" <<EOF
+invalid-utf8|html-rate|file://$fixtures/invalid-utf8.html
+EOF
+utf8="$work/utf8"
+"$script" "$work/utf8.conf" "$utf8" "$day" >/dev/null 2>"$work/utf8.stderr"; code=$?
+check "utf8: invalid page fails its source" '[ "$code" -eq 1 ]'
+check "utf8: reason carries the decoder message" 'jq -r ".sources[0].error" "$utf8/$day_dir/manifest.json" | grep -q "^html parse failed: invalid utf-8 input"'
+check "utf8: nothing stored" '[ ! -e "$utf8/$day_dir/invalid-utf8.json" ]'
+check "utf8: failure reported on stderr" 'grep -q "failed: invalid-utf8" "$work/utf8.stderr"'
+
+# --- response size cap ------------------------------------------------------------
+cap_exact="$(wc -c < "$fixtures/plazos-fijos.json")"
+cat > "$work/cap-boundary.conf" <<EOF
+bcra-plazos-fijos|json|file://$fixtures/plazos-fijos.json
+EOF
+CAPTURE_MAX_BYTES="$cap_exact" "$script" "$work/cap-boundary.conf" "$work/cap-boundary" "$day" >/dev/null 2>&1; code=$?
+check "cap: a body exactly at the limit is accepted" '[ "$code" -eq 0 ]'
+
+cap="$work/cap"
+CAPTURE_MAX_BYTES=200 "$script" "$work/ok.conf" "$cap" "$day" >"$work/cap.stdout" 2>"$work/cap.stderr"; code=$?
+check "cap: exit 1 when one body is oversized" '[ "$code" -eq 1 ]'
+check "cap: the small source is still captured" 'cmp -s "$fixtures/plazos-fijos.json" "$cap/$day_dir/bcra-plazos-fijos.json"'
+check "cap: the oversized source is not stored" '[ ! -e "$cap/$day_dir/uala-cuenta-remunerada.json" ]'
+check "cap: reason names the size and the limit" '[ "$(jq -r ".sources[] | select(.name == \"uala-cuenta-remunerada\") | .error" "$cap/$day_dir/manifest.json")" = "response too large: $(wc -c < "$fixtures/uala.html") bytes (limit 200)" ]'
+check "cap: summary counts only the captured source" 'grep -q "captured 1/2 sources" "$work/cap.stdout"'
+
+CAPTURE_MAX_BYTES=notanumber "$script" "$work/ok.conf" "$work/cap-bad" "$day" >/dev/null 2>"$work/cap-bad.err"; code=$?
+check "cap: invalid cap exits 2" '[ "$code" -eq 2 ]'
+check "cap: invalid cap message" 'grep -q "invalid CAPTURE_MAX_BYTES: notanumber" "$work/cap-bad.err"'
+check "cap: invalid cap writes nothing" '[ ! -e "$work/cap-bad" ]'
+
+# --- a partial rerun keeps the manifest entries of sources not rerun -------------- 
+cat > "$work/one.conf" <<EOF
+bcra-plazos-fijos|json|file://$fixtures/plazos-fijos.json
+EOF
+merge="$work/merge"
+"$script" "$work/ok.conf" "$merge" "$day" >/dev/null 2>&1
+"$script" "$work/one.conf" "$merge" "$day" >"$work/merge.stdout" 2>"$work/merge.stderr"; code=$?
+check "merge: partial rerun exits 0" '[ "$code" -eq 0 ]'
+check "merge: manifest still lists both sources" '[ "$(jq ".sources | length" "$merge/$day_dir/manifest.json")" -eq 2 ]'
+check "merge: no duplicate entries" '[ "$(jq "[.sources[].name] | unique | length" "$merge/$day_dir/manifest.json")" -eq 2 ]'
+check "merge: rerun source recorded once as ok" '[ "$(jq "[.sources[] | select(.name == \"bcra-plazos-fijos\" and .status == \"ok\")] | length" "$merge/$day_dir/manifest.json")" -eq 1 ]'
+check "merge: source not rerun keeps its entry and sha256" '[ "$(jq -r ".sources[] | select(.name == \"uala-cuenta-remunerada\") | .sha256" "$merge/$day_dir/manifest.json")" = "$(sha256sum "$merge/$day_dir/uala-cuenta-remunerada.json" | cut -d" " -f1)" ]'
+check "merge: summary counts only the rerun sources" 'grep -q "captured 1/1 sources" "$work/merge.stdout"'
+
+corrupt="$work/corrupt"
+mkdir -p "$corrupt/$day_dir"
+printf '{not json' > "$corrupt/$day_dir/manifest.json"
+"$script" "$work/one.conf" "$corrupt" "$day" >/dev/null 2>"$work/corrupt.stderr"; code=$?
+check "merge: corrupt previous manifest exits 0" '[ "$code" -eq 0 ]'
+check "merge: corrupt previous manifest warns on stderr" 'grep -q "cannot read previous manifest" "$work/corrupt.stderr"'
+check "merge: corrupt previous manifest is rebuilt from this run" '[ "$(jq ".sources | length" "$corrupt/$day_dir/manifest.json")" -eq 1 ]'
+
+# --- failed writes exit non-zero and leave the previous manifest intact -----------
+ro="$work/ro"
+cp -r "$merge" "$ro"
+chmod 500 "$ro/$day_dir"
+ro_manifest_before="$(cat "$ro/$day_dir/manifest.json")"
+ro_bcra_before="$(sha256sum "$ro/$day_dir/bcra-plazos-fijos.json" | cut -d" " -f1)"
+"$script" "$work/one.conf" "$ro" "$day" >"$work/ro.stdout" 2>"$work/ro.stderr"; code=$?
+check "write: unwritable day dir exits non-zero" '[ "$code" -ne 0 ]'
+check "write: result write failure reported on stderr" 'grep -q "(write failed)" "$work/ro.stderr"'
+check "write: manifest write failure reported on stderr" 'grep -q "cannot write manifest" "$work/ro.stderr"'
+check "write: no summary claims success" '! grep -q "captured" "$work/ro.stdout"'
+check "atomic: previous manifest left byte-identical" '[ "$(cat "$ro/$day_dir/manifest.json")" = "$ro_manifest_before" ]'
+check "atomic: previous manifest still complete" '[ "$(jq ".sources | length" "$ro/$day_dir/manifest.json")" -eq 2 ]'
+check "atomic: no half-written manifest left in the day dir" '[ ! -e "$ro/$day_dir/manifest.json.tmp" ] && [ -z "$(find "$ro/$day_dir" -name "*.tmp" -o -name ".manifest*")" ]'
+check "write: earlier capture untouched" '[ "$(sha256sum "$ro/$day_dir/bcra-plazos-fijos.json" | cut -d" " -f1)" = "$ro_bcra_before" ]'
+chmod 700 "$ro/$day_dir"
+
+# --- duplicate names and unknown kinds --------------------------------------------
+cat > "$work/dup.conf" <<EOF
+bcra-plazos-fijos|json|file://$fixtures/plazos-fijos.json
+bcra-plazos-fijos|json|file://$fixtures/broken.json
+EOF
+dup="$work/dup"
+"$script" "$work/dup.conf" "$dup" "$day" >"$work/dup.stdout" 2>"$work/dup.stderr"; code=$?
+check "dup: exit 1" '[ "$code" -eq 1 ]'
+check "dup: second occurrence rejected as duplicate" '[ "$(jq -r ".sources[1].error" "$dup/$day_dir/manifest.json")" = "duplicate source name" ]'
+check "dup: first occurrence captured" 'cmp -s "$fixtures/plazos-fijos.json" "$dup/$day_dir/bcra-plazos-fijos.json"'
+check "dup: summary counts both attempts" 'grep -q "captured 1/2 sources" "$work/dup.stdout"'
+
+cat > "$work/kind.conf" <<EOF
+weird-kind|xml|file://$fixtures/plazos-fijos.json
+EOF
+kind="$work/kind"
+"$script" "$work/kind.conf" "$kind" "$day" >/dev/null 2>"$work/kind.stderr"; code=$?
+check "kind: unknown kind exit 1" '[ "$code" -eq 1 ]'
+check "kind: unknown kind reason" '[ "$(jq -r ".sources[0].error" "$kind/$day_dir/manifest.json")" = "unknown kind: xml" ]'
+check "kind: unknown kind stores nothing" '[ ! -e "$kind/$day_dir/weird-kind.json" ]'
+
 if [ "$failures" -gt 0 ]; then
   printf '\n%d check(s) failed\n' "$failures"
   exit 1
