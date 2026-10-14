@@ -28,7 +28,7 @@ class DailyIngestionJobConfiguration {
 
 	@Bean
 	Job dailyIngestionJob(JobRepository jobRepository, PlatformTransactionManager transactionManager,
-			IngestionSteps steps) {
+			IngestionSteps steps, RebuildHookListener rebuildHook) {
 		return new JobBuilder(IngestionService.JOB_NAME, jobRepository)
 			.start(step("plazoFijoStep", jobRepository, transactionManager, steps::plazoFijo))
 			.next(step("fundsStep", jobRepository, transactionManager, steps::funds))
@@ -36,6 +36,7 @@ class DailyIngestionJobConfiguration {
 			.next(step("macroStep", jobRepository, transactionManager, steps::macro))
 			.next(step("dollarStep", jobRepository, transactionManager, steps::dollar))
 			.next(step("walletsStep", jobRepository, transactionManager, steps::wallets))
+			.listener(rebuildHook)
 			.build();
 	}
 

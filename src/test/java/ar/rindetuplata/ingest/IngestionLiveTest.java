@@ -1,6 +1,9 @@
 package ar.rindetuplata.ingest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.client.ExpectedCount.manyTimes;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 
 import ar.rindetuplata.source.crypto.ArgentinaDatosCryptoAdapter;
 import ar.rindetuplata.source.dollar.DolarApiAdapter;
@@ -29,6 +32,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,15 +44,26 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.mock.http.client.MockClientHttpResponse;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
 
 /**
  * T4c live rules: a LIVE run writes every kind and records one {@code source_run} row per source; a failing port
  * never blocks the other kinds; re-running a COMPLETED date is a no-op; a FAILED instance restarts only its
- * unfinished steps; the scheduler ingests today in Buenos Aires; every wallet source bean is used.
+ * unfinished steps; the scheduler ingests today in Buenos Aires; every wallet source bean is used. T4d adds the
+ * rebuild hook: the listener registered on {@code dailyIngestionJob} POSTs once after a COMPLETED run.
  */
-@Import({ StoreTestConfiguration.class, StubSourcesConfiguration.class, IngestionLiveTest.FixedClock.class })
-@SpringBootTest(properties = { "rindetuplata.ingest.cron=0 0 0 1 1 *" })
+@Import({ StoreTestConfiguration.class, StubSourcesConfiguration.class, IngestionLiveTest.FixedClock.class,
+		IngestionLiveTest.RebuildHookHttp.class })
+@SpringBootTest(properties = { "rindetuplata.ingest.cron=0 0 0 1 1 *",
+		"rindetuplata.ingest.rebuild-hook-url=" + IngestionLiveTest.HOOK_URL })
 class IngestionLiveTest {
+
+	static final String HOOK_URL = "http://rebuild-hook.test/deploy";
 
 	static final Instant FIXED_INSTANT = Instant.parse("2026-12-01T01:00:00Z");
 
@@ -60,6 +75,8 @@ class IngestionLiveTest {
 	static final LocalDate ALREADY_COMPLETED_DAY = LocalDate.parse("2026-11-03");
 	static final LocalDate RESTART_DAY = LocalDate.parse("2026-11-04");
 	static final LocalDate WALLET_DAY = LocalDate.parse("2026-11-05");
+	static final LocalDate HOOK_FAILED_DAY = LocalDate.parse("2026-11-06");
+	static final LocalDate HOOK_COMPLETED_DAY = LocalDate.parse("2026-11-07");
 
 	static final String OFFICIAL = BcraPlazoFijoAdapter.SOURCE.id();
 	static final String BANKS = ArgentinaDatosPlazoFijoAdapter.SOURCE.id();
@@ -88,6 +105,13 @@ class IngestionLiveTest {
 	@BeforeEach
 	void resetStubs() {
 		StubSources.reset();
+		RebuildHookHttp.server.reset();
+		RebuildHookHttp.POSTS.set(0);
+		RebuildHookHttp.server.expect(manyTimes(), requestTo(HOOK_URL)).andExpect(method(HttpMethod.POST)).andRespond(
+				request -> {
+					RebuildHookHttp.POSTS.incrementAndGet();
+					return new MockClientHttpResponse(new byte[0], HttpStatus.OK);
+				});
 	}
 
 	@Test
@@ -235,6 +259,26 @@ class IngestionLiveTest {
 		assertThat(reader.snapshot(InstrumentKind.WALLET, CURATED, "naranja-x", WALLET_DAY)).isPresent();
 	}
 
+	@Test
+	void onlyACompletedRunPostsOnceToTheRebuildHook() {
+		StubSources.CRYPTO_FAILS_ONCE = true;
+
+		IngestionResult failed = ingestionService.run(HOOK_FAILED_DAY, RunMode.LIVE);
+
+		assertThat(failed.status()).isEqualTo(BatchStatus.FAILED);
+		assertThat(RebuildHookHttp.POSTS).as("a FAILED run never rebuilds the site").hasValue(0);
+
+		IngestionResult completed = ingestionService.run(HOOK_COMPLETED_DAY, RunMode.LIVE);
+
+		assertThat(completed.status()).isEqualTo(BatchStatus.COMPLETED);
+		assertThat(RebuildHookHttp.POSTS).as("the listener registered on dailyIngestionJob fires once").hasValue(1);
+
+		IngestionResult noOp = ingestionService.run(HOOK_COMPLETED_DAY, RunMode.LIVE);
+
+		assertThat(noOp.alreadyCompleted()).isTrue();
+		assertThat(RebuildHookHttp.POSTS).as("an already-completed date runs nothing").hasValue(1);
+	}
+
 	private SourceRunRow runRow(LocalDate date, String sourceId) {
 		return reader.sourceRun(date, sourceId)
 			.orElseThrow(() -> new AssertionError("no source_run row for " + sourceId + " on " + date));
@@ -258,6 +302,26 @@ class IngestionLiveTest {
 		@Bean
 		Clock clock() {
 			return Clock.fixed(FIXED_INSTANT, ZoneId.of("America/Argentina/Buenos_Aires"));
+		}
+	}
+
+	/**
+	 * Replaces the rebuild hook's client with one bound to an in-memory {@link MockRestServiceServer}: the job,
+	 * its listener and the HTTP call are the real ones, only the socket is mocked.
+	 */
+	@TestConfiguration(proxyBeanMethods = false)
+	static class RebuildHookHttp {
+
+		static final AtomicInteger POSTS = new AtomicInteger();
+
+		static MockRestServiceServer server;
+
+		@Bean
+		@Primary
+		RestClient rebuildHookMockRestClient() {
+			RestClient.Builder builder = RestClient.builder();
+			server = MockRestServiceServer.bindTo(builder).build();
+			return builder.build();
 		}
 	}
 }
