@@ -13,9 +13,13 @@
  * 2. A view has one primary action: at most one `btn-primary` in the rendered
  *    markup, and the destructive confirmation confirms through the loss role
  *    while the create form keeps the alerts view's only primary.
+ * 3. The direction (T13d) replaced the T12 text steps (`text-caption`,
+ *    `text-body-sm`, `text-h1..h3`) with the seven `type-*` roles, and a field
+ *    label wears the mono caps `type-label` role; no account surface may keep a
+ *    step of the retired scale.
  */
 import { readFileSync, readdirSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -27,9 +31,15 @@ import LoginPanel from './LoginPanel';
 import ProblemNotice from './ProblemNotice';
 import StatusNotice from './StatusNotice';
 import WalletRateEditor from './WalletRateEditor';
+import WalletAuditTable from './WalletAuditTable';
+import WalletTierTable from './WalletTierTable';
 import { buttonPrimaryClass, buttonSecondaryClass } from './ui';
 
 const accountDir = fileURLToPath(new URL('.', import.meta.url));
+const webRoot = resolve(accountDir, '../../..');
+
+/** The three account pages, whose own markup is part of the same migration. */
+const accountPages = ['src/pages/ingresar.astro', 'src/pages/alertas.astro', 'src/pages/admin/tasas.astro'];
 
 /** Every class token of every `class` attribute in a rendered tree. */
 function classTokens(html: string): string[] {
@@ -51,6 +61,11 @@ function accountSources(): string[] {
   return readdirSync(accountDir)
     .filter((name) => (name.endsWith('.tsx') || name.endsWith('.ts')) && !name.endsWith('.test.ts'))
     .map((name) => join(accountDir, name));
+}
+
+/** The account sources plus the pages that host their islands. */
+function accountFiles(): string[] {
+  return [...accountSources(), ...accountPages.map((page) => join(webRoot, page))];
 }
 
 /** The failure notice of a request that never got an answer. */
@@ -190,6 +205,73 @@ describe('a view has one primary action', () => {
 
     expect(html).toContain('Eliminar la alerta de Billetera sobre Cualquier opción');
     expect(html).toContain('25,00%');
-    expect(countClass(html, 'tabular-nums')).toBeGreaterThanOrEqual(1);
+    // The threshold is the row's protagonist, in the mono tabular data role.
+    expect(countClass(html, 'type-data')).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('the wallet audit table', () => {
+  it('heads with mono caps labels and reads in mono tabular cells', () => {
+    const html = renderToStaticMarkup(
+      h(WalletAuditTable, {
+        entries: [
+          {
+            id: 1,
+            walletId: 'naranja-x',
+            action: 'CONFIRMED',
+            payload: { name: 'Naranja X' },
+            actor: 'operador@rindetuplata.com',
+            at: '2026-10-20T12:00:00Z',
+          },
+        ],
+      }),
+    );
+
+    expect(html).toContain('role="region"');
+    expect(html).toContain('tabindex="0"');
+    expect(countClass(html, 'type-label'), 'the four column heads and the detail summary').toBe(5);
+    expect(countClass(html, 'type-data'), 'actor, date and the stored document').toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('the wallet tier table', () => {
+  it('scrolls inside its own labelled region instead of spilling out of the card', () => {
+    const html = renderToStaticMarkup(
+      h(WalletTierTable, { label: 'Franjas de tasa', tiers: RATE.tiers }),
+    );
+
+    expect(html).toContain('role="region"');
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain('aria-label="Franjas de tasa"');
+    expect(countClass(html, 'type-label'), 'mono caps heads like the ranking').toBe(3);
+    expect(countClass(html, 'type-data'), 'mono tabular cells like the ranking').toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('account text stays on the seven type roles', () => {
+  it('keeps no T12 text step in the account sources or pages', () => {
+    const legacy = /\btext-(caption|body-sm|h1|h2|h3)\b/;
+    const offenders = accountFiles()
+      .filter((file) => legacy.test(readFileSync(file, 'utf8')))
+      .map((file) => relative(webRoot, file));
+
+    expect(offenders, 'a T12 text step survived the T13d migration').toEqual([]);
+  });
+
+  it('renders a field label with the mono caps label role', () => {
+    const html = renderToStaticMarkup(
+      h(AlertCreateForm, {
+        form: { kind: '', instrumentId: '', thresholdPercent: '' },
+        errors: {},
+        instruments: [],
+        optionsFailed: false,
+        creating: false,
+        onChange: noop,
+        onSubmit: noop,
+      }),
+    );
+
+    expect(html).toContain('class="type-label">Tipo de opción</label>');
+    expect(html).toContain('class="type-label">Avisame si supera esta tasa</label>');
   });
 });

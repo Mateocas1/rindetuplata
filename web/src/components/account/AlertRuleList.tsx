@@ -2,12 +2,12 @@
  * The alert rules of `/alertas` (T12c).
  *
  * A list of one-line rows inside the panel's `card`, read the way the ranking
- * table reads: the rule is the row header, the threshold is the figure the
- * reader came for (`tabular-nums`, semibold) with its caption above it, and the
- * row's action trails it. The rows stay a `ul`/`li` list — a table would drop
- * the `listitem` role an end-to-end walk of this page relies on — while they
- * copy the ranking table's row treatment: dividers, muted captions, tabular
- * figures.
+ * table reads: the rule is the row header in `type-body`, its instrument in the
+ * quiet mono `type-data` line, and the threshold is the figure the reader came
+ * for (mono `type-data` at the row figure step, semibold) under its mono caps
+ * `type-label` head. The rows stay a `ul`/`li` list — a table would drop the
+ * `listitem` role an end-to-end walk of this page relies on — while they copy
+ * the ranking table's row treatment: dividers, muted labels, tabular figures.
  *
  * The delete confirmation takes over the row that owns it: the confirm carries
  * the loss tone and the cancel is a peer action, so this view still has exactly
@@ -66,8 +66,8 @@ export default function AlertRuleList({
   if (rules.length === 0) {
     return (
       <div className={`${cardClass} flex flex-col gap-2`}>
-        <p className="font-medium">Todavía no tenés alertas</p>
-        <p className="text-body-sm text-muted">
+        <p className="type-body font-medium">Todavía no tenés alertas</p>
+        <p className="type-body text-muted">
           Una alerta te avisa por email cuando una opción supera la tasa que le pongas. Armá la
           primera con el formulario de arriba.
         </p>
@@ -85,21 +85,21 @@ export default function AlertRuleList({
           return (
             <li
               key={rule.id}
-              className={`${ROW} sm:grid sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-center sm:gap-6 ${
+              className={`${ROW} sm:grid sm:grid-cols-[minmax(0,1fr)_12.5rem_auto] sm:items-center sm:gap-6 ${
                 confirming ? 'bg-subtle-surface' : ''
               }`}
             >
               <div className="flex min-w-0 flex-col gap-1">
-                <p className="font-medium">{ruleKindLabel(rule)}</p>
-                <p className="text-caption text-muted">{instrument}</p>
+                <p className="type-body font-medium">{ruleKindLabel(rule)}</p>
+                <p className="type-data text-muted">{instrument}</p>
                 {rule.active === false && (
-                  <p className="text-caption text-warning">Pausada: no envía avisos.</p>
+                  <p className="type-data text-warning">Pausada: no envía avisos.</p>
                 )}
               </div>
 
               <div className={ROW_FIGURE}>
-                <p className="text-caption text-muted">Avisa si la tasa supera</p>
-                <p className="font-semibold tabular-nums">
+                <p className="type-label">Avisa si la tasa supera</p>
+                <p className="type-data text-figure-row font-semibold">
                   {formatPercent(percentToFraction(rule.thresholdPercent))}
                 </p>
               </div>
@@ -110,7 +110,7 @@ export default function AlertRuleList({
                   aria-label={`Confirmar: ${description}`}
                   className="flex flex-col gap-2"
                 >
-                  <p className="text-body-sm">¿Eliminar esta alerta?</p>
+                  <p className="type-body">¿Eliminar esta alerta?</p>
                   <div className="flex flex-wrap gap-2">
                     <button
                       ref={confirmRef}
