@@ -3,8 +3,10 @@
  *
  * Nothing is silently dropped: an option that cannot be ranked is listed here
  * with its reason in Spanish, grouped by reason so the common one does not hide
- * the rest. The API's own `detail` is developer-facing English, so the copy is
- * built from the reader's own amount and term (see `ineligibleExplanation`).
+ * the rest. It lives behind one disclosure (T13b, L77: progressive disclosure
+ * instead of a wall of small grey text). The API's own `detail` is
+ * developer-facing English, so the copy is built from the reader's own amount
+ * and term (see `ineligibleExplanation`).
  */
 import { formatDate, formatInteger } from '../../lib/format';
 import { excludedReasonLabel, flagLabel, ineligibleExplanation, kindLabel } from '../../lib/labels';
@@ -38,18 +40,18 @@ export default function ExcludedList({ ranking }: ExcludedListProps) {
 
   return (
     <details className="disclosure card px-4 py-3">
-      <summary className="cursor-pointer text-body-sm font-semibold text-accent">
+      <summary className="type-label text-text">
         {formatInteger(total)} opciones quedaron afuera: mirá por qué
       </summary>
       <div className="mt-4 flex flex-col gap-6">
         {ranking.ineligible.length > 0 && (
           <section className="flex flex-col gap-2">
-            <h3 className="text-body-sm font-semibold">
+            <h3 className="type-label text-text">
               No llegan con tu monto o tu plazo ({formatInteger(ranking.ineligible.length)})
             </h3>
             <ul className="flex flex-col gap-1">
               {ranking.ineligible.map((entry) => (
-                <li key={entry.id} className="text-body-sm text-muted">
+                <li key={entry.id} className="type-data text-muted">
                   <span className="text-text">{entry.name}</span> · {kindLabel(entry.kind)} ·{' '}
                   {ineligibleExplanation(entry.reason, { days, amount })}
                 </li>
@@ -59,12 +61,12 @@ export default function ExcludedList({ ranking }: ExcludedListProps) {
         )}
         {[...grouped.entries()].map(([reason, entries]) => (
           <section key={reason} className="flex flex-col gap-2">
-            <h3 className="text-body-sm font-semibold">
+            <h3 className="type-label text-text">
               {excludedReasonLabel(reason)} ({formatInteger(entries.length)})
             </h3>
             <ul className="flex flex-col gap-1">
               {entries.map((entry) => (
-                <li key={entry.id} className="text-body-sm text-muted">
+                <li key={entry.id} className="type-data text-muted">
                   <span className="text-text">{entry.name}</span> · {kindLabel(entry.kind)} ·{' '}
                   {entry.source.displayName} · dato del {formatDate(entry.dataDate)}
                   <Flags flags={entry.flags} />

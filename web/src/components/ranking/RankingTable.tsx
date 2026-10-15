@@ -1,31 +1,40 @@
 /**
- * The ranking table (S15, S11, S10, L-F).
+ * The ranking board (S15, S11, S10, L-F).
  *
  * Semantic table, no JavaScript required: it is server-rendered and the island
- * only re-renders it with fresh data. Money earned for the reader's amount and
- * term is the primary column; the real return is a labelled badge; TNA, source,
- * data date and confidence are secondary. Every amount carries `tabular-nums`.
+ * only re-renders it with fresh data. The pesos earned for the reader's amount
+ * and term is the protagonist of every row (`type-figure` at the row step); the
+ * option's name is the reading step, the mono index gutter opens the row as
+ * `01`-`08`, and the provenance is ONE quiet `type-data` line, never a stack of
+ * small grey prose (T13b, L77).
  *
  * Narrow screens: the table keeps its semantics inside a labelled, focusable
  * scroll region with a sticky first column and a visible cue, rather than
- * dropping columns (S11 requires source and date on every row).
- *
- * T12b: the whole table sits in a `card`, each row header opens with its
- * position, the pesos earned is the one protagonist and every flag is a `chip`.
- * Row hover is instant (no transition; motion arrives with T12d).
+ * dropping columns (S11 requires source and date on every row). Row 01 carries
+ * the cobalt rail and the "Mejor" chip: the one accent, doing the one job it
+ * shares with the headline and the glass card.
  *
  * The sticky cells stay at `z-0`: they must cover their own scrolled siblings,
  * but never the sticky site header above them (z-10), or a scrolled row would
  * paint over the page chrome.
  */
 import { formatDate, formatDays, formatInteger, formatMoney, formatPercent } from '../../lib/format';
-import { confidenceLabel, flagLabel, inflationIndexLabel, inflationIndexShortLabel, kindLabel, rateKindLabel } from '../../lib/labels';
+import {
+  confidenceLabel,
+  flagLabel,
+  inflationIndexLabel,
+  inflationIndexShortLabel,
+  kindLabel,
+  rateKindLabel,
+} from '../../lib/labels';
 import { instrumentPageHref } from '../../lib/slug';
 import type { RankedEntry, Ranking } from '../../lib/types';
 import RealReturnBadge from './RealReturnBadge';
 
-const headCell =
-  'border-b border-border bg-subtle-surface px-4 py-3 text-caption font-semibold uppercase tracking-[0.05em] text-muted';
+/** Mono caps column heads, the same role as the row labels below them. */
+const headCell = 'border-b border-border bg-subtle-surface px-4 py-3 type-label';
+/** The index gutter and the option name share one sticky cell, so the name never scrolls away. */
+const identCell = 'grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3';
 
 function rowCell(isLast: boolean): string {
   return `px-4 py-3 align-top ${isLast ? '' : 'border-b border-border'}`;
@@ -35,16 +44,38 @@ function isStale(entry: RankedEntry): boolean {
   return entry.warnings.some((warning) => warning.code === 'STALE');
 }
 
-export default function RankingTable({
-  ranking,
-  pageSlugs,
-}: {
+/** Source, data date and confidence in one line (S11, S12). */
+function provenance(entry: RankedEntry): string {
+  const source = entry.source.official
+    ? `${entry.source.displayName} · oficial`
+    : entry.source.displayName;
+  const verified =
+    entry.verifiedAt === null ? '' : ` · verificada el ${formatDate(entry.verifiedAt)}`;
+  return `${source} · Dato del ${formatDate(entry.dataDate)} · ${confidenceLabel(
+    entry.confidence,
+  )}${verified}`;
+}
+
+export interface RankingTableProps {
   ranking: Ranking;
   /** Slugs the build actually produced; a row outside the set stays plain text (D1). */
   pageSlugs: string[];
-}) {
+  /** The home board shows the first options only; the rest follow behind a disclosure. */
+  limit?: number;
+  /** Continue the gutter in the table that follows a limited one. */
+  offset?: number;
+}
+
+export default function RankingTable({
+  ranking,
+  pageSlugs,
+  limit,
+  offset = 0,
+}: RankingTableProps) {
   const { amount, days } = ranking.request;
   const pages = new Set(pageSlugs);
+  const ranked = ranking.ranked.slice(offset);
+  const rows = limit === undefined ? ranked : ranked.slice(0, limit);
   const indexLabel =
     ranking.inflation === null ? 'sin dato de inflación' : inflationIndexLabel(ranking.inflation.index);
   // S10: the badge column names the index it uses, visibly, right in the header.
@@ -52,29 +83,44 @@ export default function RankingTable({
     ranking.inflation === null
       ? 'Real vs. inflación'
       : `Real vs. inflación (${inflationIndexShortLabel(ranking.inflation.index)})`;
+  // The note belongs to the board, not to the continuation table.
+  const primary = offset === 0;
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-caption text-muted md:hidden">
-        Deslizá la tabla para ver todas las columnas.
-      </p>
+      <p className="type-label md:hidden">Deslizá la tabla para ver todas las columnas.</p>
       <div className="card overflow-hidden">
         <div
           className="relative overflow-x-auto focus-visible:-outline-offset-2"
           role="region"
-          aria-label={`Ranking para ${formatMoney(amount)} a ${formatDays(days)}`}
+          aria-label={`Ranking para ${formatMoney(amount)} a ${formatDays(days)}${
+            primary ? '' : ', opciones siguientes'
+          }`}
           tabIndex={0}
         >
-          <table className="w-full min-w-[46rem] border-separate border-spacing-0 text-body-sm">
+          <table className="w-full min-w-[48rem] table-fixed border-separate border-spacing-0">
+            {/* Fixed proportions: the option (with its index gutter) keeps the
+                widest column, so a long fund class never wraps one word a line
+                and the pesos earned stays readable when the table scrolls. */}
+            <colgroup>
+              <col className="w-[34%]" />
+              <col className="w-[18%]" />
+              <col className="w-[15%]" />
+              <col className="w-[13%]" />
+              <col className="w-[20%]" />
+            </colgroup>
             <caption className="sr-only">
-              Las {formatInteger(ranking.ranked.length)} mejores opciones para {formatMoney(amount)} a{' '}
+              Las {formatInteger(rows.length)} mejores opciones para {formatMoney(amount)} a{' '}
               {formatDays(days)}, ordenadas por los pesos que ganás. La columna "real" compara
               contra la inflación esperada del {indexLabel}.
             </caption>
             <thead>
               <tr>
                 <th scope="col" className={`${headCell} sticky start-0 z-0 text-start`}>
-                  Opción
+                  <span className={identCell}>
+                    <span>Nº</span>
+                    <span>Opción</span>
+                  </span>
                 </th>
                 <th scope="col" className={`${headCell} text-end`}>
                   Ganás en {formatDays(days)}
@@ -91,44 +137,64 @@ export default function RankingTable({
               </tr>
             </thead>
             <tbody>
-              {ranking.ranked.map((entry, index) => {
-                const cell = rowCell(index === ranking.ranked.length - 1);
+              {rows.map((entry, index) => {
+                const position = offset + index + 1;
+                const leader = position === 1;
+                const last = position === ranking.ranked.length;
+                const cell = rowCell(last);
                 const href = instrumentPageHref(pages, entry);
+                const entity =
+                  entry.entity !== null && entry.entity !== entry.name ? entry.entity : null;
                 return (
                   <tr key={entry.id} className="group hover:bg-subtle-surface">
                     <th
                       scope="row"
                       className={`${cell} sticky start-0 z-0 bg-surface-raised text-start font-normal group-hover:bg-subtle-surface`}
                     >
-                      <span className="block text-caption text-muted tabular-nums">
-                        {index + 1}
-                      </span>
-                      {href === null ? (
-                        <span className="block font-medium text-text">{entry.name}</span>
-                      ) : (
-                        <a
-                          href={href}
-                          className="block font-medium text-text underline decoration-border underline-offset-2 hover:decoration-accent"
-                        >
-                          {entry.name}
-                        </a>
+                      {leader && (
+                        <span aria-hidden="true" className="absolute inset-y-0 start-0 w-0.5 bg-accent" />
                       )}
-                      {entry.entity !== null && entry.entity !== entry.name && (
-                        <span className="block text-caption text-muted">{entry.entity}</span>
-                      )}
-                      <span className="chip mt-1 border border-border bg-surface-raised text-muted">
-                        {kindLabel(entry.kind)}
+                      <span className={identCell}>
+                        <span className="type-index">{String(position).padStart(2, '0')}</span>
+                        <span className="min-w-0">
+                          <span className="block">
+                            {href === null ? (
+                              <span className="type-body font-medium">{entry.name}</span>
+                            ) : (
+                              <a
+                                href={href}
+                                className="type-body font-medium text-text underline decoration-border underline-offset-2 hover:decoration-text"
+                              >
+                                {entry.name}
+                              </a>
+                            )}
+                            {leader && (
+                              <span className="chip ms-2 bg-subtle-surface type-label">
+                                <span className="text-accent">Mejor</span>
+                              </span>
+                            )}
+                          </span>
+                          <span className="mt-1 block type-data text-muted">
+                            {kindLabel(entry.kind)}
+                            {entity === null ? '' : ` · ${entity}`}
+                          </span>
+                          {isStale(entry) && (
+                            <span className="block type-data text-warning">
+                              {flagLabel('STALE')}
+                            </span>
+                          )}
+                        </span>
                       </span>
                     </th>
                     <td className={`${cell} text-end`}>
-                      <span className="block text-body font-semibold tabular-nums">
+                      <span className="block type-figure text-figure-row">
                         {formatMoney(entry.earned)}
                       </span>
-                      <span className="block text-caption whitespace-nowrap text-muted tabular-nums">
+                      <span className="block type-data text-muted">
                         {formatMoney(entry.finalAmount)} al vencimiento
                       </span>
                       {entry.upTo !== null && (
-                        <span className="mt-1 block text-caption text-warning tabular-nums">
+                        <span className="mt-1 block type-data text-warning">
                           Hasta {formatMoney(entry.upTo.finalAmount)} · {entry.upTo.condition}
                         </span>
                       )}
@@ -137,31 +203,14 @@ export default function RankingTable({
                       <RealReturnBadge realReturn={entry.realReturn} indexLabel={indexLabel} />
                     </td>
                     <td className={`${cell} text-end`}>
-                      <span className="block tabular-nums">
+                      <span className="block type-data">
                         {formatPercent(entry.rateUsed.fraction)}
                       </span>
-                      <span className="block text-caption whitespace-nowrap text-muted">
+                      <span className="block type-data text-muted">
                         {rateKindLabel(entry.rateUsed.kind)}
                       </span>
                     </td>
-                    <td className={`${cell} text-caption text-muted`}>
-                      <span className="block">
-                        {entry.source.displayName}
-                        {entry.source.official ? ' · oficial' : ''}
-                      </span>
-                      <span className="block tabular-nums">Dato del {formatDate(entry.dataDate)}</span>
-                      <span className="block tabular-nums">
-                        {confidenceLabel(entry.confidence)}
-                        {entry.verifiedAt !== null
-                          ? ` · verificada el ${formatDate(entry.verifiedAt)}`
-                          : ''}
-                      </span>
-                      {isStale(entry) && (
-                        <span className="chip mt-1 bg-warning-surface text-on-warning">
-                          {flagLabel('STALE')}
-                        </span>
-                      )}
-                    </td>
+                    <td className={`${cell} type-data text-muted`}>{provenance(entry)}</td>
                   </tr>
                 );
               })}
@@ -169,24 +218,26 @@ export default function RankingTable({
           </table>
         </div>
       </div>
-      <p className="text-caption text-muted">
-        El monto ganado ya tiene aplicados el tope y las franjas de cada producto y, para billeteras
-        y fondos, el interés compuesto diario. El rendimiento real usa la inflación esperada (
-        {indexLabel}
-        {ranking.inflation === null
-          ? ''
-          : `: ${formatPercent(ranking.inflation.twelveMonthRate)} a 12 meses, ${formatPercent(
-              ranking.inflation.overHorizon,
-            )} en ${formatDays(days)} (observación del ${formatDate(ranking.inflation.observationDate)})`}
-        ).{' '}
-        <a
-          className="link"
-          href="/metodologia/"
-        >
-          Cómo se calcula cada número
-        </a>
-        .
-      </p>
+      {primary && (
+        <p className="type-data text-muted">
+          El monto ganado ya tiene aplicados el tope y las franjas de cada producto y, para
+          billeteras y fondos, el interés compuesto diario. El retorno real es lo que le ganás a la
+          inflación esperada
+          {ranking.inflation === null
+            ? ''
+            : ` (${indexLabel}: ${formatPercent(ranking.inflation.twelveMonthRate)} a 12 meses, ${formatPercent(
+                ranking.inflation.overHorizon,
+              )} en ${formatDays(days)}, observación del ${formatDate(ranking.inflation.observationDate)})`}
+          .{' '}
+          <a
+            className="underline decoration-border-strong underline-offset-2 hover:decoration-text"
+            href="/metodologia/"
+          >
+            Cómo se calcula cada número
+          </a>
+          .
+        </p>
+      )}
     </div>
   );
 }
