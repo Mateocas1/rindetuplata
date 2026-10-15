@@ -1,0 +1,279 @@
+---
+/**
+ * Prototype: home page in direction C3 "Grafito Cobalto" (T13).
+ *
+ * A standalone document — its own <html>, NOT BaseLayout and NOT global.css —
+ * so the direction can be judged on its own values. Everything is built at
+ * build time from the real ranking: `loadRanking(DEFAULT_RANKING_QUERY)` with
+ * $ 1.000.000 a 30 días, and every figure comes from the API payload or from
+ * lib/format (S14: the browser only formats what the API calculated).
+ */
+import Segmented from '../../components/proto/cobalto-cristal/Segmented.astro';
+import RankingRow from '../../components/proto/cobalto-cristal/RankingRow.astro';
+import { loadRanking } from '../../lib/data';
+import {
+  formatDate,
+  formatDays,
+  formatInteger,
+  formatMoney,
+  formatPercent,
+  formatSignedPercent,
+} from '../../lib/format';
+import {
+  confidenceLabel,
+  inflationIndexLabel,
+  kindLabel,
+  rateKindLabel,
+} from '../../lib/labels';
+import { DEFAULT_RANKING_QUERY } from '../../lib/rankingQuery';
+import type { RankedEntry } from '../../lib/types';
+import '../../styles/proto/cobalto-cristal.css';
+
+const ranking = await loadRanking(DEFAULT_RANKING_QUERY);
+const { amount, days, asOf } = ranking.request;
+const inflation = ranking.inflation;
+
+// The board is the top 8 of the day, and the hero restates the first one: the
+// same fact, so the cobalt needle is used once.
+const board = ranking.ranked.slice(0, 8);
+const best: RankedEntry | undefined = board[0];
+
+const dataDate = formatDate(asOf);
+const money = formatMoney(amount);
+const term = formatDays(days);
+const total = formatInteger(ranking.totals.ranked);
+
+const nav = [
+  { label: 'Ranking', href: '/' },
+  { label: 'Plazos fijos', href: '/plazo-fijo/' },
+  { label: 'Billeteras', href: '/billeteras/' },
+  { label: 'Fondos', href: '/fondos/' },
+  { label: 'Cripto', href: '/cripto/' },
+  { label: 'Cómo se calcula', href: '/metodologia/' },
+];
+
+const title = 'Prototipo C3 · Grafito Cobalto — ¿Dónde rinde tu plata hoy?';
+const description = `Prototipo de dirección visual: el ranking de hoy para ${money} a ${term}, ordenado por los pesos que ganás. Datos del ${dataDate}.`;
+
+const steps = [
+  'Tomamos la tasa que publica cada entidad y la aplicamos a tu monto y a tu plazo.',
+  'Ordenamos por los pesos que ganás, no por la tasa.',
+  'Le restamos la inflación esperada para mostrarte cuánto ganás de verdad.',
+];
+---
+
+<!doctype html>
+<html lang="es-AR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <a class="wordmark" href="/">rindetuplata</a>
+        <nav aria-label="Secciones">
+          <ul class="nav">
+            {
+              nav.map((item) => (
+                <li>
+                  <a class="nav__link label" href={item.href} aria-current={item.href === '/' ? 'page' : undefined}>
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </header>
+
+      <section class="hero">
+        <div class="hero__grid">
+          <div class="stack">
+            <p class="label eyebrow">Comparador · datos del {dataDate}</p>
+            <h1 class="display">¿Dónde rinde tu <em class="display__accent">plata</em> hoy?</h1>
+            <p class="body body--lead">
+              Mirá cuánto ganás en pesos con {money} a {term}, en plazos fijos, billeteras
+              remuneradas, fondos money market y cripto. Al lado de cada opción, cuánto de eso le
+              gana a la inflación esperada.
+            </p>
+
+            <div class="controls">
+              <Segmented
+                name="monto"
+                legend="Monto"
+                selected={1}
+                options={[
+                  { value: '500000', label: '$ 500.000' },
+                  { value: '1000000', label: '$ 1.000.000' },
+                  { value: '5000000', label: '$ 5.000.000' },
+                ]}
+              />
+              <Segmented
+                name="plazo"
+                legend="Plazo"
+                selected={0}
+                options={[
+                  { value: '30', label: '30 días' },
+                  { value: '60', label: '60 días' },
+                  { value: '90', label: '90 días' },
+                ]}
+              />
+            </div>
+            <p class="label">Prototipo · los controles no recalculan</p>
+          </div>
+
+          {
+            best && (
+              <div class="field">
+                <div class="plate">
+                  <p class="label">
+                    La mejor de hoy · {kindLabel(best.kind)}
+                  </p>
+                  <p class="figure plate__figure">{formatMoney(best.earned)}</p>
+                  <p class="body plate__name">{best.name}</p>
+                  <p class="data data--muted">
+                    en {term} con {money}
+                  </p>
+                  <div class="readout">
+                    <div>
+                      <p class="label">TNA</p>
+                      <p class="data readout__value">{formatPercent(best.rateUsed.fraction)}</p>
+                    </div>
+                    <div>
+                      <p class="label">Retorno real</p>
+                      <p class="data readout__value">
+                        {best.realReturn === null ? 'sin dato' : formatSignedPercent(best.realReturn)}
+                      </p>
+                    </div>
+                    <div>
+                      <p class="label">Inflación REM</p>
+                      <p class="data readout__value">
+                        {inflation === null ? 'sin dato' : formatPercent(inflation.overHorizon)}
+                      </p>
+                    </div>
+                  </div>
+                  <p class="data data--muted plate__source">
+                    {best.source.displayName} · dato del {formatDate(best.dataDate)}
+                  </p>
+                </div>
+              </div>
+            )
+          }
+        </div>
+      </section>
+
+      <section class="ranking" aria-labelledby="ranking-title">
+        <div class="ranking__head">
+          <h2 class="section-title" id="ranking-title">Ranking de hoy</h2>
+          <p class="label">
+            Los {board.length} primeros de las {total} opciones · sobre {money} a {term}
+          </p>
+        </div>
+
+        <table class="board" role="table">
+          <caption class="sr-only">
+            Ranking de las {board.length} mejores opciones para {money} a {term}, ordenado por los
+            pesos que ganás.
+          </caption>
+          <colgroup>
+            <col class="board__col--index" />
+            <col />
+            <col class="board__col--earn" />
+            <col class="board__col--real" />
+            <col class="board__col--tna" />
+          </colgroup>
+          <thead class="board__head">
+            <tr role="row">
+              <th scope="col" role="columnheader" class="label">Nº</th>
+              <th scope="col" role="columnheader" class="label">Opción</th>
+              <th scope="col" role="columnheader" class="label board__num">
+                Ganancia en {term}
+              </th>
+              <th scope="col" role="columnheader" class="label board__num">Retorno real vs REM</th>
+              <th scope="col" role="columnheader" class="label board__num">TNA</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              board.map((entry, index) => (
+                <RankingRow entry={entry} position={index + 1} leader={index === 0} />
+              ))
+            }
+          </tbody>
+        </table>
+
+        <p class="data data--muted note">
+          El retorno real es lo que le ganás a la inflación esperada.{' '}
+          {inflation !== null && (
+            <>
+              {inflationIndexLabel(inflation.index)}: {formatPercent(inflation.twelveMonthRate)} a
+              12 meses, observado el {formatDate(inflation.observationDate)}; en {term} equivale a{' '}
+              {formatPercent(inflation.overHorizon)}.
+            </>
+          )}
+        </p>
+
+        <details class="sources">
+          <summary class="label sources__summary">Fuentes, confianza y fecha del dato</summary>
+          <ul class="sources__list">
+            {
+              board.map((entry, index) => (
+                <li class="sources__item">
+                  <span class="index">{String(index + 1).padStart(2, '0')}</span>
+                  <p class="data data--muted sources__line">
+                    {entry.source.displayName} · {rateKindLabel(entry.rateUsed.kind)} ·{' '}
+                    {confidenceLabel(entry.confidence)} · dato del {formatDate(entry.dataDate)}
+                  </p>
+                </li>
+              ))
+            }
+          </ul>
+        </details>
+
+        <a class="more" href="/">
+          Ver las {total} opciones<span class="more__arrow" aria-hidden="true">→</span>
+        </a>
+      </section>
+
+      <section class="how" aria-labelledby="how-title">
+        <div class="how__grid">
+          <div class="stack">
+            <h2 class="section-title" id="how-title">Cómo se calcula</h2>
+            <p class="body">
+              El ranking ordena por pesos, no por tasas: la tasa es el medio, la plata que ganás es
+              el resultado.
+            </p>
+            <a class="more" href="/metodologia/">
+              Ver la metodología completa<span class="more__arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
+          <ol class="steps">
+            {
+              steps.map((step, index) => (
+                <li class="step">
+                  <span class="index">{String(index + 1).padStart(2, '0')}</span>
+                  <p class="body">{step}</p>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div class="footer__grid">
+          <a class="wordmark" href="/">rindetuplata</a>
+          <p class="footer__disclaimer body">
+            La información es orientativa y no constituye una recomendación de inversión.
+          </p>
+        </div>
+        <p class="label proto-note">
+          Prototipo C3 · Grafito Cobalto · datos del {dataDate}
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>

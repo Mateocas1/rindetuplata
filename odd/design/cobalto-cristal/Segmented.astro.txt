@@ -1,0 +1,43 @@
+---
+/**
+ * The one capsule segmented control (direction C3, signature device 3).
+ *
+ * Plain radio inputs plus a CSS-only sliding thumb: no island, no JavaScript,
+ * no motion library. The selection is a specimen of the device (this prototype
+ * never recalculates), and the static cue for the selected state is the ink
+ * filled thumb, so it survives `prefers-reduced-motion`.
+ */
+interface Option {
+  value: string;
+  label: string;
+}
+
+interface Props {
+  name: string;
+  legend: string;
+  options: Option[];
+  selected: number;
+}
+
+const { name, legend, options, selected } = Astro.props;
+---
+
+<fieldset class="seg">
+  <legend class="label seg__legend">{legend}</legend>
+  <div class="seg__track" style={`--seg-count:${options.length}`}>
+    {
+      options.map((option, index) => (
+        <label class="seg__opt">
+          <input
+            type="radio"
+            name={name}
+            value={option.value}
+            checked={index === selected}
+          />
+          <span class="data">{option.label}</span>
+        </label>
+      ))
+    }
+    <span class="seg__thumb" aria-hidden="true"></span>
+  </div>
+</fieldset>
