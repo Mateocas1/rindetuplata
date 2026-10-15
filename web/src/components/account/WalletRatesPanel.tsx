@@ -247,6 +247,7 @@ export default function WalletRatesPanel() {
                     )}
 
                     <details
+                      className="disclosure"
                       onToggle={(event) =>
                         setAuditOpenId(event.currentTarget.open ? rate.walletId : null)
                       }

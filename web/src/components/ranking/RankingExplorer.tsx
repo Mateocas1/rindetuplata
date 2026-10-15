@@ -263,7 +263,7 @@ export default function RankingExplorer({
             <p className="text-caption text-muted">
               Marcá tus bancos y el ranking de plazos fijos usa la tasa para clientes.
             </p>
-            <details className="rounded-md border border-border bg-surface px-4 py-3">
+            <details className="disclosure rounded-md border border-border bg-surface px-4 py-3">
               <summary className="cursor-pointer text-body-sm text-accent">
                 {clientOf.length === 0
                   ? 'Elegir bancos'
