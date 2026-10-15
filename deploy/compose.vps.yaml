@@ -11,12 +11,16 @@
 # What it changes with respect to `compose.yaml`:
 #   - the database and the broker are not published at all (the base file publishes them for local
 #     development, with the committed password: that must never reach a public interface);
-#   - Postgres gets a named volume, so `docker compose down` stops destroying the only stateful part;
+#   - Postgres and RabbitMQ get a named volume, so `docker compose down` stops destroying the only
+#     stateful parts (the users' alert rules and the alert events);
+#   - every service restarts unless it was stopped by hand (before: a reboot or an OOM left the whole
+#     box down until someone ran `up` again);
 #   - Mailpit and the local-site Caddy are out: the VPS sends real mail and the site lives on a CDN;
 #   - a `caddy` service terminates TLS for api.<domain> (deploy/Caddyfile.vps).
 
 services:
   postgres:
+    restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the env file}
     ports: !override []
@@ -27,10 +31,18 @@ services:
       - pgdata:/var/lib/postgresql
 
   rabbitmq:
+    restart: unless-stopped
+    # RabbitMQ derives its node name, and therefore its data directory, from the container hostname:
+    # without a fixed one a restarted broker comes up as a new node and cannot read the mnesia state
+    # it wrote before. The image declares `/var/lib/rabbitmq` as its volume and sets
+    # `RABBITMQ_DATA_DIR` to it, so that is where the state goes (checked with `docker image inspect`).
+    hostname: rindetuplata-rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-rindetuplata}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?set RABBITMQ_DEFAULT_PASS in the env file}
     ports: !override []
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
 
   # Local SMTP catcher only.
   mailpit:
@@ -42,6 +54,7 @@ services:
     profiles: !override ["local-site"]
 
   api:
+    restart: unless-stopped
     environment:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the env file}
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-rindetuplata}
@@ -67,6 +80,7 @@ services:
 
   caddy:
     image: caddy:2-alpine
+    restart: unless-stopped
     depends_on:
       api:
         condition: service_healthy
@@ -85,5 +99,6 @@ services:
 
 volumes:
   pgdata:
+  rabbitmq_data:
   caddy_data:
   caddy_config:

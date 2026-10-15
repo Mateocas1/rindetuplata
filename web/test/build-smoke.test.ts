@@ -114,10 +114,10 @@ describe('robots.txt', () => {
     expect(robots).toContain(`Sitemap: ${SITE_URL}/sitemap-index.xml`);
   });
 
-  it('keeps the account pages out of the crawler', () => {
+  it('leaves the noindex account pages crawlable, so the crawler can read their noindex', () => {
     const robots = readFileSync(join(dist, 'robots.txt'), 'utf8');
     for (const path of ACCOUNT_PATHS) {
-      expect(robots, `${path} must be disallowed`).toContain(`Disallow: ${path}`);
+      expect(robots, `${path} must not be disallowed`).not.toContain(`Disallow: ${path}`);
     }
   });
 });

@@ -37,9 +37,13 @@ docker compose --profile stack up -d --wait
   `deploy/e2e.sh` (needs `cd web && npm ci && npx playwright install chromium` once).
 - Locally the database has no named volume on purpose: every `down` leaves a clean database, which is
   what makes the smoke repeatable. `./mvnw spring-boot:test-run` uses its own Testcontainers
-  PostgreSQL and is unaffected. Note that `deploy/e2e.sh` ends with `docker compose --profile stack
-  down`, which removes every service of the project, not only the two the profile adds: do not run it
-  while you depend on a local database you started by hand.
+  PostgreSQL and is unaffected.
+- `deploy/e2e.sh` runs in its own Compose project (`E2E_PROJECT`, default `rindetuplata-e2e`) with
+  `deploy/compose.e2e.yaml`, an overlay that leaves Postgres, RabbitMQ and Mailpit's SMTP port off the
+  host: its teardown removes only what it started, and a local database you started by hand keeps
+  running with its data and its port. Only the site port and Mailpit's HTTP API are published, and the
+  script refuses to start — naming the port — when one of those is already taken (finding R1 of
+  `review-d018a62efca39d30`).
 
 ## VPS: the API
 
@@ -49,9 +53,15 @@ production-shaped (every statement below was checked with `docker compose config
 - Postgres and RabbitMQ are **not published at all**. The base file publishes them for local
   development with the password that is in this repository; that password must never sit on a public
   interface, and the overlay also replaces it.
-- Postgres gets the `pgdata` volume, so `docker compose down` stops destroying the only stateful part.
+- Postgres gets the `pgdata` volume and RabbitMQ its own `rabbitmq_data` volume at
+  `/var/lib/rabbitmq` with a fixed `hostname` (the broker derives its node name, and so its data
+  directory, from it): `docker compose down` no longer destroys the database or the queued alert
+  events.
+- Every service carries `restart: unless-stopped`, so a reboot or an OOM brings the API and its
+  dependencies back without anyone running `up` again.
 - Mailpit and the local site server are dropped (`profiles: !override`), and a `caddy` service
-  terminates TLS for `api.<domain>` using `deploy/Caddyfile.vps`.
+  terminates TLS for `api.<domain>` using `deploy/Caddyfile.vps`, which proxies only `/api/*` and
+  answers 404 for every other path (the site itself lives on the CDN).
 - Every production value comes from an env file that is never committed. `--env-file` only feeds
   `${VAR}` substitution, so the overlay names each variable, and a missing one fails the command
   instead of silently starting with the local default (Mailpit on 1025).
@@ -124,11 +134,33 @@ The database holds only what cannot be rebuilt: users and their alert rules. The
 history come from the sources and can be re-ingested.
 
 ```bash
+#!/usr/bin/env bash
 # Daily dump next to the Compose project, 30 days kept; run it from cron.
-docker compose -f compose.yaml -f deploy/compose.vps.yaml --env-file /srv/rindetuplata/api.env \
-  exec -T postgres pg_dump -U rindetuplata -Fc rindetuplata \
-  > "/srv/rindetuplata/backups/rindetuplata-$(date +%F).dump"
-find /srv/rindetuplata/backups -name 'rindetuplata-*.dump' -mtime +30 -delete
+#
+# `set -euo pipefail` is the point of the recipe, not decoration: without it a failed
+# `docker compose exec` (box down, container restarting, volume missing) left a truncated dump and the
+# `find` below still ran, deleting the older dumps that were still good. The dump now lands in a
+# temporary file and only replaces the day's dump once it is non-empty, so pruning can never run on a
+# day whose dump failed (finding R4 of `review-d018a62efca39d30`).
+set -euo pipefail
+
+cd /srv/rindetuplata # the checkout; cron starts in the home directory
+compose=(docker compose -f compose.yaml -f deploy/compose.vps.yaml --env-file /srv/rindetuplata/api.env)
+backups=/srv/rindetuplata/backups
+dump="$backups/rindetuplata-$(date +%F).dump"
+
+mkdir -p "$backups"
+trap 'rm -f "$dump.tmp"' EXIT
+
+"${compose[@]}" exec -T postgres pg_dump -U rindetuplata -Fc rindetuplata > "$dump.tmp"
+
+if [ ! -s "$dump.tmp" ]; then
+  echo "pg_dump produced an empty file; keeping every existing dump" >&2
+  exit 1
+fi
+
+mv "$dump.tmp" "$dump"
+find "$backups" -name 'rindetuplata-*.dump' -mtime +30 -delete
 
 # Restore (a new or broken volume), same pgdata volume in place:
 docker compose -f compose.yaml -f deploy/compose.vps.yaml --env-file /srv/rindetuplata/api.env \
