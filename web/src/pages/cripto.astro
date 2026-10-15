@@ -1,0 +1,15 @@
+---
+/**
+ * Category landing page, one file per kind so the URL is exactly the category
+ * slug. All the markup lives in CategoryLanding.astro.
+ */
+import CategoryLanding from '../components/CategoryLanding.astro';
+import { CATEGORIES } from '../lib/categories';
+
+const category = CATEGORIES.find((entry) => entry.slug === 'cripto');
+if (category === undefined) {
+  throw new Error('No category configured for cripto');
+}
+---
+
+<CategoryLanding category={category} />

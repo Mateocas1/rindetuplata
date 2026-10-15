@@ -30,6 +30,8 @@ export interface RankingExplorerProps {
   initialQuery: RankingQueryState;
   /** Banks that report a plazo fijo rate, for "soy cliente de…" (S19). */
   banks: BankOption[];
+  /** Slugs the build produced; rows outside it render as plain text, never a 404 link. */
+  pageSlugs: string[];
 }
 
 const DEBOUNCE_MS = 400;
@@ -41,6 +43,7 @@ export default function RankingExplorer({
   initialRanking,
   initialQuery,
   banks,
+  pageSlugs,
 }: RankingExplorerProps) {
   const [ranking, setRanking] = useState<Ranking>(initialRanking);
   const [amount, setAmount] = useState(initialQuery.amount);
@@ -339,7 +342,7 @@ export default function RankingExplorer({
               </p>
             </div>
           ) : (
-            <RankingTable ranking={ranking} />
+            <RankingTable ranking={ranking} pageSlugs={pageSlugs} />
           )}
         </div>
 

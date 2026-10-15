@@ -8,10 +8,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import RankingExplorer from '../components/ranking/RankingExplorer';
 import { loadBanks, loadRanking } from '../lib/data';
 import { formatDate } from '../lib/format';
+import { loadInstrumentPages } from '../lib/pages';
 import { DEFAULT_RANKING_QUERY } from '../lib/rankingQuery';
 
 const ranking = await loadRanking(DEFAULT_RANKING_QUERY);
 const banks = await loadBanks();
+// The island can ask for a combination nobody prerendered, so it needs to know
+// which instrument pages exist before it renders a link (D1).
+const pages = await loadInstrumentPages();
 
 const dataDate = ranking.request.asOf;
 const title = '¿Dónde rinde tu plata hoy? Comparador de plazos fijos y billeteras';
@@ -47,6 +51,7 @@ const jsonLd = {
       initialRanking={ranking}
       initialQuery={DEFAULT_RANKING_QUERY}
       banks={banks}
+      pageSlugs={pages.slugs}
     />
   </div>
 </BaseLayout>

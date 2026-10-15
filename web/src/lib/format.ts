@@ -24,6 +24,13 @@ const shortDate = new Intl.DateTimeFormat('es-AR', {
   timeZone: 'UTC',
 });
 
+const axisDate = new Intl.DateTimeFormat('es-AR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: '2-digit',
+  timeZone: 'UTC',
+});
+
 const plural = new Intl.PluralRules('es-AR');
 
 const MINUS = '\u2212';
@@ -57,6 +64,11 @@ export function formatSignedPercent(fraction: number): string {
 /** ISO date to dd/mm/yyyy in the source's own day, never shifted by a time zone. */
 export function formatDate(isoDate: string): string {
   return shortDate.format(new Date(`${isoDate}T00:00:00Z`));
+}
+
+/** ISO date to dd/mm/yy, for chart axis labels where space is tight. */
+export function formatShortDate(isoDate: string): string {
+  return axisDate.format(new Date(`${isoDate}T00:00:00Z`));
 }
 
 /** Grouped integer without decimals: 1234 → "1.234" */

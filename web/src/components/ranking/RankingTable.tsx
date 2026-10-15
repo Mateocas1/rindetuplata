@@ -12,6 +12,7 @@
  */
 import { formatDate, formatDays, formatInteger, formatMoney, formatPercent } from '../../lib/format';
 import { confidenceLabel, flagLabel, inflationIndexLabel, inflationIndexShortLabel, kindLabel, rateKindLabel } from '../../lib/labels';
+import { instrumentPageHref } from '../../lib/slug';
 import type { RankedEntry, Ranking } from '../../lib/types';
 import RealReturnBadge from './RealReturnBadge';
 
@@ -25,8 +26,16 @@ function isStale(entry: RankedEntry): boolean {
   return entry.warnings.some((warning) => warning.code === 'STALE');
 }
 
-export default function RankingTable({ ranking }: { ranking: Ranking }) {
+export default function RankingTable({
+  ranking,
+  pageSlugs,
+}: {
+  ranking: Ranking;
+  /** Slugs the build actually produced; a row outside the set stays plain text (D1). */
+  pageSlugs: string[];
+}) {
   const { amount, days } = ranking.request;
+  const pages = new Set(pageSlugs);
   const indexLabel =
     ranking.inflation === null ? 'sin dato de inflación' : inflationIndexLabel(ranking.inflation.index);
   // S10: the badge column names the index it uses, visibly, right in the header.
@@ -75,13 +84,23 @@ export default function RankingTable({ ranking }: { ranking: Ranking }) {
             <tbody>
               {ranking.ranked.map((entry, index) => {
                 const cell = rowCell(index === ranking.ranked.length - 1);
+                const href = instrumentPageHref(pages, entry);
                 return (
                   <tr key={entry.id}>
                     <th
                       scope="row"
                       className={`${cell} sticky start-0 z-10 bg-surface-raised text-start font-normal`}
                     >
-                      <span className="block font-medium text-text">{entry.name}</span>
+                      {href === null ? (
+                        <span className="block font-medium text-text">{entry.name}</span>
+                      ) : (
+                        <a
+                          href={href}
+                          className="block font-medium text-text underline decoration-border underline-offset-2 hover:decoration-accent"
+                        >
+                          {entry.name}
+                        </a>
+                      )}
                       {entry.entity !== null && entry.entity !== entry.name && (
                         <span className="block text-caption text-muted">{entry.entity}</span>
                       )}
@@ -150,7 +169,7 @@ export default function RankingTable({ ranking }: { ranking: Ranking }) {
         ).{' '}
         <a
           className="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-          href="/metodologia"
+          href="/metodologia/"
         >
           Cómo se calcula cada número
         </a>
