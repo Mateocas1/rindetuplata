@@ -70,6 +70,9 @@ Pane prompt checklist (learned in T4 with DeepSeek v4 flash; each item cost an a
   replaces `JobLauncher`); Jackson 3 (`tools.jackson`) has different node accessors; Boot 4.1.1 has no
   `RestClient.Builder` bean; `spring.main.allow-bean-definition-overriding` does not replace real port beans in tests
   (use `@Primary` stubs or remove the definitions); a component with two constructors breaks the context.
+- **Security tests (T7a).** Assert cookie attributes over real HTTP (`RANDOM_PORT` + JDK `HttpClient`): MockMvc's
+  `Cookie` drops `Secure`/`SameSite`. spring-security-test's `with(csrf())` permanently swaps the shared `CsrfFilter`
+  repository in a cached context; a test of the real CSRF flow must restore it (`WebTestUtils.setCsrfTokenRepository`).
 - **Point to exact files** to read first; exploration dominates cost (T4d, a 1-listener task, peaked at 170k tokens;
   T4c 227k, T4a 137k, T4b 66k).
 - **Parallel Maven panes** need separate worktrees under `.worktrees/` (excluded in `.git/info/exclude`) so they never
