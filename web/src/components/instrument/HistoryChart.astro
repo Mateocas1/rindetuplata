@@ -60,7 +60,7 @@ const description =
           size on every screen.
         */}
         <div
-          class="card w-fit max-w-full overflow-x-auto p-block"
+          class="card flex w-fit max-w-full flex-row-reverse overflow-x-auto p-block focus-visible:-outline-offset-2"
           role="region"
           aria-label={`Gráfico: ${rateSeries.label} contra ${inflationSeries.label}`}
           tabindex="0"
@@ -69,7 +69,7 @@ const description =
             width={chart.width}
             height={chart.height}
             viewBox={`0 0 ${chart.width} ${chart.height}`}
-            class="block"
+            class="block shrink-0"
             role="img"
             aria-labelledby={`${titleId} ${descId}`}
           >

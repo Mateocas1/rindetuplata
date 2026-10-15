@@ -140,6 +140,8 @@ describe('instrument pages', () => {
       expect(page, slug).toContain(`<h1 class="text-h1`);
       expect(page, slug).toContain(entry.name);
       expect(page, slug).toContain(formatPercent(entry.rateUsed.fraction));
+      // The headline figure and its unit never run together ("19,10% TNA", T12e).
+      expect(page, slug).toMatch(new RegExp(`${formatPercent(entry.rateUsed.fraction).replace(/[.%]/g, '\\$&')}\\s+<span`));
       expect(page, slug).toContain(entry.source.displayName);
       expect(page, slug).toContain('Fecha del dato');
       expect(page, slug).toContain(formatDate(entry.dataDate));
@@ -177,6 +179,8 @@ describe('instrument pages', () => {
       expect(tag, slug).toContain(`width="${CHART_WIDTH}"`);
       expect(tag, slug).toContain(`height="${CHART_HEIGHT}"`);
       expect(tag, slug).not.toContain('w-full');
+      // Inside the row-reverse scroller (T12e) the svg is a flex item: shrink-0 keeps its 640px.
+      expect(tag, slug).toMatch(/class="[^"]*\bshrink-0\b/);
       // 13px from --text-caption: the labels sit on a 1:1 surface, never a scaled one.
       expect(page, slug).toContain('fill-muted text-caption tabular-nums');
     }

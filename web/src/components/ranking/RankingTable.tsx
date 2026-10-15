@@ -60,7 +60,7 @@ export default function RankingTable({
       </p>
       <div className="card overflow-hidden">
         <div
-          className="overflow-x-auto"
+          className="relative overflow-x-auto focus-visible:-outline-offset-2"
           role="region"
           aria-label={`Ranking para ${formatMoney(amount)} a ${formatDays(days)}`}
           tabIndex={0}
@@ -79,7 +79,7 @@ export default function RankingTable({
                 <th scope="col" className={`${headCell} text-end`}>
                   Ganás en {formatDays(days)}
                 </th>
-                <th scope="col" className={`${headCell} text-start`}>
+                <th scope="col" className={`${headCell} whitespace-nowrap text-start`}>
                   {indexHeader}
                 </th>
                 <th scope="col" className={`${headCell} text-end`}>
@@ -116,7 +116,7 @@ export default function RankingTable({
                       {entry.entity !== null && entry.entity !== entry.name && (
                         <span className="block text-caption text-muted">{entry.entity}</span>
                       )}
-                      <span className="chip mt-1 bg-subtle-surface text-muted">
+                      <span className="chip mt-1 border border-border bg-surface-raised text-muted">
                         {kindLabel(entry.kind)}
                       </span>
                     </th>
@@ -124,7 +124,7 @@ export default function RankingTable({
                       <span className="block text-body font-semibold tabular-nums">
                         {formatMoney(entry.earned)}
                       </span>
-                      <span className="block text-caption text-muted tabular-nums">
+                      <span className="block text-caption whitespace-nowrap text-muted tabular-nums">
                         {formatMoney(entry.finalAmount)} al vencimiento
                       </span>
                       {entry.upTo !== null && (
@@ -140,7 +140,7 @@ export default function RankingTable({
                       <span className="block tabular-nums">
                         {formatPercent(entry.rateUsed.fraction)}
                       </span>
-                      <span className="block text-caption text-muted">
+                      <span className="block text-caption whitespace-nowrap text-muted">
                         {rateKindLabel(entry.rateUsed.kind)}
                       </span>
                     </td>
@@ -149,8 +149,8 @@ export default function RankingTable({
                         {entry.source.displayName}
                         {entry.source.official ? ' · oficial' : ''}
                       </span>
-                      <span className="block">Dato del {formatDate(entry.dataDate)}</span>
-                      <span className="block">
+                      <span className="block tabular-nums">Dato del {formatDate(entry.dataDate)}</span>
+                      <span className="block tabular-nums">
                         {confidenceLabel(entry.confidence)}
                         {entry.verifiedAt !== null
                           ? ` · verificada el ${formatDate(entry.verifiedAt)}`

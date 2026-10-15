@@ -135,7 +135,7 @@
   --spacing-section: 2.5rem;
   --spacing-section-lg: 4rem;
 
-  /* Radius: a card holds controls at a 1rem inset, so card = control + inset (concentric) */
+  /* Radius: cards (xl) and controls (md) are separate surfaces; card insets reach 1.5rem, past the concentric cutoff */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
