@@ -1,0 +1,42 @@
+/**
+ * Component recipes (T12a): the one place a surface, button, field, chip or
+ * link takes its shape. Components compose these with layout utilities and
+ * never re-derive their values; every color still comes from a role token.
+ * Motion (press feedback, transitions) is added by T12d.
+ */
+
+/* A raised surface: shadow for elevation, a transparent border so forced-colors
+   mode (which drops box-shadow) still draws an edge. Radius = control (md) + 1rem inset. */
+@utility card {
+  border: 1px solid transparent;
+  border-radius: var(--radius-xl);
+  background-color: var(--color-surface-raised);
+  box-shadow: var(--shadow-card);
+}
+
+/* The one filled action of a view. */
+@utility btn-primary {
+  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-accent-solid px-4 py-2 text-body-sm font-semibold text-on-accent;
+  @apply hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+/* Peer actions: neutral, never colored. */
+@utility btn-secondary {
+  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-raised px-4 py-2 text-body-sm font-semibold text-text;
+  @apply hover:bg-subtle-surface disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+/* Text inputs and selects: a 3:1 boundary, 16px on mobile so iOS never zooms. */
+@utility field {
+  @apply w-full rounded-md border border-border-strong bg-surface-raised px-3 py-2 text-base text-text sm:text-body-sm;
+}
+
+/* Small labelled pill (kind, status flags); never wraps. */
+@utility chip {
+  @apply inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-caption font-medium whitespace-nowrap;
+}
+
+/* Inline text link. */
+@utility link {
+  @apply text-accent underline decoration-from-font underline-offset-2 hover:decoration-transparent;
+}

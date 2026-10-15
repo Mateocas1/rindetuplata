@@ -3,6 +3,10 @@
  * every declared color must fit sRGB, every declared text/UI pair must meet its WCAG
  * 2.2 threshold (better-colors: "never report a contrast value you did not measure"),
  * and no component may hard-code a color outside the token file.
+ *
+ * Two appearances (T12a): the `@theme` block holds the light values and one
+ * `@media (prefers-color-scheme: dark)` block repoints the roles, so every pair is
+ * measured once per scheme against the tokens that scheme actually resolves.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join, relative, resolve } from 'node:path';
@@ -87,6 +91,29 @@ function inSrgbGamut(color: Oklch, tolerance = 0.0005): boolean {
   );
 }
 
+const darkQuery = '@media (prefers-color-scheme: dark)';
+
+/** Light tokens come from everything outside the dark block; dark tokens override them. */
+function schemes(css: string): { light: Map<string, string>; dark: Map<string, string>; darkOnly: Map<string, string> } {
+  const start = css.indexOf(darkQuery);
+  if (start === -1) {
+    return { light: parseTokens(css), dark: parseTokens(css), darkOnly: new Map() };
+  }
+  let depth = 0;
+  let end = css.indexOf('{', start);
+  for (let i = end; i < css.length; i += 1) {
+    if (css[i] === '{') depth += 1;
+    if (css[i] === '}') depth -= 1;
+    if (depth === 0) {
+      end = i + 1;
+      break;
+    }
+  }
+  const light = parseTokens(css.slice(0, start) + css.slice(end));
+  const darkOnly = parseTokens(css.slice(start, end));
+  return { light, dark: new Map([...light, ...darkOnly]), darkOnly };
+}
+
 const requiredRoles = [
   '--color-surface',
   '--color-surface-raised',
@@ -97,6 +124,7 @@ const requiredRoles = [
   '--color-border-strong',
   '--color-accent',
   '--color-accent-solid',
+  '--color-accent-surface',
   '--color-on-accent',
   '--color-gain',
   '--color-gain-surface',
@@ -117,6 +145,9 @@ const contrastPairs: Array<[string, string, string, number]> = [
   ['muted on surface', '--color-muted', '--color-surface', 4.5],
   ['muted on surface-raised', '--color-muted', '--color-surface-raised', 4.5],
   ['muted on subtle-surface', '--color-muted', '--color-subtle-surface', 4.5],
+  ['text on subtle-surface', '--color-text', '--color-subtle-surface', 4.5],
+  ['text on accent-surface (selected)', '--color-text', '--color-accent-surface', 4.5],
+  ['accent on accent-surface', '--color-accent', '--color-accent-surface', 4.5],
   ['accent on surface', '--color-accent', '--color-surface', 4.5],
   ['accent on surface-raised', '--color-accent', '--color-surface-raised', 4.5],
   ['on-accent on accent-solid', '--color-on-accent', '--color-accent-solid', 4.5],
@@ -133,6 +164,8 @@ const contrastPairs: Array<[string, string, string, number]> = [
   ['focus ring on surface', '--color-focus', '--color-surface', 3],
   ['focus ring on surface-raised', '--color-focus', '--color-surface-raised', 3],
   ['border-strong on surface-raised', '--color-border-strong', '--color-surface-raised', 3],
+  ['border-strong on surface', '--color-border-strong', '--color-surface', 3],
+  ['border-strong on subtle-surface (input on a panel)', '--color-border-strong', '--color-subtle-surface', 3],
 ];
 
 function sourceFiles(dir: string): string[] {
@@ -150,22 +183,53 @@ function sourceFiles(dir: string): string[] {
 }
 
 describe('design tokens', () => {
-  const tokens = parseTokens(readFileSync(tokensPath, 'utf8'));
+  const css = readFileSync(tokensPath, 'utf8');
+  const { light, dark, darkOnly } = schemes(css);
+  const tokens = light;
+  const bySchema: Array<[string, Map<string, string>]> = [
+    ['light', light],
+    ['dark', dark],
+  ];
 
   it('declares every color role a component uses', () => {
     const missing = requiredRoles.filter((role) => !tokens.has(role));
     expect(missing).toEqual([]);
   });
 
-  it.each(contrastPairs)('%s meets %s:1', (label, foreground, background, minimum) => {
-    const ratio = contrastRatio(
-      resolveToken(tokens, foreground),
-      resolveToken(tokens, background),
-    );
+  it('repoints every color role in one prefers-color-scheme dark block', () => {
+    expect(css.split(darkQuery).length - 1).toBe(1);
+    expect(css).not.toMatch(/\.dark\b/);
+    const missing = requiredRoles.filter((role) => !darkOnly.has(role));
+    expect(missing).toEqual([]);
+  });
+
+  it('declares both appearances to the browser', () => {
+    expect(css).toMatch(/color-scheme:\s*light dark/);
+  });
+
+  it.each(
+    bySchema.flatMap(([scheme, map]) =>
+      contrastPairs.map(([label, fg, bg, min]) => [scheme, label, fg, bg, min, map] as const),
+    ),
+  )('%s: %s', (scheme, label, foreground, background, minimum, map) => {
+    const ratio = contrastRatio(resolveToken(map, foreground), resolveToken(map, background));
     expect(
       Number(ratio.toFixed(2)),
-      `${label}: ${foreground} on ${background} measured ${ratio.toFixed(2)}:1`,
+      `${scheme} ${label}: ${foreground} on ${background} measured ${ratio.toFixed(2)}:1 (min ${minimum})`,
     ).toBeGreaterThanOrEqual(minimum);
+  });
+
+  it('declares elevation shadows for both appearances', () => {
+    for (const name of ['--shadow-card', '--shadow-card-hover']) {
+      expect(light.has(name), `${name} light`).toBe(true);
+      expect(darkOnly.has(name), `${name} dark`).toBe(true);
+    }
+  });
+
+  it('sets Inter Variable first in the sans stack and ships it as a dependency', () => {
+    expect(tokens.get('--font-sans')).toMatch(/^'Inter Variable',/);
+    const pkg = JSON.parse(readFileSync(join(webRoot, 'package.json'), 'utf8'));
+    expect(pkg.dependencies['@fontsource-variable/inter']).toBeDefined();
   });
 
   const primitiveName = /^--color-(slate|blue|green|red|amber)-\d+$/;
@@ -185,8 +249,8 @@ describe('design tokens', () => {
     expect(nonOklch).toEqual([]);
   });
 
-  it('points every role at a declared primitive', () => {
-    const roles = [...tokens.entries()].filter(
+  it.each(bySchema)('points every %s role at a declared primitive', (_scheme, map) => {
+    const roles = [...map.entries()].filter(
       ([name]) => name.startsWith('--color-') && !primitiveName.test(name),
     );
     const dangling = roles
