@@ -1,0 +1,20 @@
+# Build context of the API image (T7e). The Maven build needs the wrapper, the POM and src/; everything
+# else is dead weight, and the heavy or sensitive directories (the site with its node_modules and
+# dist, the captured raw data, the git metadata, the other checkouts under .worktrees) stay out.
+
+.git
+.gitattributes
+.github
+.agents
+.atl
+.worktrees
+target
+**/target
+web
+capture
+odd
+docs
+deploy
+compose.yaml
+skills-lock.json
+*.md

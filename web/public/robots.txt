@@ -1,7 +1,0 @@
-# rindetuplata robots.txt
-# The production domain is fixed at deploy time (T7e); the sitemap is generated
-# by @astrojs/sitemap from the built pages.
-User-agent: *
-Allow: /
-
-Sitemap: https://rindetuplata.ar/sitemap-index.xml
