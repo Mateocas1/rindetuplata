@@ -29,6 +29,12 @@ public class AccountTestConfiguration {
 
 	@Bean
 	@Primary
+	MutableAccountRoles mutableAccountRoles(AccountProperties properties) {
+		return new MutableAccountRoles(properties);
+	}
+
+	@Bean
+	@Primary
 	RecordingMailer recordingMailer() {
 		return new RecordingMailer();
 	}

@@ -23,6 +23,7 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
@@ -35,7 +36,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 /**
  * T6a security (S4, S13): one chain for the API, magic-link login over Spring Security's JDBC one-time-token
  * service, JDBC sessions, SPA CSRF, CORS with credentials, and JSON {@code ProblemDetail} for 401/403. Public
- * reads stay open; {@code /api/v1/me} and {@code /api/v1/alerts/**} need a login; {@code /api/v1/admin/**} needs
+ * reads stay open; the authorities of a session are recomputed on every request ({@link RolesRefreshFilter});
+ * {@code /api/v1/me} and {@code /api/v1/alerts/**} need a login; {@code /api/v1/admin/**} needs
  * {@code ROLE_ADMIN}; everything else is denied.
  */
 @Configuration(proxyBeanMethods = false)
@@ -46,9 +48,10 @@ public class SecurityConfiguration {
 	@Bean
 	SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource,
 			SecurityContextRepository securityContextRepository, CsrfTokenRepository csrfTokenRepository,
-			AuthenticationEntryPoint authenticationEntryPoint, AccessDeniedHandler accessDeniedHandler)
-			throws Exception {
+			AuthenticationEntryPoint authenticationEntryPoint, AccessDeniedHandler accessDeniedHandler,
+			AccountRoles accountRoles) throws Exception {
 		http
+				.addFilterAfter(new RolesRefreshFilter(accountRoles), SecurityContextHolderFilter.class)
 				.cors(cors -> cors.configurationSource(corsConfigurationSource))
 				.csrf(csrf -> csrf.spa().csrfTokenRepository(csrfTokenRepository))
 				.securityContext(context -> context

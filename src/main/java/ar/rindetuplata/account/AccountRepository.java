@@ -22,9 +22,14 @@ public class AccountRepository {
 			select id, email, created_at, last_login_at from app_user where email = :email
 			""";
 
+	/** A concurrent first login of the same email inserts nothing here and finds the winner's row with {@link #FIND}. */
 	private static final String INSERT = """
 			insert into app_user (email, created_at) values (:email, :now)
-			returning id, email, created_at, last_login_at
+			on conflict (email) do nothing
+			""";
+
+	private static final String LOCK_TOKENS = """
+			select pg_advisory_xact_lock(hashtextextended(:email, 0))
 			""";
 
 	private static final String RECORD_LOGIN = """
@@ -49,12 +54,26 @@ public class AccountRepository {
 		return jdbc.sql(FIND).param("email", email).query(AccountRepository::map).optional();
 	}
 
+	/**
+	 * The account of an email, created by the first login. The insert ignores a conflict and the row is read
+	 * afterwards, so two first logins of one email (two tokens) both end with the same single row.
+	 */
+	public AppUser findOrCreate(String email, Instant now) {
+		return create(email, now);
+	}
+
+	/** Inserts the account unless it exists and returns the stored row either way. */
 	public AppUser create(String email, Instant now) {
-		return jdbc.sql(INSERT)
-				.param("email", email)
-				.param("now", OffsetDateTime.ofInstant(now, ZoneOffset.UTC))
-				.query(AccountRepository::map)
-				.single();
+		jdbc.sql(INSERT).param("email", email).param("now", OffsetDateTime.ofInstant(now, ZoneOffset.UTC)).update();
+		return findByEmail(email).orElseThrow(() -> new IllegalStateException("No account for " + email));
+	}
+
+	/**
+	 * Takes the transaction-scoped advisory lock of an email's tokens (released at commit or rollback), so counting
+	 * and generating tokens for one email cannot interleave. Must run inside a transaction.
+	 */
+	public void lockTokensOf(String email) {
+		jdbc.sql(LOCK_TOKENS).param("email", email).query().singleRow();
 	}
 
 	public void recordLogin(long id, Instant now) {

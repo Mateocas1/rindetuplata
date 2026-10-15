@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.OptionalLong;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -40,15 +41,26 @@ public class AccountController {
 			+ "session. A successful login rotates the CSRF token and clears the XSRF-TOKEN cookie, so the client "
 			+ "must call GET /api/v1/auth/csrf again before its next state-changing request.";
 
+	private static final String MAGIC_LINK_DESCRIPTION = "Emails a one-time login link. A valid email always answers "
+			+ "202 with the same body, whether or not the account exists and even when the email already holds its "
+			+ "maximum of unexpired tokens (then nothing is sent). An invalid email is a 400. Each remote address may "
+			+ "make rindetuplata.auth.magic-link-per-ip-limit requests per rindetuplata.auth.magic-link-per-ip-window "
+			+ "(fixed window, counted in memory by the single API instance, invalid emails included); beyond it the "
+			+ "answer is a 429 with a Retry-After header in seconds, no token and no mail, for known and unknown "
+			+ "emails alike.";
+
 	private final AccountService accounts;
+
+	private final MagicLinkRateLimiter magicLinkLimiter;
 
 	private final SecurityContextRepository securityContextRepository;
 
 	private final SessionAuthenticationStrategy sessionStrategy;
 
-	public AccountController(AccountService accounts, SecurityContextRepository securityContextRepository,
-			SessionAuthenticationStrategy sessionStrategy) {
+	public AccountController(AccountService accounts, MagicLinkRateLimiter magicLinkLimiter,
+			SecurityContextRepository securityContextRepository, SessionAuthenticationStrategy sessionStrategy) {
 		this.accounts = accounts;
+		this.magicLinkLimiter = magicLinkLimiter;
 		this.securityContextRepository = securityContextRepository;
 		this.sessionStrategy = sessionStrategy;
 	}
@@ -68,7 +80,16 @@ public class AccountController {
 	}
 
 	@PostMapping("/auth/magic-link")
-	ResponseEntity<MagicLinkResponse> requestMagicLink(@RequestBody MagicLinkRequest request) {
+	@Operation(summary = "Request a magic link", description = MAGIC_LINK_DESCRIPTION)
+	ResponseEntity<MagicLinkResponse> requestMagicLink(@RequestBody MagicLinkRequest request,
+			HttpServletRequest httpRequest) {
+		// First, before the email is even validated: an invalid email still counts, and the answer never depends on
+		// whether the email is known or already holds its maximum of tokens.
+		OptionalLong retryAfter = magicLinkLimiter.tryAcquire(httpRequest.getRemoteAddr());
+		if (retryAfter.isPresent()) {
+			throw AccountException.tooManyRequests("Too many magic-link requests from this address; try again later",
+					retryAfter.getAsLong());
+		}
 		accounts.requestMagicLink(request == null ? null : request.email());
 		return ResponseEntity.accepted().body(MagicLinkResponse.ACCEPTED);
 	}
