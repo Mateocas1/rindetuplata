@@ -77,6 +77,9 @@ Pane prompt checklist (learned in T4 with DeepSeek v4 flash; each item cost an a
 - **Static site checks (T7c).** `astro check` + Vitest + a green build do not validate internal links: every `web/`
   unit asserts that each internal `href` in `dist` resolves to a built file. Smoke builds that share `dist` must not run
   in parallel; the child build runs with `NODE_ENV=production` (Vitest's `NODE_ENV=test` makes Vite ship a dev bundle).
+- **Deploy files (T7e).** Check Compose merges with `docker compose config` (`!reset` and `!override` differ) and
+  every volume mount against the image's `Volumes`/`PGDATA` (`docker image inspect`); Playwright specs that may reuse a
+  running stack must be idempotent.
 - **Point to exact files** to read first; exploration dominates cost (T4d, a 1-listener task, peaked at 170k tokens;
   T4c 227k, T4a 137k, T4b 66k).
 - **Parallel Maven panes** need separate worktrees under `.worktrees/` (excluded in `.git/info/exclude`) so they never
