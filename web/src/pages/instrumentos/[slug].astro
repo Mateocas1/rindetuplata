@@ -1,0 +1,282 @@
+---
+/**
+ * Instrument page (T7c, S3, S10, S11).
+ *
+ * One page per instrument any prerendered table can link to (`lib/pages.ts`):
+ * ranked or ineligible, never the unranked BCRA rows or the dead fund classes,
+ * which would only ever be thin pages. Everything is rendered at build time: the
+ * rate, its dates, its source and confidence, the history chart as an inline SVG
+ * and the simulator island, which is the only client JavaScript on the page.
+ */
+import HistoryChart from '../../components/instrument/HistoryChart.astro';
+import SimulatorIsland from '../../components/instrument/SimulatorIsland';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { categoryForKind } from '../../lib/categories';
+import { MissingHistoryRecording, loadHistory } from '../../lib/data';
+import { formatDate, formatMoney, formatPercent } from '../../lib/format';
+import {
+  confidenceLabel,
+  flagLabel,
+  ineligibleExplanation,
+  inflationIndexLabel,
+  kindLabel,
+  rateKindLabel,
+} from '../../lib/labels';
+import { loadInstrumentPages } from '../../lib/pages';
+import { DEFAULT_AMOUNT, DEFAULT_DAYS } from '../../lib/rankingQuery';
+import { breadcrumbJsonLd, financialProductJsonLd } from '../../lib/seo';
+import { instrumentSlug } from '../../lib/slug';
+import type { IneligibleEntry, Inflation, InstrumentHistory, RankedEntry } from '../../lib/types';
+
+interface PageProps {
+  entry: RankedEntry | IneligibleEntry;
+  inflation: Inflation | null;
+}
+
+export async function getStaticPaths() {
+  const pageSet = await loadInstrumentPages();
+  return pageSet.pages.map(({ entry }) => ({
+    params: { slug: instrumentSlug(entry.name, entry.id) },
+    props: { entry, inflation: pageSet.inflation },
+  }));
+}
+
+const { entry, inflation } = Astro.props as PageProps;
+const ranked: RankedEntry | null = 'rateUsed' in entry ? entry : null;
+const ineligible: IneligibleEntry | null = 'reason' in entry ? entry : null;
+
+// A page exists for every instrument a table can link to, and in fixture mode
+// not every one of those has a recorded history yet: the chart says so instead
+// of failing the build. Any other read error still stops the build.
+let history: InstrumentHistory | null = null;
+try {
+  history = await loadHistory(entry.id);
+} catch (error) {
+  if (!(error instanceof MissingHistoryRecording)) throw error;
+}
+
+const category = categoryForKind(entry.kind);
+
+const site = Astro.site ?? new URL('http://localhost:4321');
+const canonical = new URL(Astro.url.pathname, site);
+const kindName = kindLabel(entry.kind);
+const basis = ranked === null ? null : ranked.rateUsed.basis;
+const ratePercent = ranked === null ? null : formatPercent(ranked.rateUsed.fraction);
+const inflationLabel =
+  inflation === null ? 'sin dato de inflación' : inflationIndexLabel(inflation.index);
+
+const title =
+  basis !== null && ratePercent !== null
+    ? `${entry.name} · ${kindName}: ${basis} ${ratePercent} | rindetuplata`
+    : `${entry.name} · ${kindName} | rindetuplata`;
+const description =
+  ranked !== null
+    ? `Cuánto rinde ${entry.name} hoy: ${basis} ${ratePercent} según ${entry.source.displayName}, dato del ${formatDate(entry.dataDate)}. Mirá el historial contra la inflación del INDEC y simulá con tu monto y tu plazo.`
+    : `${entry.name} (${kindName}) no entra en el ranking de hoy. Mirá su historial contra la inflación del INDEC y las condiciones que pide.`;
+
+/** One trail, one URL shape: every item ends in a slash like the canonical. */
+const breadcrumb = [
+  { name: 'Inicio', url: new URL('/', site).href },
+  ...(category === null
+    ? []
+    : [{ name: category.navLabel, url: new URL(category.path, site).href }]),
+  { name: entry.name, url: canonical.href },
+];
+
+const jsonLd: object[] = [breadcrumbJsonLd(breadcrumb)];
+if (ranked !== null) {
+  jsonLd.push(
+    financialProductJsonLd({
+      name: ranked.name,
+      description: `${kindName}. Fuente: ${ranked.source.displayName}. Dato del ${formatDate(ranked.dataDate)}.`,
+      url: canonical.href,
+      interestRate: ranked.rateUsed.fraction,
+      provider: ranked.entity,
+    }),
+  );
+}
+
+const isStale = ranked !== null && ranked.warnings.some((warning) => warning.code === 'STALE');
+const definition = 'text-body-sm';
+const term = 'text-muted';
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <article class="flex flex-col gap-section py-section">
+    <header class="flex max-w-prose flex-col gap-block">
+      <nav aria-label="Ubicación" class="text-caption text-muted">
+        <ol class="flex flex-wrap gap-x-2">
+          <li>
+            <a
+              class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
+              href="/"
+            >
+              Inicio
+            </a>
+          </li>
+          {
+            category !== null && (
+              <li>
+                <span aria-hidden="true">/</span>{' '}
+                <a
+                  class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
+                  href={category.path}
+                >
+                  {category.navLabel}
+                </a>
+              </li>
+            )
+          }
+          <li aria-current="page"><span aria-hidden="true">/</span> {entry.name}</li>
+        </ol>
+      </nav>
+      <h1 class="text-h1 font-semibold text-balance">{entry.name}</h1>
+      <p class="text-lead text-muted text-pretty">
+        {kindName}
+        {ranked?.entity !== null && ranked?.entity !== undefined && ranked.entity !== ranked.name
+          ? ` de ${ranked.entity}`
+          : ''}. Los datos salen de {entry.source.displayName}
+        {entry.source.official ? ' (fuente oficial)' : ''}.
+      </p>
+    </header>
+
+    <section class="flex flex-col gap-block" aria-labelledby="tasa-de-hoy">
+      <h2 id="tasa-de-hoy" class="text-h2 font-semibold">La tasa de hoy</h2>
+      {
+        ranked !== null ? (
+          <div class="flex max-w-prose flex-col gap-3 rounded-lg border border-border bg-surface-raised p-block">
+            <p class="text-display font-semibold tabular-nums">
+              {ratePercent}
+              <span class="text-h3 font-normal text-muted">{basis}</span>
+            </p>
+            <p class="text-body-sm text-muted">
+              {rateKindLabel(ranked.rateUsed.kind)}. La fuente publica la tasa como {basis}; el
+              ranking la usa para calcular cuánto ganás con tu monto y tu plazo.
+            </p>
+            {ranked.upTo !== null && (
+              <p class="text-body-sm text-warning tabular-nums">
+                Hasta {formatMoney(ranked.upTo.finalAmount)} {ranked.upTo.condition}.
+              </p>
+            )}
+            <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+              <div class={definition}>
+                <dt class={term}>Fuente</dt>
+                <dd>
+                  {ranked.source.displayName}
+                  {ranked.source.official ? ' · oficial' : ''}
+                </dd>
+              </div>
+              <div class={definition}>
+                <dt class={term}>Confianza del dato</dt>
+                <dd>
+                  {confidenceLabel(ranked.confidence)}
+                  {ranked.verifiedAt !== null
+                    ? ` · verificada el ${formatDate(ranked.verifiedAt)}`
+                    : ''}
+                </dd>
+              </div>
+              <div class={definition}>
+                <dt class={term}>Fecha del dato</dt>
+                <dd class="tabular-nums">{formatDate(ranked.dataDate)}</dd>
+              </div>
+              <div class={definition}>
+                <dt class={term}>Fecha de captura</dt>
+                <dd class="tabular-nums">{formatDate(ranked.captureDate)}</dd>
+              </div>
+            </dl>
+            {isStale && (
+              <p class="inline-flex self-start rounded-pill bg-warning-surface px-2 py-1 text-caption text-on-warning">
+                {flagLabel('STALE')}: la fuente no publica un dato más nuevo.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div class="flex max-w-prose flex-col gap-3 rounded-lg border border-border bg-surface-raised p-block">
+            <p class="font-medium">Hoy no entra en el ranking</p>
+            <p class="text-body-sm text-muted">
+              {ineligible === null
+                ? 'La API no lo puede rankear hoy.'
+                : ineligibleExplanation(ineligible.reason, {
+                    amount: DEFAULT_AMOUNT,
+                    days: DEFAULT_DAYS,
+                  })}
+            </p>
+            {ineligible !== null && (
+              <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                <div class={definition}>
+                  <dt class={term}>Fuente</dt>
+                  <dd>
+                    {ineligible.source.displayName}
+                    {ineligible.source.official ? ' · oficial' : ''}
+                  </dd>
+                </div>
+                <div class={definition}>
+                  <dt class={term}>Fecha del dato</dt>
+                  <dd class="tabular-nums">{formatDate(ineligible.dataDate)}</dd>
+                </div>
+                <div class={definition}>
+                  <dt class={term}>Fecha de captura</dt>
+                  <dd class="tabular-nums">{formatDate(ineligible.captureDate)}</dd>
+                </div>
+              </dl>
+            )}
+          </div>
+        )
+      }
+    </section>
+
+    <section class="flex flex-col gap-block" aria-labelledby="historial">
+      <div class="flex max-w-prose flex-col gap-2">
+        <h2 id="historial" class="text-h2 font-semibold">Cómo viene rindiendo</h2>
+        <p class="text-body-sm text-muted">
+          La tasa del instrumento contra la inflación mensual del INDEC, la que se usa para el
+          histórico (S10). El ranking de hoy compara contra la inflación esperada del REM.
+        </p>
+      </div>
+      <HistoryChart history={history} />
+    </section>
+
+    <section class="flex max-w-prose flex-col gap-block" aria-labelledby="simulador">
+      <div class="flex flex-col gap-2">
+        <h2 id="simulador" class="text-h2 font-semibold">Simulá con tu monto y tu plazo</h2>
+        <p class="text-body-sm text-muted">
+          La cuenta la hace la API con la tasa, el tope y las condiciones de este producto. El
+          rendimiento real compara contra la inflación esperada del {inflationLabel}.
+        </p>
+      </div>
+      <SimulatorIsland
+        client:visible
+        instrumentId={entry.id}
+        inflationIndexLabel={inflationLabel}
+      />
+    </section>
+
+    <footer class="flex max-w-prose flex-col gap-2 border-t border-border pt-block text-body-sm">
+      <p>
+        {
+          category !== null && (
+            <>
+              <a
+                class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
+                href={category.path}
+              >
+                Ver {category.navLabel.toLowerCase()}
+              </a>{' '}
+              ·{' '}
+            </>
+          )
+        }
+        <a
+          class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
+          href="/metodologia/"
+        >
+          Cómo se calcula cada número
+        </a>
+      </p>
+      <p class="text-caption text-muted">
+        Es información, no asesoramiento financiero. rindetuplata no recibe dinero de las entidades
+        que compara.
+      </p>
+    </footer>
+  </article>
+</BaseLayout>

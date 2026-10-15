@@ -1,0 +1,272 @@
+/**
+ * `/admin/tasas` island (S12, T7d) — client only.
+ *
+ * Curated wallet rates: today's document, how long ago it was verified (stale
+ * ones flagged, never shown as current), an edit form, a one-click confirm and
+ * the audit trail per wallet. A 403 becomes the "Sin permiso" state; a 401
+ * leaves for `/ingresar`.
+ */
+import { useCallback, useEffect, useState } from 'react';
+import { accountApi, type WalletRate, type WalletTier } from '../../lib/account';
+import { ApiProblem } from '../../lib/api';
+import { percentToFraction } from '../../lib/accountForm';
+import { FORBIDDEN_MESSAGE, isStale, sessionAction, stalenessText, toProblem } from '../../lib/accountStatus';
+import { formatDate, formatMoney, formatPercent } from '../../lib/format';
+import ProblemNotice from './ProblemNotice';
+import WalletAudit from './WalletAudit';
+import WalletRateEditor from './WalletRateEditor';
+import { buttonSecondaryClass } from './ui';
+
+const LOGIN_PATH = '/ingresar';
+
+type Status = 'loading' | 'ready' | 'forbidden' | 'error';
+
+function TierTable({ tiers }: { tiers: WalletTier[] }) {
+  if (tiers.length === 0) {
+    return <p className="text-body-sm text-muted">Sin franjas.</p>;
+  }
+  return (
+    <table className="w-full max-w-lg border-collapse text-body-sm">
+      <caption className="sr-only">Franjas de tasa</caption>
+      <thead>
+        <tr>
+          <th scope="col" className="border-b border-border p-2 text-start font-semibold">
+            Desde
+          </th>
+          <th scope="col" className="border-b border-border p-2 text-start font-semibold">
+            Hasta
+          </th>
+          <th scope="col" className="border-b border-border p-2 text-start font-semibold">
+            TNA
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {tiers.map((tier, index) => (
+          <tr key={index}>
+            <td className="border-b border-border p-2 tabular-nums">
+              {tier.floor === null ? 'Sin piso' : formatMoney(tier.floor)}
+            </td>
+            <td className="border-b border-border p-2 tabular-nums">
+              {tier.ceiling === null ? 'Sin techo' : formatMoney(tier.ceiling)}
+            </td>
+            <td className="border-b border-border p-2 tabular-nums">
+              {formatPercent(percentToFraction(tier.tnaPercent))}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export default function WalletRatesPanel() {
+  const [status, setStatus] = useState<Status>('loading');
+  const [rates, setRates] = useState<WalletRate[]>([]);
+  const [problem, setProblem] = useState<ApiProblem | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [auditOpenId, setAuditOpenId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const load = useCallback(async (): Promise<void> => {
+    setStatus('loading');
+    setProblem(null);
+    try {
+      setRates(await accountApi.listWalletRates());
+      setStatus('ready');
+    } catch (reason) {
+      const failure = toProblem(reason);
+      if (sessionAction(failure.status) === 'login') {
+        window.location.assign(LOGIN_PATH);
+        return;
+      }
+      if (sessionAction(failure.status) === 'forbidden') {
+        setStatus('forbidden');
+        return;
+      }
+      setProblem(failure);
+      setStatus('error');
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const handleProblem = useCallback((failure: ApiProblem): void => {
+    if (sessionAction(failure.status) === 'login') {
+      window.location.assign(LOGIN_PATH);
+      return;
+    }
+    if (sessionAction(failure.status) === 'forbidden') {
+      setStatus('forbidden');
+      return;
+    }
+    setProblem(failure);
+  }, []);
+
+  async function onConfirm(walletId: string): Promise<void> {
+    setConfirmingId(walletId);
+    setProblem(null);
+    setMessage(null);
+    try {
+      const saved = await accountApi.confirmWalletRate(walletId);
+      setRates((current) => current.map((rate) => (rate.walletId === walletId ? saved : rate)));
+      setMessage(`${saved.name}: tasa confirmada hoy.`);
+    } catch (reason) {
+      handleProblem(toProblem(reason));
+    } finally {
+      setConfirmingId(null);
+    }
+  }
+
+  if (status === 'loading') {
+    return (
+      <p role="status" className="text-body-sm text-muted">
+        Cargando las tasas cargadas a mano…
+      </p>
+    );
+  }
+
+  if (status === 'forbidden') {
+    return (
+      <div className="flex flex-col gap-2 rounded-lg border border-loss bg-loss-surface px-4 py-3">
+        <p className="font-semibold text-on-loss">Sin permiso</p>
+        <p className="text-body-sm text-on-loss">{FORBIDDEN_MESSAGE}</p>
+        <a
+          href="/"
+          className="self-start rounded-md bg-accent-solid px-4 py-2 text-body-sm font-semibold text-on-accent hover:bg-accent"
+        >
+          Volver al ranking
+        </a>
+      </div>
+    );
+  }
+
+  if (status === 'error' && problem !== null) {
+    return <ProblemNotice problem={problem} onRetry={() => void load()} />;
+  }
+
+  return (
+    <div className="flex flex-col gap-section">
+      {problem !== null && <ProblemNotice problem={problem} />}
+      {message !== null && (
+        <div
+          role="status"
+          className="rounded-lg border border-border bg-gain-surface px-4 py-3 text-body-sm text-on-gain"
+        >
+          {message}
+        </div>
+      )}
+
+      {rates.length === 0 ? (
+        <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-raised p-block">
+          <p className="font-medium">No hay tasas cargadas a mano</p>
+          <p className="text-body-sm text-muted">
+            Cuando exista una, va a aparecer acá para editarla, confirmarla y ver su historial.
+          </p>
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-4">
+          {rates.map((rate) => {
+            const stale = isStale(rate.daysSinceVerified);
+            return (
+              <li
+                key={rate.walletId}
+                className="flex flex-col gap-3 rounded-lg border border-border bg-surface-raised p-block"
+              >
+                {editingId === rate.walletId ? (
+                  <WalletRateEditor
+                    rate={rate}
+                    onProblem={handleProblem}
+                    onCancel={() => setEditingId(null)}
+                    onSaved={(saved) => {
+                      setRates((current) =>
+                        current.map((entry) => (entry.walletId === rate.walletId ? saved : entry)),
+                      );
+                      setEditingId(null);
+                      setMessage(`${saved.name}: tasa guardada y verificada hoy.`);
+                    }}
+                  />
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <h2 className="text-h3 font-semibold">{rate.name}</h2>
+                        <p className="text-caption text-muted">
+                          Identificador: <code>{rate.walletId}</code>
+                        </p>
+                        <p className={stale ? 'text-body-sm text-warning' : 'text-body-sm text-muted'}>
+                          {stalenessText(rate.daysSinceVerified)}
+                          {stale ? '. Conviene reverificarla.' : '.'}
+                        </p>
+                        <p className="text-caption text-muted">
+                          Última actualización: {formatDate(rate.updatedAt.slice(0, 10))} por{' '}
+                          {rate.updatedBy}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingId(rate.walletId);
+                            setMessage(null);
+                          }}
+                          className={buttonSecondaryClass}
+                        >
+                          Editar {rate.name}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={confirmingId === rate.walletId}
+                          onClick={() => void onConfirm(rate.walletId)}
+                          className={buttonSecondaryClass}
+                        >
+                          {confirmingId === rate.walletId ? 'Confirmando…' : 'Confirmar hoy'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <TierTable tiers={rate.tiers} />
+
+                    {rate.conditions.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <h3 className="text-body-sm font-semibold">Condiciones</h3>
+                        {rate.conditions.map((condition, index) => (
+                          <div key={index} className="flex flex-col gap-1">
+                            <p className="text-body-sm">{condition.condition}</p>
+                            <TierTable tiers={condition.tiers} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {rate.note !== null && rate.note !== '' && (
+                      <p className="text-body-sm text-muted">Nota: {rate.note}</p>
+                    )}
+
+                    <details
+                      onToggle={(event) =>
+                        setAuditOpenId(event.currentTarget.open ? rate.walletId : null)
+                      }
+                    >
+                      <summary className="cursor-pointer text-body-sm font-semibold text-accent">
+                        Historial de cambios
+                      </summary>
+                      <div className="mt-3">
+                        {auditOpenId === rate.walletId && (
+                          <WalletAudit walletId={rate.walletId} onProblem={handleProblem} />
+                        )}
+                      </div>
+                    </details>
+                  </>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}

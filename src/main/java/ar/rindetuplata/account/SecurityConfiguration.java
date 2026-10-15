@@ -90,10 +90,24 @@ public class SecurityConfiguration {
 		return service;
 	}
 
-	/** The SPA CSRF cookie ({@code XSRF-TOKEN}, readable by the frontend), shared with the login strategy. */
+	/**
+	 * The SPA CSRF cookie ({@code XSRF-TOKEN}, readable by the frontend), shared with the login strategy.
+	 * {@code CookieCsrfTokenRepository} already marks it {@code Secure} on a secure request (T7a,
+	 * {@code server.forward-headers-strategy=native} makes Caddy's terminated TLS visible); the customizer adds the
+	 * {@code rindetuplata.auth.secure-cookie} switch and pins {@code SameSite=Lax}, so the cookie travels on a
+	 * credentialed same-site {@code fetch} and never on a cross-site one.
+	 */
 	@Bean
-	CsrfTokenRepository csrfTokenRepository() {
-		return CookieCsrfTokenRepository.withHttpOnlyFalse();
+	CsrfTokenRepository csrfTokenRepository(AccountProperties properties) {
+		CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+		repository.setCookiePath("/");
+		repository.setCookieCustomizer(cookie -> {
+			cookie.sameSite("Lax");
+			if (properties.secureCookie()) {
+				cookie.secure(true);
+			}
+		});
+		return repository;
 	}
 
 	/**

@@ -1,3 +1,20 @@
+# Local development stack (T1, T6d, T7e).
+#
+# `docker compose up -d postgres` (the workflow in AGENTS.md) starts only the services without a
+# profile: postgres, rabbitmq and mailpit, for `./mvnw spring-boot:test-run` and the Astro dev server.
+#
+# The whole product locally is this same file with the `stack` profile:
+#
+#   mkdir -p web/dist
+#   docker compose --profile stack up -d --wait
+#   (cd web && API_URL=http://localhost:4321 npm run build:api)   # or just deploy/e2e.sh
+#
+# which builds and starts the API from ./Dockerfile and puts Caddy in front of the built site
+# (deploy/Caddyfile.local), so the site and the API share one origin at localhost:4321. The deployed
+# topology is same-site but cross-origin (pages on the apex domain, the API on api.<domain>): see the
+# CORS, CSRF and cookie notes in docs/deploy.md.
+# `web/dist` must exist before the first `up`: Docker would create it owned by root.
+
 services:
   postgres:
     image: postgres:18-alpine
@@ -7,6 +24,11 @@ services:
       POSTGRES_PASSWORD: rindetuplata
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "rindetuplata", "-d", "rindetuplata"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
   # T6d: the alert events. The application talks AMQP on 5672; 15672 is the management UI (guest/guest locally).
   rabbitmq:
     image: rabbitmq:4-management
@@ -24,3 +46,52 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
+  # T7e: the API image. Everything it needs is here as environment variables (Spring relaxed binding);
+  # no secret is committed and the defaults are local-only values.
+  api:
+    profiles: ["stack"]
+    build:
+      context: .
+    image: rindetuplata-api:local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/rindetuplata
+      SPRING_DATASOURCE_USERNAME: rindetuplata
+      SPRING_DATASOURCE_PASSWORD: rindetuplata
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: "1025"
+      # One origin (L48): the magic link, the alert page and the allowed browser origin all point at
+      # the web service, which is where the reader actually is.
+      RINDETUPLATA_AUTH_MAGICLINKURL: ${RINDETUPLATA_AUTH_MAGICLINKURL:-http://localhost:4321/ingresar}
+      RINDETUPLATA_ALERT_MANAGEURL: ${RINDETUPLATA_ALERT_MANAGEURL:-http://localhost:4321/alertas}
+      RINDETUPLATA_WEB_ALLOWEDORIGINS: ${RINDETUPLATA_WEB_ALLOWEDORIGINS:-http://localhost:4321}
+      # Local HTTP, so the session cookie is not Secure; the VPS sets this to true (docs/deploy.md).
+      RINDETUPLATA_AUTH_SECURECOOKIE: ${RINDETUPLATA_AUTH_SECURECOOKIE:-false}
+      # Harmless placeholder: an admin address nobody uses locally. Override it to reach /admin/tasas.
+      RINDETUPLATA_AUTH_ADMINEMAILS: ${RINDETUPLATA_AUTH_ADMINEMAILS:-admin@example.com}
+  # T7e: Caddy serves web/dist read-only and proxies /api/* to the API, so the browser sees one origin.
+  web:
+    profiles: ["stack"]
+    image: caddy:2-alpine
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-4321}:80"
+    volumes:
+      - ./web/dist:/srv:ro
+      - ./deploy/Caddyfile.local:/etc/caddy/Caddyfile:ro
+    # Caddy's admin API on 127.0.0.1 answers as soon as the server is up, whether or not web/dist has
+    # been built yet (the site itself is built by `npm run build:api` after `up`). The address is
+    # spelled out because `localhost` resolves to ::1 first inside the container, where Caddy does not
+    # listen.
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:2019/config/"]
+      interval: 5s
+      timeout: 5s
+      retries: 12

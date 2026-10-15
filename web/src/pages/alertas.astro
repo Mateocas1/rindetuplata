@@ -1,0 +1,35 @@
+---
+/**
+ * `/alertas` (S3, S13, T7d): the reader's alert rules. `noindex` and client
+ * only — the island loads the session with `GET /api/v1/me` and the rules in
+ * the browser, so nothing personal is prerendered.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AlertsPanel from '../components/account/AlertsPanel';
+import LogoutButton from '../components/account/LogoutButton';
+---
+
+<BaseLayout
+  title="Tus alertas | rindetuplata"
+  description="Creá y administrá tus alertas de rindetuplata: te avisamos por email cuando una opción supera la tasa que elegís."
+  noindex
+>
+  <div class="flex flex-col gap-section py-section">
+    <header class="flex max-w-prose flex-col gap-block">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <h1 class="text-h1 font-semibold text-balance">Tus alertas</h1>
+        <div id="alertas-logout">
+          <LogoutButton client:only="react" />
+        </div>
+      </div>
+      <p class="text-lead text-muted text-pretty">
+        Elegí una tasa y te avisamos por email cuando alguna opción la supere. Vos decidís después
+        qué hacer con la información.
+      </p>
+    </header>
+
+    <div id="alertas-island">
+      <AlertsPanel client:only="react" />
+    </div>
+  </div>
+</BaseLayout>

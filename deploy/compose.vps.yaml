@@ -1,0 +1,89 @@
+# VPS overlay (T7e): the production shape of the local `compose.yaml`, for one small box.
+#
+#   docker compose -f compose.yaml -f deploy/compose.vps.yaml \
+#     --profile stack --env-file /srv/rindetuplata/api.env up -d --wait
+#
+# Why an overlay and not just the env file: `--env-file` only feeds `${VAR}` substitution in the
+# Compose files, it does not put anything into a container. Every production value therefore has to be
+# named here, and the `:?` form makes the command fail loudly when the env file is missing one,
+# instead of starting with a local default that silently points at Mailpit.
+#
+# What it changes with respect to `compose.yaml`:
+#   - the database and the broker are not published at all (the base file publishes them for local
+#     development, with the committed password: that must never reach a public interface);
+#   - Postgres gets a named volume, so `docker compose down` stops destroying the only stateful part;
+#   - Mailpit and the local-site Caddy are out: the VPS sends real mail and the site lives on a CDN;
+#   - a `caddy` service terminates TLS for api.<domain> (deploy/Caddyfile.vps).
+
+services:
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the env file}
+    ports: !override []
+    # Postgres 18 keeps its data in a versioned directory (`PGDATA=/var/lib/postgresql/18/docker`) and
+    # declares `/var/lib/postgresql` as its volume: mounting the old `/var/lib/postgresql/data` makes
+    # the entrypoint refuse to start ("unused mount/volume"). Mount the declared volume instead.
+    volumes:
+      - pgdata:/var/lib/postgresql
+
+  rabbitmq:
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-rindetuplata}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?set RABBITMQ_DEFAULT_PASS in the env file}
+    ports: !override []
+
+  # Local SMTP catcher only.
+  mailpit:
+    profiles: !override ["mailpit"]
+
+  # The local site server (Caddy over web/dist) only; on the VPS Caddy serves api.<domain> instead and
+  # the pages come from the CDN.
+  web:
+    profiles: !override ["local-site"]
+
+  api:
+    environment:
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the env file}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-rindetuplata}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?set RABBITMQ_DEFAULT_PASS in the env file}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:?set SPRING_MAIL_HOST in the env file}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:?set SPRING_MAIL_USERNAME in the env file}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:?set SPRING_MAIL_PASSWORD in the env file}
+      # Port 587 speaks STARTTLS; a provider on port 465 wants SSL instead
+      # (SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_ENABLE=true and no STARTTLS).
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+      RINDETUPLATA_MAIL_FROM: "${RINDETUPLATA_MAIL_FROM:-rindetuplata <no-reply@rindetuplata.ar>}"
+      RINDETUPLATA_AUTH_MAGICLINKURL: ${RINDETUPLATA_AUTH_MAGICLINKURL:?set the site login URL}
+      RINDETUPLATA_ALERT_MANAGEURL: ${RINDETUPLATA_ALERT_MANAGEURL:?set the site alerts URL}
+      RINDETUPLATA_WEB_ALLOWEDORIGINS: ${RINDETUPLATA_WEB_ALLOWEDORIGINS:?set the site origin}
+      RINDETUPLATA_AUTH_ADMINEMAILS: ${RINDETUPLATA_AUTH_ADMINEMAILS:?set the admin email}
+      RINDETUPLATA_INGEST_REBUILDHOOKURL: ${RINDETUPLATA_INGEST_REBUILDHOOKURL:?set the CDN deploy hook}
+      # TLS terminates in front of the API: without this the session and CSRF cookies travel in clear.
+      RINDETUPLATA_AUTH_SECURECOOKIE: "true"
+    # To replay the T9 archive (REPLAY mode of the daily job) mount a checkout of the `data` branch:
+    # volumes:
+    #   - ./archive:/app/archive:ro
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile.vps:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:2019/config/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

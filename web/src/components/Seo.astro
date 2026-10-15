@@ -1,0 +1,54 @@
+---
+/**
+ * Head metadata (S14). Every page gets a title, a description, a canonical URL
+ * and Open Graph/Twitter tags with the static default card. The optional
+ * `jsonLd` block is only passed on pages that need it: pages that ship no
+ * islands must keep zero `<script>` tags (checked by the build smoke test).
+ */
+export interface Props {
+  title: string;
+  description: string;
+  /** One structured-data node, or several (each gets its own script tag). */
+  jsonLd?: object | Array<object> | null;
+  noindex?: boolean;
+  image?: string;
+}
+
+const { title, description, jsonLd = null, noindex = false, image = '/og-default.png' } = Astro.props;
+
+const jsonLdBlocks =
+  jsonLd === null ? [] : Array.isArray(jsonLd) ? jsonLd : [jsonLd];
+
+const site = Astro.site ?? new URL('http://localhost:4321');
+const canonical = new URL(Astro.url.pathname, site);
+const imageUrl = new URL(image, site);
+const SOCIAL_TITLE_LIMIT = 70;
+const socialTitle = title.length > SOCIAL_TITLE_LIMIT ? `${title.slice(0, 69)}…` : title;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical.href} />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="rindetuplata" />
+<meta property="og:locale" content="es_AR" />
+<meta property="og:title" content={socialTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical.href} />
+<meta property="og:image" content={imageUrl.href} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="rindetuplata: comparador de rendimientos en pesos" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={socialTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl.href} />
+{
+  jsonLdBlocks.map((block) => (
+    <script type="application/ld+json" set:html={JSON.stringify(block)} />
+  ))
+}

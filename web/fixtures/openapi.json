@@ -1,0 +1,1403 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "rindetuplata API",
+    "description": "Informational yields for Argentine savers: plazo fijo by bank, remunerated wallets, money-market funds and the dollar MEP, compared by real return against inflation. This API is informational only and is not financial advice: it does not recommend any institution, product or investment decision. Every row names its source id, its date of data and its validation flags.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:18080",
+      "description": "Generated server url"
+    }
+  ],
+  "paths": {
+    "/api/v1/admin/wallet-rates/{walletId}": {
+      "put": {
+        "tags": [
+          "curation-controller"
+        ],
+        "operationId": "put",
+        "parameters": [
+          {
+            "name": "walletId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletRateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletRateView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/magic-link": {
+      "post": {
+        "tags": [
+          "account-controller"
+        ],
+        "operationId": "requestMagicLink",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MagicLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MagicLinkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "account-controller"
+        ],
+        "summary": "Log in with a magic-link token",
+        "description": "Consumes the one-time token of the magic link and starts the session. A successful login rotates the CSRF token and clears the XSRF-TOKEN cookie, so the client must call GET /api/v1/auth/csrf again before its next state-changing request.",
+        "operationId": "loginForm",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "tags": [
+          "alert-controller"
+        ],
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "alert-controller"
+        ],
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/wallet-rates/{walletId}/confirm": {
+      "post": {
+        "tags": [
+          "curation-controller"
+        ],
+        "operationId": "confirm",
+        "parameters": [
+          {
+            "name": "walletId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletRateView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulations": {
+      "get": {
+        "tags": [
+          "simulation-controller"
+        ],
+        "operationId": "simulate",
+        "parameters": [
+          {
+            "name": "instrumentId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "client",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ranking": {
+      "get": {
+        "tags": [
+          "ranking-controller"
+        ],
+        "operationId": "ranking",
+        "parameters": [
+          {
+            "name": "amount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "clientOf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "PLAZO_FIJO",
+                  "WALLET",
+                  "FUND",
+                  "CRYPTO"
+                ]
+              }
+            }
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "account-controller"
+        ],
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instruments": {
+      "get": {
+        "tags": [
+          "instrument-controller"
+        ],
+        "operationId": "list_1",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PLAZO_FIJO_OFFICIAL",
+                "PLAZO_FIJO_BANK",
+                "FUND_CLASS",
+                "CRYPTO_YIELD",
+                "WALLET"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InstrumentSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/instruments/{id}/history": {
+      "get": {
+        "tags": [
+          "instrument-controller"
+        ],
+        "operationId": "history",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstrumentHistory"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/csrf": {
+      "get": {
+        "tags": [
+          "account-controller"
+        ],
+        "summary": "Current CSRF token",
+        "description": "The raw CSRF token the SPA sends as the X-XSRF-TOKEN header on every state-changing request; the same response writes the XSRF-TOKEN cookie. The header is compared against the raw value, so this is the token to hand the client, never the masked request attribute. Public: no session is needed to ask for one.",
+        "operationId": "csrf",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsrfTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/wallet-rates": {
+      "get": {
+        "tags": [
+          "curation-controller"
+        ],
+        "operationId": "list_2",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WalletRateView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/wallet-rates/{walletId}/audit": {
+      "get": {
+        "tags": [
+          "curation-controller"
+        ],
+        "operationId": "audit",
+        "parameters": [
+          {
+            "name": "walletId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntryView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/{id}": {
+      "delete": {
+        "tags": [
+          "alert-controller"
+        ],
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConditionRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TierRequest"
+            }
+          }
+        }
+      },
+      "TierRequest": {
+        "type": "object",
+        "properties": {
+          "floor": {
+            "type": "number"
+          },
+          "ceiling": {
+            "type": "number"
+          },
+          "tnaPercent": {
+            "type": "number"
+          }
+        }
+      },
+      "WalletRateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TierRequest"
+            }
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConditionRequest"
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "ConditionView": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TierView"
+            }
+          }
+        }
+      },
+      "TierView": {
+        "type": "object",
+        "properties": {
+          "floor": {
+            "type": "number"
+          },
+          "ceiling": {
+            "type": "number"
+          },
+          "tnaPercent": {
+            "type": "number"
+          }
+        }
+      },
+      "WalletRateView": {
+        "type": "object",
+        "properties": {
+          "walletId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TierView"
+            }
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConditionView"
+            }
+          },
+          "note": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysSinceVerified": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedBy": {
+            "type": "string"
+          }
+        }
+      },
+      "MagicLinkRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "MagicLinkResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "AlertRequest": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "instrumentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "thresholdPercent": {
+            "type": "number"
+          }
+        }
+      },
+      "AlertResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "instrumentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "thresholdPercent": {
+            "type": "number"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ExcludedView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationFlagView"
+            }
+          }
+        }
+      },
+      "IneligibleView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
+      "RankedEntryView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceView"
+          },
+          "confidence": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "captureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dataDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "rateUsed": {
+            "$ref": "#/components/schemas/RateUsedView"
+          },
+          "finalAmount": {
+            "type": "number"
+          },
+          "earned": {
+            "type": "number"
+          },
+          "nominalReturn": {
+            "type": "number"
+          },
+          "realReturn": {
+            "type": "number"
+          },
+          "upTo": {
+            "$ref": "#/components/schemas/UpToView"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationFlagView"
+            }
+          }
+        }
+      },
+      "RateUsedView": {
+        "type": "object",
+        "properties": {
+          "fraction": {
+            "type": "number"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      },
+      "SimulationResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "entry": {
+            "$ref": "#/components/schemas/RankedEntryView"
+          },
+          "ineligible": {
+            "$ref": "#/components/schemas/IneligibleView"
+          },
+          "excluded": {
+            "$ref": "#/components/schemas/ExcludedView"
+          }
+        }
+      },
+      "SourceView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "official": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpToView": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "finalAmount": {
+            "type": "number"
+          }
+        }
+      },
+      "ValidationFlagView": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ExcludedEntryView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceView"
+          },
+          "captureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dataDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationFlagView"
+            }
+          }
+        }
+      },
+      "IneligibleEntryView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceView"
+          },
+          "captureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dataDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
+      "InflationResponse": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "string"
+          },
+          "twelveMonthRate": {
+            "type": "number"
+          },
+          "observationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "overHorizon": {
+            "type": "number"
+          }
+        }
+      },
+      "RankingRequestView": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number"
+          },
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clientOf": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "RankingResponse": {
+        "type": "object",
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/RankingRequestView"
+          },
+          "inflation": {
+            "$ref": "#/components/schemas/InflationResponse"
+          },
+          "ranked": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RankedEntryView"
+            }
+          },
+          "ineligible": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IneligibleEntryView"
+            }
+          },
+          "excluded": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExcludedEntryView"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/TotalsView"
+          }
+        }
+      },
+      "TotalsView": {
+        "type": "object",
+        "properties": {
+          "ranked": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ineligible": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "excluded": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "InstrumentSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "entityName": {
+            "type": "string"
+          },
+          "segment": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "number"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "clientRate": {
+            "type": "number"
+          },
+          "captureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dataDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "confidence": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "invalid": {
+            "type": "boolean"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationFlagView"
+            }
+          },
+          "quoteDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "vcp": {
+            "type": "number"
+          }
+        }
+      },
+      "FundQuotePoint": {
+        "type": "object",
+        "properties": {
+          "quoteDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "vcp": {
+            "type": "number"
+          },
+          "tnaEquivalent": {
+            "type": "number"
+          }
+        }
+      },
+      "InstrumentHistory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "entityName": {
+            "type": "string"
+          },
+          "segment": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SnapshotPoint"
+            }
+          },
+          "quotes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FundQuotePoint"
+            }
+          },
+          "monthlyInflation": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonthlyInflationPoint"
+            }
+          }
+        }
+      },
+      "MonthlyInflationPoint": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "string"
+          },
+          "observationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "value": {
+            "type": "number"
+          },
+          "confidence": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          }
+        }
+      },
+      "SnapshotPoint": {
+        "type": "object",
+        "properties": {
+          "captureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "dataDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "basis": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "number"
+          },
+          "clientRate": {
+            "type": "number"
+          },
+          "invalid": {
+            "type": "boolean"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationFlagView"
+            }
+          }
+        }
+      },
+      "CsrfTokenResponse": {
+        "type": "object",
+        "properties": {
+          "headerName": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditEntryView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "walletId": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/JsonNode"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "JsonNode": {
+        "type": "object",
+        "properties": {
+          "container": {
+            "type": "boolean"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": [
+              "ARRAY",
+              "BINARY",
+              "BOOLEAN",
+              "MISSING",
+              "NULL",
+              "NUMBER",
+              "OBJECT",
+              "POJO",
+              "STRING"
+            ]
+          },
+          "string": {
+            "type": "boolean"
+          },
+          "integralNumber": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "valueNode": {
+            "type": "boolean"
+          },
+          "object": {
+            "type": "boolean"
+          },
+          "pojo": {
+            "type": "boolean"
+          },
+          "floatingPointNumber": {
+            "type": "boolean"
+          },
+          "short": {
+            "type": "boolean"
+          },
+          "int": {
+            "type": "boolean"
+          },
+          "long": {
+            "type": "boolean"
+          },
+          "double": {
+            "type": "boolean"
+          },
+          "bigDecimal": {
+            "type": "boolean"
+          },
+          "bigInteger": {
+            "type": "boolean"
+          },
+          "textual": {
+            "type": "boolean",
+            "deprecated": true
+          },
+          "boolean": {
+            "type": "boolean"
+          },
+          "binary": {
+            "type": "boolean"
+          },
+          "array": {
+            "type": "boolean"
+          },
+          "empty": {
+            "type": "boolean"
+          },
+          "null": {
+            "type": "boolean"
+          },
+          "float": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "boolean"
+          },
+          "embeddedValue": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
