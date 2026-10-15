@@ -5,6 +5,10 @@
  * ones flagged, never shown as current), an edit form, a one-click confirm and
  * the audit trail per wallet. A 403 becomes the "Sin permiso" state; a 401
  * leaves for `/ingresar`.
+ *
+ * T12c: one `card` per wallet, the tier tables read like the ranking table
+ * (caption headers, tabular figures, right-aligned numbers), and every notice —
+ * the confirmation, a failure, the 403 — goes through the shared surfaces.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { accountApi, type WalletRate, type WalletTier } from '../../lib/account';
@@ -13,13 +17,21 @@ import { percentToFraction } from '../../lib/accountForm';
 import { FORBIDDEN_MESSAGE, isStale, sessionAction, stalenessText, toProblem } from '../../lib/accountStatus';
 import { formatDate, formatMoney, formatPercent } from '../../lib/format';
 import ProblemNotice from './ProblemNotice';
+import StatusNotice from './StatusNotice';
 import WalletAudit from './WalletAudit';
 import WalletRateEditor from './WalletRateEditor';
-import { buttonSecondaryClass } from './ui';
+import { buttonSecondaryClass, cardClass } from './ui';
 
 const LOGIN_PATH = '/ingresar';
 
 type Status = 'loading' | 'ready' | 'forbidden' | 'error';
+
+/** Header and figure treatment shared with the ranking table. */
+const HEAD_CELL = 'border-b border-border px-3 py-2 text-caption font-semibold text-muted';
+
+function bodyCell(isLast: boolean): string {
+  return `px-3 py-2 tabular-nums ${isLast ? '' : 'border-b border-border'}`;
+}
 
 function TierTable({ tiers }: { tiers: WalletTier[] }) {
   if (tiers.length === 0) {
@@ -30,31 +42,34 @@ function TierTable({ tiers }: { tiers: WalletTier[] }) {
       <caption className="sr-only">Franjas de tasa</caption>
       <thead>
         <tr>
-          <th scope="col" className="border-b border-border p-2 text-start font-semibold">
+          <th scope="col" className={`${HEAD_CELL} text-end`}>
             Desde
           </th>
-          <th scope="col" className="border-b border-border p-2 text-start font-semibold">
+          <th scope="col" className={`${HEAD_CELL} text-end`}>
             Hasta
           </th>
-          <th scope="col" className="border-b border-border p-2 text-start font-semibold">
+          <th scope="col" className={`${HEAD_CELL} text-end`}>
             TNA
           </th>
         </tr>
       </thead>
       <tbody>
-        {tiers.map((tier, index) => (
-          <tr key={index}>
-            <td className="border-b border-border p-2 tabular-nums">
-              {tier.floor === null ? 'Sin piso' : formatMoney(tier.floor)}
-            </td>
-            <td className="border-b border-border p-2 tabular-nums">
-              {tier.ceiling === null ? 'Sin techo' : formatMoney(tier.ceiling)}
-            </td>
-            <td className="border-b border-border p-2 tabular-nums">
-              {formatPercent(percentToFraction(tier.tnaPercent))}
-            </td>
-          </tr>
-        ))}
+        {tiers.map((tier, index) => {
+          const cell = bodyCell(index === tiers.length - 1);
+          return (
+            <tr key={index}>
+              <td className={`${cell} text-end`}>
+                {tier.floor === null ? 'Sin piso' : formatMoney(tier.floor)}
+              </td>
+              <td className={`${cell} text-end`}>
+                {tier.ceiling === null ? 'Sin techo' : formatMoney(tier.ceiling)}
+              </td>
+              <td className={`${cell} text-end`}>
+                {formatPercent(percentToFraction(tier.tnaPercent))}
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
@@ -131,16 +146,11 @@ export default function WalletRatesPanel() {
 
   if (status === 'forbidden') {
     return (
-      <div className="flex flex-col gap-2 rounded-lg border border-loss bg-loss-surface px-4 py-3">
-        <p className="font-semibold text-on-loss">Sin permiso</p>
-        <p className="text-body-sm text-on-loss">{FORBIDDEN_MESSAGE}</p>
-        <a
-          href="/"
-          className="self-start rounded-md bg-accent-solid px-4 py-2 text-body-sm font-semibold text-on-accent hover:bg-accent"
-        >
+      <ProblemNotice problem={{ status: 403, message: FORBIDDEN_MESSAGE }} title="Sin permiso">
+        <a href="/" className={`${buttonSecondaryClass} mt-1 self-start`}>
           Volver al ranking
         </a>
-      </div>
+      </ProblemNotice>
     );
   }
 
@@ -151,17 +161,10 @@ export default function WalletRatesPanel() {
   return (
     <div className="flex flex-col gap-section">
       {problem !== null && <ProblemNotice problem={problem} />}
-      {message !== null && (
-        <div
-          role="status"
-          className="rounded-lg border border-border bg-gain-surface px-4 py-3 text-body-sm text-on-gain"
-        >
-          {message}
-        </div>
-      )}
+      {message !== null && <StatusNotice role="status" tone="gain" title={message} />}
 
       {rates.length === 0 ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-raised p-block">
+        <div className={`${cardClass} flex flex-col gap-2`}>
           <p className="font-medium">No hay tasas cargadas a mano</p>
           <p className="text-body-sm text-muted">
             Cuando exista una, va a aparecer acá para editarla, confirmarla y ver su historial.
@@ -172,10 +175,7 @@ export default function WalletRatesPanel() {
           {rates.map((rate) => {
             const stale = isStale(rate.daysSinceVerified);
             return (
-              <li
-                key={rate.walletId}
-                className="flex flex-col gap-3 rounded-lg border border-border bg-surface-raised p-block"
-              >
+              <li key={rate.walletId} className={`${cardClass} flex flex-col gap-3`}>
                 {editingId === rate.walletId ? (
                   <WalletRateEditor
                     rate={rate}
@@ -251,7 +251,7 @@ export default function WalletRatesPanel() {
                         setAuditOpenId(event.currentTarget.open ? rate.walletId : null)
                       }
                     >
-                      <summary className="cursor-pointer text-body-sm font-semibold text-accent">
+                      <summary className="link cursor-pointer text-body-sm font-semibold">
                         Historial de cambios
                       </summary>
                       <div className="mt-3">

@@ -166,6 +166,12 @@ const contrastPairs: Array<[string, string, string, number]> = [
   ['border-strong on surface-raised', '--color-border-strong', '--color-surface-raised', 3],
   ['border-strong on surface', '--color-border-strong', '--color-surface', 3],
   ['border-strong on subtle-surface (input on a panel)', '--color-border-strong', '--color-subtle-surface', 3],
+  // T12c status surfaces: the destructive confirmation fills with the loss role
+  // and every notice borders its own tint, so each combination is measured too.
+  ['on-accent on loss (destructive confirmation)', '--color-on-accent', '--color-loss', 4.5],
+  ['loss on loss-surface (notice border)', '--color-loss', '--color-loss-surface', 3],
+  ['gain on gain-surface (notice border)', '--color-gain', '--color-gain-surface', 3],
+  ['warning on warning-surface (notice border)', '--color-warning', '--color-warning-surface', 3],
 ];
 
 function sourceFiles(dir: string): string[] {
