@@ -3,6 +3,7 @@ package ar.rindetuplata.alert;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ar.rindetuplata.account.AccountTestConfiguration;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -11,7 +12,9 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +46,15 @@ class OutboxRelayIntegrationTest {
 
 	@Autowired
 	JdbcClient jdbc;
+
+	@Autowired
+	Clock clock;
+
+	@Autowired
+	RabbitAdmin admin;
+
+	@Autowired
+	Binding alertEmailBinding;
 
 	@BeforeEach
 	void clean() {
@@ -95,6 +107,65 @@ class OutboxRelayIntegrationTest {
 		}
 	}
 
+	@Test
+	void aRowThatReachedTheAttemptCapIsNeverClaimed() {
+		UUID exhausted = insert(payload(UUID.randomUUID(), 7, "Wallet Exhausted"), Instant.parse("2026-10-14T12:00:00Z"),
+				10, null);
+		UUID due = insert(payload(UUID.randomUUID(), 7, "Wallet Due"), Instant.parse("2026-10-14T12:00:01Z"), 9, null);
+
+		int published = relay.relayPending();
+
+		assertThat(published).as("only the row under the cap goes out").isEqualTo(1);
+		assertThat(publishedAt(exhausted)).as("the exhausted row stays in the table for the operator").isNull();
+		assertThat(attempts(exhausted)).as("and is not attempted again").isEqualTo(10);
+		assertThat(publishedAt(due)).isNotNull();
+		assertThat(template.receive(AlertEvents.QUEUE, 5000)).as("the due event reached the queue").isNotNull();
+		assertThat(template.receive(AlertEvents.QUEUE, 300)).as("the exhausted one did not").isNull();
+	}
+
+	@Test
+	void aLeasedRowIsSkippedUntilItsLeaseExpires() {
+		Instant now = clock.instant();
+		UUID leased = insert(payload(UUID.randomUUID(), 7, "Wallet Leased"), Instant.parse("2026-10-14T12:00:00Z"), 0,
+				now.plusSeconds(3600));
+		UUID expired = insert(payload(UUID.randomUUID(), 7, "Wallet Expired"), Instant.parse("2026-10-14T12:00:01Z"), 0,
+				now.minusSeconds(1));
+
+		int published = relay.relayPending();
+
+		assertThat(published).as("the expired lease is claimable, the live one is not").isEqualTo(1);
+		assertThat(publishedAt(leased)).isNull();
+		assertThat(publishedAt(expired)).isNotNull();
+	}
+
+	@Test
+	void aMessageTheBrokerCannotRouteCountsAsAFailure() {
+		UUID eventId = insert(payload(UUID.randomUUID(), 7, "Wallet Unroutable"), Instant.parse("2026-10-14T12:00:00Z"));
+		admin.removeBinding(alertEmailBinding);
+		try {
+			int published = relay.relayPending();
+
+			assertThat(published).as("the broker acks an unroutable message, the return makes it a failure").isZero();
+			assertThat(publishedAt(eventId)).as("the row is still pending").isNull();
+			assertThat(attempts(eventId)).isEqualTo(1);
+			assertThat(lastError(eventId)).as("the reason says it was returned").containsIgnoringCase("return");
+		}
+		finally {
+			admin.declareBinding(alertEmailBinding);
+		}
+	}
+
+	@Test
+	void aPublishedRowKeepsZeroAttemptsAndNoError() {
+		UUID eventId = insert(payload(UUID.randomUUID(), 7, "Wallet Lease"), Instant.parse("2026-10-14T12:00:00Z"));
+
+		relay.relayPending();
+
+		assertThat(publishedAt(eventId)).isNotNull();
+		assertThat(attempts(eventId)).as("a published row did not fail").isZero();
+		assertThat(lastError(eventId)).isNull();
+	}
+
 	static String payload(UUID eventId, long ruleId, String instrumentName) {
 		return """
 				{"eventId":"%s","ruleId":%d,"userEmail":"saver@example.com","instrumentId":"42",\
@@ -104,11 +175,17 @@ class OutboxRelayIntegrationTest {
 	}
 
 	private UUID insert(String payload, Instant createdAt) {
+		return insert(payload, createdAt, 0, null);
+	}
+
+	private UUID insert(String payload, Instant createdAt, int attempts, Instant lockedUntil) {
 		UUID eventId = UUID.fromString(match(payload, "eventId"));
 		jdbc.sql("""
-				insert into outbox_event (id, event_type, aggregate_id, payload, created_at, attempts)
-				values (:id, 'AlertTriggered', :aggregate, cast(:payload as jsonb), :createdAt, 0)
+				insert into outbox_event (id, event_type, aggregate_id, payload, created_at, attempts, locked_until)
+				values (:id, 'AlertTriggered', :aggregate, cast(:payload as jsonb), :createdAt, :attempts, :lockedUntil)
 				""")
+			.param("attempts", attempts)
+			.param("lockedUntil", lockedUntil == null ? null : OffsetDateTime.ofInstant(lockedUntil, ZoneOffset.UTC))
 			.param("id", eventId)
 			.param("aggregate", AGGREGATE)
 			.param("payload", payload)
@@ -129,6 +206,21 @@ class OutboxRelayIntegrationTest {
 			.query((rs, rowNumber) -> rs.getObject("published_at", OffsetDateTime.class))
 			.optional()
 			.orElse(null);
+	}
+
+	private int attempts(UUID eventId) {
+		return jdbc.sql("select attempts from outbox_event where id = :id")
+			.param("id", eventId)
+			.query(Integer.class)
+			.single();
+	}
+
+	private String lastError(UUID eventId) {
+		return jdbc.sql("select last_error from outbox_event where id = :id")
+			.param("id", eventId)
+			.query((rs, rowNumber) -> rs.getString("last_error"))
+			.list()
+			.get(0);
 	}
 
 	private static String body(Message message) {
