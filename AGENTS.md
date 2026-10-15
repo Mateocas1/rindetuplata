@@ -57,6 +57,9 @@ Pane prompt checklist (learned in T4 with DeepSeek v4 flash; each item cost an a
   (e.g. "Allow recognized data-loss command?" for `rm -rf /tmp/scratch`). Check the `herdr agent read` tail before
   trusting an exit; unblock with `herdr pane send-keys <pane> enter`, re-wait with `herdr agent wait <name>`.
   Prevent it in the prompt: "inspect jars with `javap -classpath <jar>` / `unzip -l`; never extract jars or `rm -rf`".
+- **Stalled first prompt.** A prompt sent right after `herdr agent start` can be lost while pi refreshes its skill
+  registry (`agent_prompt_stalled`, the pane stays at "waiting for input"). Check the prompt job's first output line;
+  resend after a few seconds.
 - **Steering.** `herdr pane send-text <pane> "..."` + `send-keys enter` queues a message while it works.
 - **Final answer.** `herdr agent read` is wrapped terminal text; read the last assistant text from the pane's session
   file (grep the prompt's first line, skip the parent's own session).
