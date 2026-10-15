@@ -1,0 +1,57 @@
+---
+/**
+ * Home (S15, S14, S11): the ranking for the default amount and term, rendered at
+ * build time from the API (or the recorded fixtures with WEB_FIXTURES=1) and
+ * taken over by the RankingExplorer island once it hydrates.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import RankingExplorer from '../components/ranking/RankingExplorer';
+import { loadBanks, loadRanking } from '../lib/data';
+import { formatDate } from '../lib/format';
+import { loadInstrumentPages } from '../lib/pages';
+import { DEFAULT_RANKING_QUERY } from '../lib/rankingQuery';
+
+const ranking = await loadRanking(DEFAULT_RANKING_QUERY);
+const banks = await loadBanks();
+// The island can ask for a combination nobody prerendered, so it needs to know
+// which instrument pages exist before it renders a link (D1).
+const pages = await loadInstrumentPages();
+
+const dataDate = ranking.request.asOf;
+const title = '¿Dónde rinde tu plata hoy? Comparador de plazos fijos y billeteras';
+const description = `Mirá cuánto ganás con tu monto y tu plazo en plazos fijos, billeteras remuneradas, fondos money market y cripto, y cuánto le ganás a la inflación esperada. Datos del ${formatDate(dataDate)}.`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'rindetuplata',
+  url: (Astro.site ?? new URL('http://localhost:4321')).href,
+  inLanguage: 'es-AR',
+  description,
+};
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <div class="flex flex-col gap-section py-section">
+    <header class="flex max-w-prose flex-col gap-block">
+      <h1 class="text-display font-semibold text-balance">¿Dónde rinde tu plata hoy?</h1>
+      <p class="text-lead text-muted text-pretty">
+        Plazos fijos, billeteras remuneradas, fondos money market y cripto, ordenados por cuánto
+        ganás en pesos con tu monto y tu plazo. Al lado de cada uno, cuánto de eso le gana a la
+        inflación esperada.
+      </p>
+      <p class="text-body-sm text-muted">
+        Datos del {formatDate(dataDate)}. El ranking se ordena por los pesos que ganás, no por la
+        tasa, y cada fila indica su fuente y la fecha del dato.
+      </p>
+    </header>
+
+    <RankingExplorer
+      client:idle
+      initialRanking={ranking}
+      initialQuery={DEFAULT_RANKING_QUERY}
+      banks={banks}
+      pageSlugs={pages.slugs}
+    />
+  </div>
+</BaseLayout>

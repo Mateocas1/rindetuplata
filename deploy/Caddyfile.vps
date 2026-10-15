@@ -1,0 +1,10 @@
+# VPS (T7e): automatic TLS for the API, and nothing else published.
+#
+# The API container is only reachable from this Compose network; Caddy gets the certificate for
+# api.<domain> from Let's Encrypt on its own. The site is static and lives on a CDN, so Caddy here
+# serves the API only — the local one-origin Caddyfile lives in deploy/Caddyfile.local.
+
+api.rindetuplata.ar {
+	encode zstd gzip
+	reverse_proxy api:8080
+}

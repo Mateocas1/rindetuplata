@@ -1,0 +1,63 @@
+name: Web tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/web-test.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - ".github/workflows/web-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: check, unit tests and fixture build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      # The smoke tests inside `npm test` build the site in fixture mode themselves (they shell out to
+      # `astro build`), so CI never needs a running API.
+      - run: npm test
+      - name: Fixture build (no API needed)
+        run: npm run build
+        env:
+          WEB_FIXTURES: "1"
+
+  e2e:
+    name: end-to-end smoke on the compose stack
+    # Long, needs the Docker daemon and Playwright's browser: a manual run only.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install the web dependencies and Chromium
+        working-directory: web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      # Builds the API image, brings the stack up, builds the site against it, runs the spec and always
+      # brings the stack down again.
+      - run: deploy/e2e.sh

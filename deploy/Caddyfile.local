@@ -1,0 +1,28 @@
+# Local stack (T7e, L48 topology).
+#
+# Caddy serves the built Astro site (web/dist, mounted read-only on /srv) and reverse-proxies /api*
+# to the API container, so the local stack is one origin. Production keeps the same site identity —
+# pages on the apex domain and the API on api.<domain>, which is same-site but cross-origin, so CORS
+# with credentials and the XSRF header apply there (see docs/deploy.md).
+
+:80 {
+	encode zstd gzip
+	root * /srv
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy api:8080
+	}
+
+	# Static pages: directory or file, no extension. Unknown paths fall through to the error handler
+	# instead of a catch-all index, so a missing page is a real 404 for crawlers.
+	handle {
+		try_files {path} {path}/ {path}/index.html {path}.html
+		file_server
+	}
+
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+}
