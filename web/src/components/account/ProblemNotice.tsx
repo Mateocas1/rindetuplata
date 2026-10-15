@@ -27,7 +27,7 @@ export default function ProblemNotice({
 }: ProblemNoticeProps) {
   return (
     <StatusNotice role="alert" tone="loss" title={title}>
-      <p className="text-body-sm">{problemText(problem)}</p>
+      <p className="type-body">{problemText(problem)}</p>
       {children}
       {onRetry !== undefined && (
         <button

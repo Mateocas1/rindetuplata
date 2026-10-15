@@ -94,7 +94,7 @@ export default function AlertCreateForm({
 
       <div className={fieldGroupClass}>
         <label htmlFor={THRESHOLD_INPUT_ID} className={labelClass}>
-          Avisame si supera esta tasa (TNA anual en porcentaje)
+          Avisame si supera esta tasa
         </label>
         <input
           id={THRESHOLD_INPUT_ID}
@@ -110,8 +110,8 @@ export default function AlertCreateForm({
           onChange={(event) => onChange({ ...form, thresholdPercent: event.target.value })}
           className={inputClass}
         />
-        <p id={THRESHOLD_HINT_ID} className="text-caption text-muted">
-          Escribí el número sin el signo %: por ejemplo, 25 para 25% de TNA.
+        <p id={THRESHOLD_HINT_ID} className="type-body text-muted">
+          TNA anual en porcentaje: escribí el número sin el signo % (por ejemplo, 25 para 25%).
         </p>
         {thresholdError !== undefined && (
           <p id={THRESHOLD_ERROR_ID} className={errorTextClass}>

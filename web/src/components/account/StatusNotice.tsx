@@ -71,10 +71,10 @@ function NoticeIcon({ tone }: { tone: NoticeTone }) {
 
 export default function StatusNotice({ role, tone, title, children }: StatusNoticeProps) {
   return (
-    <div role={role} className={`flex gap-3 rounded-lg border px-4 py-3 ${SURFACE[tone]}`}>
+    <div role={role} className={`flex gap-3 rounded-panel border px-4 py-3 ${SURFACE[tone]}`}>
       <NoticeIcon tone={tone} />
       <div className="flex min-w-0 flex-col gap-1">
-        <p className="font-semibold text-balance">{title}</p>
+        <p className="type-body font-semibold text-balance">{title}</p>
         {children}
       </div>
     </div>

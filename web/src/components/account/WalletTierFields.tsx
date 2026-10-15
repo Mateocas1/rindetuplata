@@ -45,7 +45,7 @@ export default function WalletTierFields({
       aria-describedby={describedIds.length > 0 ? describedIds.join(' ') : undefined}
     >
       <legend className={labelClass}>{legend}</legend>
-      <p className="text-caption text-muted">
+      <p className="type-body text-muted">
         Dejá el piso o el techo vacío cuando la franja no tiene ese límite.
       </p>
       {orderingError !== undefined && (
@@ -62,7 +62,7 @@ export default function WalletTierFields({
           return (
             <li
               key={index}
-              className="flex flex-wrap items-start gap-x-4 gap-y-3 rounded-md border border-border bg-surface p-3"
+              className="flex flex-wrap items-start gap-x-4 gap-y-3 rounded-panel border border-border bg-surface p-3"
             >
               <div className="flex flex-col gap-1">
                 <label htmlFor={floorId} className={labelClass}>

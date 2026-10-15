@@ -136,7 +136,7 @@ export default function AlertsPanel() {
 
   if (status === 'loading') {
     return (
-      <p role="status" className="text-body-sm text-muted">
+      <p role="status" className="type-body text-muted">
         Cargando tus alertas…
       </p>
     );
@@ -149,19 +149,20 @@ export default function AlertsPanel() {
   return (
     <div className="flex flex-col gap-section">
       <section aria-labelledby="crear-alerta" className="flex flex-col gap-block">
-        <h2 id="crear-alerta" className="text-h2 font-semibold">
+        <h2 id="crear-alerta" className="type-section">
           Crear una alerta
         </h2>
-        <p className="text-body-sm text-muted">
-          Te avisamos por email cuando una opción supera la tasa que elijas. Podés mirar un tipo de
-          opción, una opción puntual o todas.
-        </p>
+        <details className="disclosure">
+          <summary className="type-label">Cómo funcionan las alertas</summary>
+          <p className="mt-2 max-w-prose type-body text-muted">
+            Te avisamos por email cuando una opción supera la tasa que elijas. Podés mirar un tipo de
+            opción, una opción puntual o todas.
+          </p>
+        </details>
 
         {created && (
           <StatusNotice role="status" tone="gain" title="Alerta creada">
-            <p className="text-body-sm">
-              La vas a ver abajo y te avisamos cuando se cumpla.
-            </p>
+            <p className="type-body">La vas a ver abajo y te avisamos cuando se cumpla.</p>
           </StatusNotice>
         )}
         {actionProblem !== null && <ProblemNotice problem={actionProblem} />}
@@ -178,7 +179,7 @@ export default function AlertsPanel() {
       </section>
 
       <section aria-labelledby="tus-alertas" className="flex flex-col gap-block">
-        <h2 id="tus-alertas" tabIndex={-1} className="text-h2 font-semibold">
+        <h2 id="tus-alertas" tabIndex={-1} className="type-section">
           Tus alertas
         </h2>
 

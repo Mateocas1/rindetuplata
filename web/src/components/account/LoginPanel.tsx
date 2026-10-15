@@ -15,7 +15,14 @@ import { normalizeEmail, validateEmail } from '../../lib/accountForm';
 import { toProblem } from '../../lib/accountStatus';
 import ProblemNotice from './ProblemNotice';
 import StatusNotice from './StatusNotice';
-import { buttonPrimaryClass, cardClass, fieldGroupClass, inputClass, labelClass } from './ui';
+import {
+  buttonPrimaryClass,
+  cardClass,
+  errorTextClass,
+  fieldGroupClass,
+  inputClass,
+  labelClass,
+} from './ui';
 
 const ALERTS_PATH = '/alertas';
 const EMAIL_INPUT_ID = 'ingresar-email';
@@ -91,7 +98,7 @@ export default function LoginPanel() {
 
   if (status === 'consuming') {
     return (
-      <p role="status" className="text-body-sm text-muted">
+      <p role="status" className="type-body text-muted">
         Estamos entrando con tu link…
       </p>
     );
@@ -105,13 +112,13 @@ export default function LoginPanel() {
     <div className="flex flex-col gap-block">
       {status === 'token-error' && (
         <StatusNotice role="alert" tone="loss" title="No pudimos entrar con ese link">
-          <p className="text-body-sm">El link ya se usó o venció. Pedí uno nuevo con tu email.</p>
+          <p className="type-body">El link ya se usó o venció. Pedí uno nuevo con tu email.</p>
         </StatusNotice>
       )}
 
       {status === 'sent' && (
         <StatusNotice role="status" tone="gain" title="Revisá tu email">
-          <p className="text-body-sm">
+          <p className="type-body">
             Si esa dirección está bien escrita, te llega un link para entrar. Puede tardar unos
             minutos; fijate también en el correo no deseado.
           </p>
@@ -144,11 +151,11 @@ export default function LoginPanel() {
             }}
             className={inputClass}
           />
-          <p id={EMAIL_HINT_ID} className="text-caption text-muted">
+          <p id={EMAIL_HINT_ID} className="type-body text-muted">
             Sin contraseñas: te mandamos un link de un solo uso, válido por 15 minutos.
           </p>
           {emailError !== null && (
-            <p id={EMAIL_ERROR_ID} className="text-body-sm text-loss">
+            <p id={EMAIL_ERROR_ID} className={errorTextClass}>
               {emailError}
             </p>
           )}
