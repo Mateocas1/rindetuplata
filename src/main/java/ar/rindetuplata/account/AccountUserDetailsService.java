@@ -1,5 +1,6 @@
 package ar.rindetuplata.account;
 
+import java.util.UUID;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -28,6 +29,7 @@ public class AccountUserDetailsService implements UserDetailsService {
 		String email = Emails.normalize(username);
 		accounts.findByEmail(email)
 				.orElseThrow(() -> new UsernameNotFoundException("No account for " + email));
-		return User.withUsername(email).password("{noop}magic-link").authorities(roles.of(email)).build();
+		// Accounts have no password: an unguessable one per load keeps any future password-based login closed.
+		return User.withUsername(email).password("{noop}" + UUID.randomUUID()).authorities(roles.of(email)).build();
 	}
 }

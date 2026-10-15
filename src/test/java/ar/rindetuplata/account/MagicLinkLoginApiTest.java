@@ -50,6 +50,22 @@ class MagicLinkLoginApiTest extends AccountIntegrationTest {
 	}
 
 	@Test
+	void aLongValidEmailCanRequestALinkAndLogIn() throws Exception {
+		String longEmail = "nombre.apellido.segundo.apellido.largo@consultora-ejemplo-servicios-financieros.com.ar";
+		assertThat(longEmail).hasSizeGreaterThan(80);
+
+		postMagicLink(longEmail).andExpect(status().isAccepted());
+		Cookie session = sessionCookie(login(lastMailedToken(), null)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.email").value(longEmail))
+				.andReturn());
+
+		mockMvc.perform(get("/api/v1/me").cookie(session))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.email").value(longEmail));
+	}
+
+	@Test
 	void aUsedTokenIsUnauthorized() throws Exception {
 		postMagicLink(USER_EMAIL);
 		String token = lastMailedToken();
