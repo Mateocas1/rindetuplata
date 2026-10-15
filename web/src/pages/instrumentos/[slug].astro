@@ -107,10 +107,7 @@ const term = 'text-muted';
       <nav aria-label="Ubicación" class="text-caption text-muted">
         <ol class="flex flex-wrap gap-x-2">
           <li>
-            <a
-              class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-              href="/"
-            >
+            <a class="link" href="/">
               Inicio
             </a>
           </li>
@@ -118,10 +115,7 @@ const term = 'text-muted';
             category !== null && (
               <li>
                 <span aria-hidden="true">/</span>{' '}
-                <a
-                  class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-                  href={category.path}
-                >
+                <a class="link" href={category.path}>
                   {category.navLabel}
                 </a>
               </li>
@@ -144,8 +138,8 @@ const term = 'text-muted';
       <h2 id="tasa-de-hoy" class="text-h2 font-semibold">La tasa de hoy</h2>
       {
         ranked !== null ? (
-          <div class="flex max-w-prose flex-col gap-3 rounded-lg border border-border bg-surface-raised p-block">
-            <p class="text-display font-semibold tabular-nums">
+          <div class="card flex max-w-prose flex-col gap-3 p-6">
+            <p class="text-figure font-semibold tabular-nums">
               {ratePercent}
               <span class="text-h3 font-normal text-muted">{basis}</span>
             </p>
@@ -185,13 +179,13 @@ const term = 'text-muted';
               </div>
             </dl>
             {isStale && (
-              <p class="inline-flex self-start rounded-pill bg-warning-surface px-2 py-1 text-caption text-on-warning">
+              <p class="chip self-start bg-warning-surface text-on-warning">
                 {flagLabel('STALE')}: la fuente no publica un dato más nuevo.
               </p>
             )}
           </div>
         ) : (
-          <div class="flex max-w-prose flex-col gap-3 rounded-lg border border-border bg-surface-raised p-block">
+          <div class="card flex max-w-prose flex-col gap-3 p-6">
             <p class="font-medium">Hoy no entra en el ranking</p>
             <p class="text-body-sm text-muted">
               {ineligible === null
@@ -230,7 +224,7 @@ const term = 'text-muted';
         <h2 id="historial" class="text-h2 font-semibold">Cómo viene rindiendo</h2>
         <p class="text-body-sm text-muted">
           La tasa del instrumento contra la inflación mensual del INDEC, la que se usa para el
-          histórico (S10). El ranking de hoy compara contra la inflación esperada del REM.
+          histórico. El ranking de hoy compara contra la inflación esperada del REM.
         </p>
       </div>
       <HistoryChart history={history} />
@@ -256,20 +250,14 @@ const term = 'text-muted';
         {
           category !== null && (
             <>
-              <a
-                class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-                href={category.path}
-              >
+              <a class="link" href={category.path}>
                 Ver {category.navLabel.toLowerCase()}
               </a>{' '}
               ·{' '}
             </>
           )
         }
-        <a
-          class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-          href="/metodologia/"
-        >
+        <a class="link" href="/metodologia/">
           Cómo se calcula cada número
         </a>
       </p>

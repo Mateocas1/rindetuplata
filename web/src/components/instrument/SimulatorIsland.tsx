@@ -28,8 +28,7 @@ export interface Props {
   defaultDays?: number;
 }
 
-const inputClass =
-  'w-full rounded-md border border-border-strong bg-surface-raised px-3 py-2 text-body tabular-nums';
+const inputClass = 'field tabular-nums';
 const labelClass = 'flex flex-col gap-1 text-body-sm font-medium';
 
 function SimulatedResult({
@@ -79,7 +78,7 @@ function SimulatedResult({
         </p>
       )}
       {isStale && (
-        <p className="inline-flex self-start rounded-pill bg-warning-surface px-2 py-1 text-caption text-on-warning">
+        <p className="chip self-start bg-warning-surface text-on-warning">
           {flagLabel('STALE')}
         </p>
       )}
@@ -181,11 +180,7 @@ export default function SimulatorIsland({
             )}
           </div>
         </div>
-        <button
-          type="submit"
-          className="self-start rounded-md bg-accent-solid px-4 py-2 font-semibold text-on-accent hover:bg-accent aria-disabled:opacity-60"
-          aria-disabled={loading}
-        >
+        <button type="submit" className="btn-primary self-start aria-disabled:opacity-60" aria-disabled={loading}>
           {loading ? 'Simulando…' : 'Simular'}
         </button>
       </form>
@@ -194,7 +189,7 @@ export default function SimulatorIsland({
         role="status"
         aria-live="polite"
         aria-busy={loading}
-        className="min-h-6 rounded-lg border border-border bg-surface-raised px-4 py-3"
+        className="card min-h-6 px-4 py-3"
       >
         {loading && <p className="text-body-sm text-muted">Simulando con tu monto y tu plazo…</p>}
         {!loading && error !== null && <p className="text-body-sm text-loss">{error}</p>}

@@ -44,10 +44,7 @@ const jsonLd = breadcrumbJsonLd([
       <nav aria-label="Ubicación" class="text-caption text-muted">
         <ol class="flex flex-wrap gap-x-2">
           <li>
-            <a
-              class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-              href="/"
-            >
+            <a class="link" href="/">
               Inicio
             </a>
           </li>
@@ -58,7 +55,10 @@ const jsonLd = breadcrumbJsonLd([
       <p class="text-lead text-muted text-pretty">{category.intro}</p>
       <p class="text-body-sm text-muted">
         Ordenado por los pesos que ganás con $&nbsp;1.000.000 a 30 días. Cada fila indica su
-        fuente, la fecha del dato y si quedó desactualizado. Datos del {formatDate(ranking.request.asOf)}.
+        fuente, la fecha del dato y si quedó desactualizado.
+      </p>
+      <p class="chip self-start bg-subtle-surface text-muted">
+        Datos del {formatDate(ranking.request.asOf)}
       </p>
     </header>
 
@@ -68,17 +68,11 @@ const jsonLd = breadcrumbJsonLd([
     </section>
 
     <p class="max-w-prose text-body-sm">
-      <a
-        class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-        href="/"
-      >
+      <a class="link" href="/">
         Ver todas las opciones juntas, con tu monto y tu plazo
       </a>
       {' '}·{' '}
-      <a
-        class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-        href="/metodologia/"
-      >
+      <a class="link" href="/metodologia/">
         Cómo se calcula cada número
       </a>
     </p>

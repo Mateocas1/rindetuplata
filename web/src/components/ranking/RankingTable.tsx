@@ -9,6 +9,14 @@
  * Narrow screens: the table keeps its semantics inside a labelled, focusable
  * scroll region with a sticky first column and a visible cue, rather than
  * dropping columns (S11 requires source and date on every row).
+ *
+ * T12b: the whole table sits in a `card`, each row header opens with its
+ * position, the pesos earned is the one protagonist and every flag is a `chip`.
+ * Row hover is instant (no transition; motion arrives with T12d).
+ *
+ * The sticky cells stay at `z-0`: they must cover their own scrolled siblings,
+ * but never the sticky site header above them (z-10), or a scrolled row would
+ * paint over the page chrome.
  */
 import { formatDate, formatDays, formatInteger, formatMoney, formatPercent } from '../../lib/format';
 import { confidenceLabel, flagLabel, inflationIndexLabel, inflationIndexShortLabel, kindLabel, rateKindLabel } from '../../lib/labels';
@@ -16,7 +24,8 @@ import { instrumentPageHref } from '../../lib/slug';
 import type { RankedEntry, Ranking } from '../../lib/types';
 import RealReturnBadge from './RealReturnBadge';
 
-const headCell = 'border-b border-border px-4 py-3 text-caption font-semibold text-muted';
+const headCell =
+  'border-b border-border bg-subtle-surface px-4 py-3 text-caption font-semibold uppercase tracking-[0.05em] text-muted';
 
 function rowCell(isLast: boolean): string {
   return `px-4 py-3 align-top ${isLast ? '' : 'border-b border-border'}`;
@@ -49,7 +58,7 @@ export default function RankingTable({
       <p className="text-caption text-muted md:hidden">
         Deslizá la tabla para ver todas las columnas.
       </p>
-      <div className="overflow-hidden rounded-lg border border-border bg-surface-raised">
+      <div className="card overflow-hidden">
         <div
           className="overflow-x-auto"
           role="region"
@@ -64,7 +73,7 @@ export default function RankingTable({
             </caption>
             <thead>
               <tr>
-                <th scope="col" className={`${headCell} sticky start-0 z-10 bg-surface-raised text-start`}>
+                <th scope="col" className={`${headCell} sticky start-0 z-0 text-start`}>
                   Opción
                 </th>
                 <th scope="col" className={`${headCell} text-end`}>
@@ -86,11 +95,14 @@ export default function RankingTable({
                 const cell = rowCell(index === ranking.ranked.length - 1);
                 const href = instrumentPageHref(pages, entry);
                 return (
-                  <tr key={entry.id}>
+                  <tr key={entry.id} className="group hover:bg-subtle-surface">
                     <th
                       scope="row"
-                      className={`${cell} sticky start-0 z-10 bg-surface-raised text-start font-normal`}
+                      className={`${cell} sticky start-0 z-0 bg-surface-raised text-start font-normal group-hover:bg-subtle-surface`}
                     >
+                      <span className="block text-caption text-muted tabular-nums">
+                        {index + 1}
+                      </span>
                       {href === null ? (
                         <span className="block font-medium text-text">{entry.name}</span>
                       ) : (
@@ -104,12 +116,12 @@ export default function RankingTable({
                       {entry.entity !== null && entry.entity !== entry.name && (
                         <span className="block text-caption text-muted">{entry.entity}</span>
                       )}
-                      <span className="mt-1 inline-flex rounded-pill bg-subtle-surface px-2 py-0.5 text-caption text-muted">
+                      <span className="chip mt-1 bg-subtle-surface text-muted">
                         {kindLabel(entry.kind)}
                       </span>
                     </th>
                     <td className={`${cell} text-end`}>
-                      <span className="block font-semibold tabular-nums">
+                      <span className="block text-body font-semibold tabular-nums">
                         {formatMoney(entry.earned)}
                       </span>
                       <span className="block text-caption text-muted tabular-nums">
@@ -145,7 +157,7 @@ export default function RankingTable({
                           : ''}
                       </span>
                       {isStale(entry) && (
-                        <span className="mt-1 inline-flex rounded-pill bg-warning-surface px-2 py-0.5 text-caption text-on-warning">
+                        <span className="chip mt-1 bg-warning-surface text-on-warning">
                           {flagLabel('STALE')}
                         </span>
                       )}
@@ -168,7 +180,7 @@ export default function RankingTable({
             )} en ${formatDays(days)} (observación del ${formatDate(ranking.inflation.observationDate)})`}
         ).{' '}
         <a
-          className="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
+          className="link"
           href="/metodologia/"
         >
           Cómo se calcula cada número

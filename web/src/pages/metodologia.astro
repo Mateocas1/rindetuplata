@@ -16,8 +16,9 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { CONFIDENCE_DESCRIPTIONS, CONFIDENCE_LABELS } from '../lib/labels';
 
-const linkClass = 'text-accent underline decoration-from-font underline-offset-2 hover:no-underline';
-const detailsClass = 'rounded-md border border-border bg-surface-raised px-4 py-3';
+const linkClass = 'link';
+// Callouts sit on the page surface: the `card` recipe carries the edge (T12b).
+const detailsClass = 'card px-4 py-3';
 const summaryClass = 'cursor-pointer text-body-sm font-semibold text-accent';
 const confidenceOrder = [
   'OFFICIAL_AUTOMATIC',
