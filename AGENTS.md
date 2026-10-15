@@ -85,6 +85,7 @@ Pane prompt checklist (learned in T4 with DeepSeek v4 flash; each item cost an a
   T4c 227k, T4a 137k, T4b 66k).
 - **Parallel Maven panes** need separate worktrees under `.worktrees/` (excluded in `.git/info/exclude`) so they never
   share `target/`.
+- **Exit codes and `.astro` syntax (T12).** Never pipe a check through `tail` to judge it: `cmd > file 2>&1; rc=$?`. In `.astro` files write HTML attributes (`tabindex`, `class`), not JSX props. Name the e2e selector contract (`web/e2e/account.spec.ts`: roles, exact button names) in any prompt that restyles the account pages.
 - **What works well:** allowed edit surfaces are respected; asking for "deviations from the notes" gets honest,
   useful reports.
 
