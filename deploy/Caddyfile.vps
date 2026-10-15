@@ -3,8 +3,19 @@
 # The API container is only reachable from this Compose network; Caddy gets the certificate for
 # api.<domain> from Let's Encrypt on its own. The site is static and lives on a CDN, so Caddy here
 # serves the API only — the local one-origin Caddyfile lives in deploy/Caddyfile.local.
+#
+# Only `/api/*` is proxied: the static site lives on the CDN, the API has no other public route, and a
+# path that reaches this host by accident (a stale DNS record, a mistyped deploy URL) must answer 404
+# instead of hitting whatever the API serves for it (finding R1 of review-d018a62efca39d30).
 
 api.rindetuplata.ar {
 	encode zstd gzip
-	reverse_proxy api:8080
+
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		respond 404
+	}
 }

@@ -1,10 +1,12 @@
 package ar.rindetuplata.alert;
 
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.boot.amqp.autoconfigure.RabbitListenerRetrySettingsCustomizer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,24 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties({ OutboxProperties.class, AlertMailProperties.class })
 class OutboxConfiguration {
+
+	/**
+	 * T11b: a failure the consumer marks as final ({@link AmqpRejectAndDontRequeueException}, e.g. an unreadable
+	 * payload) is not retried: the container's retry advice would otherwise repeat it three times before the
+	 * dead-lettering, which only delays the same outcome. The listener wraps the exception, so the whole cause chain
+	 * is checked.
+	 */
+	@Bean
+	RabbitListenerRetrySettingsCustomizer finalFailuresAreNotRetried() {
+		return settings -> settings.setExceptionPredicate(failure -> {
+			for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+				if (cause instanceof AmqpRejectAndDontRequeueException) {
+					return false;
+				}
+			}
+			return true;
+		});
+	}
 
 	@Bean
 	TopicExchange alertEventsExchange() {

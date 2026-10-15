@@ -99,4 +99,17 @@ class MagicLinkLoginApiTest extends AccountIntegrationTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.email").value(USER_EMAIL));
 	}
+
+	@Test
+	void aReturningLoginKeepsTheSingleAccountAndRecordsTheLoginTime() throws Exception {
+		loginNewSession(USER_EMAIL);
+		clock.advance(Duration.ofHours(2));
+		postMagicLink(USER_EMAIL).andExpect(status().isAccepted());
+
+		login(lastMailedToken(), null).andExpect(status().isOk()).andExpect(jsonPath("$.email").value(USER_EMAIL));
+
+		assertThat(accountCount()).as("a second login creates no second account").isEqualTo(1);
+		assertThat(jdbc.sql("select last_login_at > created_at from app_user where email = :email")
+				.param("email", USER_EMAIL).query(Boolean.class).single()).isTrue();
+	}
 }

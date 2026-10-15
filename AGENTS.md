@@ -80,6 +80,7 @@ Pane prompt checklist (learned in T4 with DeepSeek v4 flash; each item cost an a
 - **Deploy files (T7e).** Check Compose merges with `docker compose config` (`!reset` and `!override` differ) and
   every volume mount against the image's `Volumes`/`PGDATA` (`docker image inspect`); Playwright specs that may reuse a
   running stack must be idempotent.
+- **Test contexts own containers.** Each test configuration declares its own Testcontainers beans, so every distinct cached context keeps a Postgres (and maybe a RabbitMQ) alive; `src/test/resources/spring.properties` caps the cache at 8 (T11). Reuse a shared test configuration instead of adding `@TestPropertySource` or `@Primary` variants, and count `Creating container for image` in the log when the suite flakes with "Connection refused" or SSL errors.
 - **Point to exact files** to read first; exploration dominates cost (T4d, a 1-listener task, peaked at 170k tokens;
   T4c 227k, T4a 137k, T4b 66k).
 - **Parallel Maven panes** need separate worktrees under `.worktrees/` (excluded in `.git/info/exclude`) so they never
