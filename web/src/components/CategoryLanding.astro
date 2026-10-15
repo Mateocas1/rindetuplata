@@ -1,0 +1,86 @@
+---
+/**
+ * Category landing page (T7c, S14).
+ *
+ * The day's ranking filtered by one kind, prerendered with the same table
+ * component the home page uses. No island: the table is static markup and each
+ * row links to the instrument page. Own H1, intro copy, title, description and
+ * breadcrumb.
+ */
+import RankingTable from './ranking/RankingTable';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import type { Category } from '../lib/categories';
+import { loadRanking, CATALOG_LIMIT } from '../lib/data';
+import { formatDate } from '../lib/format';
+import { loadInstrumentPages } from '../lib/pages';
+import { DEFAULT_RANKING_QUERY } from '../lib/rankingQuery';
+import { breadcrumbJsonLd } from '../lib/seo';
+
+export interface Props {
+  category: Category;
+}
+
+const { category } = Astro.props;
+const ranking = await loadRanking(
+  { ...DEFAULT_RANKING_QUERY, kinds: [category.kind] },
+  { limit: CATALOG_LIMIT },
+);
+// Every row of a kind recording has a page, but the table gates on the real set
+// instead of assuming it (D1).
+const pages = await loadInstrumentPages();
+
+const site = Astro.site ?? new URL('http://localhost:4321');
+const canonical = new URL(Astro.url.pathname, site);
+const description = `${category.description} Datos del ${formatDate(ranking.request.asOf)}.`;
+const jsonLd = breadcrumbJsonLd([
+  { name: 'Inicio', url: new URL('/', site).href },
+  { name: category.navLabel, url: canonical.href },
+]);
+---
+
+<BaseLayout title={category.title} description={description} jsonLd={jsonLd}>
+  <div class="flex flex-col gap-section py-section">
+    <header class="flex max-w-prose flex-col gap-block">
+      <nav aria-label="Ubicación" class="text-caption text-muted">
+        <ol class="flex flex-wrap gap-x-2">
+          <li>
+            <a
+              class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
+              href="/"
+            >
+              Inicio
+            </a>
+          </li>
+          <li aria-current="page"><span aria-hidden="true">/</span> {category.navLabel}</li>
+        </ol>
+      </nav>
+      <h1 class="text-display font-semibold text-balance">{category.h1}</h1>
+      <p class="text-lead text-muted text-pretty">{category.intro}</p>
+      <p class="text-body-sm text-muted">
+        Ordenado por los pesos que ganás con $&nbsp;1.000.000 a 30 días. Cada fila indica su
+        fuente, la fecha del dato y si quedó desactualizado. Datos del {formatDate(ranking.request.asOf)}.
+      </p>
+    </header>
+
+    <section class="flex flex-col gap-block" aria-labelledby="ranking-de-hoy">
+      <h2 id="ranking-de-hoy" class="text-h2 font-semibold">El ranking de hoy</h2>
+      <RankingTable ranking={ranking} pageSlugs={pages.slugs} />
+    </section>
+
+    <p class="max-w-prose text-body-sm">
+      <a
+        class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
+        href="/"
+      >
+        Ver todas las opciones juntas, con tu monto y tu plazo
+      </a>
+      {' '}·{' '}
+      <a
+        class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
+        href="/metodologia/"
+      >
+        Cómo se calcula cada número
+      </a>
+    </p>
+  </div>
+</BaseLayout>

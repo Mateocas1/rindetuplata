@@ -5,6 +5,7 @@ import {
   formatInteger,
   formatMoney,
   formatPercent,
+  formatShortDate,
   formatSignedPercent,
 } from './format';
 
@@ -83,5 +84,13 @@ describe('formatDays', () => {
   it('uses the Spanish plural form', () => {
     expect(formatDays(30)).toBe('30 días');
     expect(formatDays(1)).toBe('1 día');
+  });
+});
+
+describe('formatShortDate', () => {
+  it('formats a chart axis date in the source day, without a time zone shift', () => {
+    expect(formatShortDate('2026-07-31')).toBe('31/07/26');
+    expect(formatShortDate('2026-01-05')).toBe('05/01/26');
+    expect(formatShortDate('2026-10-14')).toBe('14/10/26');
   });
 });

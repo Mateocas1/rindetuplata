@@ -8,12 +8,16 @@
 export interface Props {
   title: string;
   description: string;
-  jsonLd?: Record<string, unknown> | null;
+  /** One structured-data node, or several (each gets its own script tag). */
+  jsonLd?: object | Array<object> | null;
   noindex?: boolean;
   image?: string;
 }
 
 const { title, description, jsonLd = null, noindex = false, image = '/og-default.png' } = Astro.props;
+
+const jsonLdBlocks =
+  jsonLd === null ? [] : Array.isArray(jsonLd) ? jsonLd : [jsonLd];
 
 const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(Astro.url.pathname, site);
@@ -44,7 +48,7 @@ const socialTitle = title.length > SOCIAL_TITLE_LIMIT ? `${title.slice(0, 69)}â€
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={imageUrl.href} />
 {
-  jsonLd !== null && (
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-  )
+  jsonLdBlocks.map((block) => (
+    <script type="application/ld+json" set:html={JSON.stringify(block)} />
+  ))
 }

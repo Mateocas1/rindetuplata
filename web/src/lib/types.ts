@@ -117,6 +117,70 @@ export interface BankOption {
   name: string;
 }
 
+/** One rate snapshot of an instrument, as served by `GET /api/v1/instruments/{id}/history`. */
+export interface SnapshotPoint {
+  captureDate: string;
+  dataDate: string;
+  basis: string;
+  rate: number | null;
+  clientRate: number | null;
+  invalid: boolean;
+  flags: ValidationFlag[];
+}
+
+/** One fund cuotaparte quote; `tnaEquivalent` is null when the value fell. */
+export interface FundQuotePoint {
+  quoteDate: string;
+  vcp: number;
+  tnaEquivalent: number | null;
+}
+
+/** INDEC monthly inflation, the past index used by history (S10). */
+export interface MonthlyInflationPoint {
+  index: string;
+  observationDate: string;
+  value: number;
+  confidence: string;
+  sourceId: string;
+}
+
+export interface InstrumentHistory {
+  id: string;
+  kind: string;
+  displayName: string;
+  entityName: string | null;
+  segment: string | null;
+  sourceId: string;
+  from: string;
+  to: string;
+  points: SnapshotPoint[];
+  quotes: FundQuotePoint[];
+  monthlyInflation: MonthlyInflationPoint[];
+}
+
+export interface IneligibleSimulation {
+  id: string;
+  name: string;
+  reason: string;
+  detail: string | null;
+}
+
+/** `GET /api/v1/simulations` excluded branch, as the OpenAPI snapshot types it. */
+export interface ExcludedSimulation {
+  id: string;
+  name: string;
+  reason: string;
+  flags: ValidationFlag[];
+}
+
+/** `GET /api/v1/simulations`: exactly one of entry / ineligible / excluded. */
+export interface Simulation {
+  status: string;
+  entry: RankedEntry | null;
+  ineligible: IneligibleSimulation | null;
+  excluded: ExcludedSimulation | null;
+}
+
 // ---------------------------------------------------------------------------
 // Compile-time guard against the committed OpenAPI snapshot: every field this
 // module declares must exist in the generated schema.
@@ -139,6 +203,15 @@ type _UpTo = AssertKnown<KeysAreKnown<UpTo, Schema['UpToView']>>;
 type _SourceRef = AssertKnown<KeysAreKnown<SourceRef, Schema['SourceView']>>;
 type _RateUsed = AssertKnown<KeysAreKnown<RateUsed, Schema['RateUsedView']>>;
 type _Flag = AssertKnown<KeysAreKnown<ValidationFlag, Schema['ValidationFlagView']>>;
+type _History = AssertKnown<KeysAreKnown<InstrumentHistory, Schema['InstrumentHistory']>>;
+type _SnapshotPoint = AssertKnown<KeysAreKnown<SnapshotPoint, Schema['SnapshotPoint']>>;
+type _FundQuotePoint = AssertKnown<KeysAreKnown<FundQuotePoint, Schema['FundQuotePoint']>>;
+type _MonthlyInflationPoint = AssertKnown<
+  KeysAreKnown<MonthlyInflationPoint, Schema['MonthlyInflationPoint']>
+>;
+type _Simulation = AssertKnown<KeysAreKnown<Simulation, Schema['SimulationResponse']>>;
+type _IneligibleSimulation = AssertKnown<KeysAreKnown<IneligibleSimulation, Schema['IneligibleView']>>;
+type _ExcludedSimulation = AssertKnown<KeysAreKnown<ExcludedSimulation, Schema['ExcludedView']>>;
 
 // Referenced so the guards are not flagged as unused by the checker.
 export type TypeGuards = [
@@ -153,4 +226,11 @@ export type TypeGuards = [
   _SourceRef,
   _RateUsed,
   _Flag,
+  _History,
+  _SnapshotPoint,
+  _FundQuotePoint,
+  _MonthlyInflationPoint,
+  _Simulation,
+  _IneligibleSimulation,
+  _ExcludedSimulation,
 ];

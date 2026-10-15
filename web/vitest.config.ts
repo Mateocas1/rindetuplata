@@ -5,7 +5,10 @@ export default getViteConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
-    // The build smoke test shells out to `astro build`; give it room.
+    // Two smoke tests shell out to `astro build` and both write `dist`; run the
+    // files one at a time so the two builds never share the output directory.
+    fileParallelism: false,
+    // The build smoke tests shell out to `astro build`; give them room.
     testTimeout: 180_000,
     hookTimeout: 180_000,
   },
