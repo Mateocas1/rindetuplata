@@ -1,0 +1,26 @@
+# E2E overlay (T7e): the throwaway stack `deploy/e2e.sh` runs *next to* the developer's own stack.
+#
+#   docker compose -f compose.yaml -f deploy/compose.e2e.yaml -p rindetuplata-e2e --profile stack ...
+#
+# Why an overlay: the smoke needs Caddy (the site) and Mailpit's HTTP API on the host, and nothing else.
+# The base file publishes Postgres, the broker and Mailpit's SMTP port for local development, and a
+# second copy of them would collide with a `docker compose up -d postgres` that was already running —
+# the very database the smoke must not disturb (finding R1 of review-d018a62efca39d30). Dropping those
+# publications leaves the e2e stack reachable on WEB_PORT and 8025 only, so it starts while the
+# developer's database, broker and Mailpit keep their ports and their data.
+#
+# It is not `deploy/compose.vps.yaml`: that one is the production shape (TLS, real mail, no Mailpit)
+# and it also replaces the credentials, which the smoke must not need.
+
+services:
+  postgres:
+    ports: !override []
+
+  rabbitmq:
+    ports: !override []
+
+  # Only the HTTP API the Playwright spec reads the magic link from; SMTP (1025) stays on the Compose
+  # network, where the api container talks to it.
+  mailpit:
+    ports: !override
+      - "127.0.0.1:8025:8025"
