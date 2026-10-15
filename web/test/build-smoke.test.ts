@@ -79,8 +79,48 @@ beforeAll(() => {
 }, 300_000);
 
 describe('prerendered home page', () => {
-  it('renders the heading the product promises', () => {
-    expect(html('index.html')).toContain('¿Dónde rinde tu plata hoy?');
+  it('renders the heading the product promises, with "plata" as the one serif accent', () => {
+    const page = html('index.html');
+    const h1 = /<h1 class="type-display">([\s\S]*?)<\/h1>/.exec(page);
+    expect(h1, 'the home H1').not.toBeNull();
+    expect(renderedText(h1![1]).replace(/\s+/g, ' ').trim()).toBe('¿Dónde rinde tu plata hoy?');
+    expect(h1![1]).toContain('<span class="serif-accent">plata</span>');
+  });
+
+  it('paints the best option as the only glass card, inside the field it blurs', () => {
+    const page = html('index.html');
+
+    // One glass element per page (T13), over the cobalt glow and hairline grid
+    // its `glass-field` parent paints, with the cobalt rail of the leader.
+    expect(page.match(/class="glass /g) ?? []).toHaveLength(1);
+    expect(page).toContain('glass-field');
+    expect(page).toContain('border-s-accent');
+    expect(renderedText(page)).toContain('La mejor de hoy');
+  });
+
+  it('offers the amount and term presets as real radios, and keeps the free inputs', () => {
+    const page = html('index.html');
+    const radios = [...page.matchAll(/<input[^>]*type="radio"[^>]*>/g)].map((match) => match[0]);
+
+    expect(radios).toHaveLength(6);
+    for (const [name, values, preselected] of [
+      ['monto-preset', ['500000', '1000000', '5000000'], '1000000'],
+      ['plazo-preset', ['30', '60', '90'], '30'],
+    ] as const) {
+      const group = radios.filter((tag) => tag.includes(`name="${name}"`));
+      expect(group.map((tag) => /value="([^"]*)"/.exec(tag)?.[1])).toEqual([...values]);
+      // The default query of the build is the checked preset, and only one.
+      const checked = group.filter((tag) => /\bchecked=""/.test(tag));
+      expect(checked).toHaveLength(1);
+      expect(checked[0]).toContain(`value="${preselected}"`);
+    }
+    // The capsule control paints its thumb with the roles the design names.
+    expect(page).toContain('bg-thumb');
+    expect(page).toContain('text-on-thumb');
+    expect(page).toContain('bg-subtle-surface');
+    // The prototype's presets are shortcuts: the reader's own inputs stay.
+    expect(page).toMatch(/<input[^>]*id="monto"[^>]*type="number"/);
+    expect(page).toMatch(/<input[^>]*id="dias"[^>]*type="number"/);
   });
 
   it('renders the first three ranked options in order', () => {
@@ -111,14 +151,26 @@ describe('prerendered home page', () => {
     }
   });
 
-  it('numbers each ranked row inside its own row header cell', () => {
-    const headers = rowHeaderTexts(html('index.html'));
+  it('numbers the board with a mono 01-08 gutter and keeps the rest behind a disclosure', () => {
+    const page = html('index.html');
+    const headers = rowHeaderTexts(page);
     const expected = fixture.ranked.slice(0, 3);
     expect(headers.length).toBeGreaterThanOrEqual(expected.length);
     for (const [index, entry] of expected.entries()) {
-      expect(headers[index], `row ${index + 1}`).toMatch(new RegExp(`^${index + 1}\\s`));
+      const position = String(index + 1).padStart(2, '0');
+      expect(headers[index], `row ${index + 1}`).toMatch(new RegExp(`^${position}\\s`));
       expect(headers[index], `row ${index + 1}`).toContain(entry.name);
     }
+
+    // Nothing is dropped: the first table is the day's eight, the second one
+    // continues the gutter inside one disclosure.
+    const boards = [...page.matchAll(/<th[^>]*scope="row"/g)].map((match) => match.index ?? -1);
+    expect(boards).toHaveLength(fixture.ranked.length);
+    const summary = page.indexOf('opciones siguientes');
+    expect(summary).toBeGreaterThan(-1);
+    expect(boards[7]).toBeLessThan(summary);
+    expect(boards[8]).toBeGreaterThan(summary);
+    expect(headers[8]).toMatch(/^09\s/);
   });
 
   it('states where the data comes from (S11)', () => {
@@ -198,6 +250,14 @@ describe('stylesheet', () => {
       '.tabular-nums',
       '.px-gutter',
       '.text-display',
+      '.type-label',
+      '.type-data',
+      '.type-figure',
+      '.type-index',
+      '.serif-accent',
+      '.glass-field',
+      '.bg-thumb',
+      '.text-on-thumb',
     ]) {
       expect(css, `${selector} is missing from the built CSS`).toContain(selector);
     }
