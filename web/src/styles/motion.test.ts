@@ -49,7 +49,7 @@ function withClassConstant(file: string, tag: string): string {
 }
 
 describe('motion layer', () => {
-  it.each(['btn-primary', 'btn-secondary'])(
+  it.each(['btn-primary', 'btn-secondary', 'btn-danger'])(
     '%s scales to 0.96 on press over 150ms ease-out, only without reduced motion',
     (name) => {
       const body = utility(name);
@@ -82,9 +82,20 @@ describe('motion layer', () => {
     expect(ungated).not.toMatch(/transition[^;]*(rotate|block-size|translate|scale)/);
   });
 
-  it('dims a busy region instead of moving its data', () => {
-    expect(global).toMatch(/\[aria-busy='true'\]\s*\{\s*opacity:\s*0\.6;/);
-    expect(global).toMatch(/\[aria-busy\]\s*\{\s*transition:\s*opacity 150ms ease-out;/);
+  it('never dims a busy region: its text must keep 4.5:1 while it waits (T12e)', () => {
+    const busyRules = [...global.matchAll(/\[aria-busy[^\]]*\][^{]*\{([^}]*)\}/g)].map((m) => m[1]);
+    expect(busyRules.filter((body) => /opacity|filter/.test(body))).toEqual([]);
+    const offenders = sources
+      .filter(({ text }) => /aria-busy[^\n]*(opacity|brightness)/.test(text))
+      .map(({ file }) => file);
+    expect(offenders).toEqual([]);
+  });
+
+  it('builds the destructive confirm from the btn-danger recipe on the measured loss pair', () => {
+    expect(utility('btn-danger')).toMatch(/bg-loss[^;]*text-on-accent|text-on-accent[^;]*bg-loss/);
+    const alertList = sources.find(({ file }) => file.endsWith('AlertRuleList.tsx'));
+    expect(alertList?.text).toContain('btn-danger');
+    expect(alertList?.text).not.toMatch(/bg-loss px-4/);
   });
 
   it('never transitions everything or any color', () => {

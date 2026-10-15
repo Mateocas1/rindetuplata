@@ -172,7 +172,7 @@ export default function RankingExplorer({
         <h2 id="armar-ranking" className="text-h2 font-semibold">
           Armá tu ranking
         </h2>
-        <div className="card flex flex-col gap-6 p-6">
+        <div className="card flex flex-col gap-6 p-block sm:p-6">
           <div className="flex flex-wrap items-end gap-x-8 gap-y-block">
             <div className="flex flex-col gap-1">
               <label htmlFor="monto" className={labelClass}>

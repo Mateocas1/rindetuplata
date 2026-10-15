@@ -96,6 +96,14 @@ describe('prerendered home page', () => {
     expect(positions[1]).toBeLessThan(positions[2]);
   });
 
+  it('contains the table inside its scroll region and keeps its focus ring visible (T12e)', () => {
+    const region = /<div class="([^"]*)" role="region" aria-label="Ranking para/.exec(html('index.html'));
+    expect(region, 'ranking scroll region').not.toBeNull();
+    // `relative` keeps the sr-only spans inside the scroller (no page-level sideways scroll at 320px);
+    // an inset outline is never clipped by the card's overflow-hidden.
+    expect(region![1].split(/\s+/)).toEqual(expect.arrayContaining(['relative', 'focus-visible:-outline-offset-2']));
+  });
+
   it('renders their earned amounts with the API values', () => {
     const page = html('index.html');
     for (const entry of fixture.ranked.slice(0, 3)) {

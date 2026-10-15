@@ -180,8 +180,8 @@ describe('a view has one primary action', () => {
 
     expect(html).toContain('Sí, eliminar la alerta');
     expect(html).toContain('Cancelar');
-    expect(countClass(html, 'bg-loss')).toBe(1);
-    expect(countClass(html, 'text-on-accent')).toBe(1);
+    // The loss fill on on-accent text lives in the btn-danger recipe (motion.test.ts pins its values).
+    expect(countClass(html, 'btn-danger')).toBe(1);
     expect(countClass(html, buttonSecondaryClass)).toBe(1);
   });
 

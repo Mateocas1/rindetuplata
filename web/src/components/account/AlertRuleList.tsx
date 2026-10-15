@@ -21,14 +21,10 @@ import { kindLabel } from '../../lib/labels';
 import { buttonSecondaryClass, cardClass } from './ui';
 
 const ROW = 'flex flex-col gap-3 border-b border-border px-4 py-4 last:border-b-0';
-const ROW_FIGURE = 'flex flex-col gap-0.5 sm:items-end';
+const ROW_FIGURE = 'flex flex-col gap-0.5 sm:items-end sm:text-end';
 
-/**
- * The destructive confirmation keeps the loss role: `tokens.test.ts` measures
- * `on-accent` on `loss` in both appearances, so the fill is not a guess.
- */
-const CONFIRM =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-loss px-4 py-2 text-body-sm font-semibold text-on-accent disabled:cursor-not-allowed disabled:opacity-60';
+/** The destructive confirmation: the `btn-danger` recipe (loss fill, measured pair). */
+const CONFIRM = 'btn-danger';
 
 export interface AlertRuleListProps {
   rules: AlertRule[];
@@ -89,7 +85,7 @@ export default function AlertRuleList({
           return (
             <li
               key={rule.id}
-              className={`${ROW} sm:flex-row sm:items-center sm:justify-between sm:gap-6 ${
+              className={`${ROW} sm:grid sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-center sm:gap-6 ${
                 confirming ? 'bg-subtle-surface' : ''
               }`}
             >
