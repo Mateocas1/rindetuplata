@@ -75,7 +75,7 @@ Order of work: T9 first (history clock), then T2 onward.
 | T12d | S14 | Motion: press feedback, disclosures, ranking re-render, theme-switch suppression, all gated by reduced motion (`animate` skill) | parent or pane | done | 87af043 |
 | T12e | S14 | Audit: interface-review + better-accessibility over light/dark × desktop/mobile screenshots, fix round | verify subagent + parent | done | 27cefcf |
 | T13 | S14, S10, S15 | Premium visual direction (L75): stronger text hierarchy, a distinctive identity beyond default Tailwind + Inter, less information per screen; research getdesign.md, Land-book, Seesaw, 21st.dev; prototype directions, owner picks, roll out, audit | parent + panes | in progress | |
-| T13a | S14 | Foundations in Cobalto Cristal: graphite + cobalt role tokens (light/dark, measured), fonts (Space Grotesk, Archivo, Geist Mono, Instrument Serif italic), text roles (max 7), glass/surface-ladder recipes | parent | done | COMMIT |
+| T13a | S14 | Foundations in Cobalto Cristal: graphite + cobalt role tokens (light/dark, measured), fonts (Space Grotesk, Archivo, Geist Mono, Instrument Serif italic), text roles (max 7), glass/surface-ladder recipes | parent | done | b2aad72 |
 | T13b | S14, S10, S15 | Home + ranking + category landings in the new direction (hero instrument card, segmented controls wired to the explorer, mono index gutter) | DeepSeek pane | pending | |
 | T13c | S14 | Instrument page, metodología, 404 | DeepSeek pane | pending | |
 | T13d | S14 | Account pages (ingresar, alertas, admin/tasas) | Haiku xhigh pane (<100k) | pending | |
