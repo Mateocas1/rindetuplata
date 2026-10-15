@@ -5,7 +5,7 @@
  * combobox pattern brings a key map and `aria-activedescendant` this list does
  * not need, and native buttons keep the keyboard path intact. The result count
  * is announced politely, and the chosen option collapses to a chip with a way
- * back ("Quitar").
+ * back ("Quitar"), which uses the one inline-link recipe of the system (T12c).
  */
 import { useMemo, useState } from 'react';
 import type { InstrumentSummary } from '../../lib/account';
@@ -54,7 +54,7 @@ export default function InstrumentPicker({
         <button
           type="button"
           onClick={() => onSelect(null)}
-          className="rounded-sm px-2 py-2 text-body-sm text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
+          className="link rounded-sm px-2 py-2 text-body-sm"
         >
           Quitar
         </button>
