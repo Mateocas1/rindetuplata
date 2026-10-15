@@ -1,5 +1,6 @@
 package ar.rindetuplata.account;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -12,6 +13,8 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.DeferredCsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +32,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1")
 public class AccountController {
 
+	/**
+	 * The T7a contract the SPA is written against: the login rotates the CSRF token, so the client refetches
+	 * {@code GET /api/v1/auth/csrf} instead of reusing the token it used for the login itself.
+	 */
+	private static final String LOGIN_DESCRIPTION = "Consumes the one-time token of the magic link and starts the "
+			+ "session. A successful login rotates the CSRF token and clears the XSRF-TOKEN cookie, so the client "
+			+ "must call GET /api/v1/auth/csrf again before its next state-changing request.";
+
 	private final AccountService accounts;
 
 	private final SecurityContextRepository securityContextRepository;
@@ -42,6 +53,20 @@ public class AccountController {
 		this.sessionStrategy = sessionStrategy;
 	}
 
+	@GetMapping("/auth/csrf")
+	@Operation(summary = "Current CSRF token", description = "The raw CSRF token the SPA sends as the "
+			+ "X-XSRF-TOKEN header on every state-changing request; the same response writes the XSRF-TOKEN cookie. "
+			+ "The header is compared against the raw value, so this is the token to hand the client, never the "
+			+ "masked request attribute. Public: no session is needed to ask for one.")
+	CsrfTokenResponse csrf(HttpServletRequest request) {
+		DeferredCsrfToken deferred = (DeferredCsrfToken) request.getAttribute(DeferredCsrfToken.class.getName());
+		if (deferred == null) {
+			throw new IllegalStateException("the CSRF filter did not expose its deferred token");
+		}
+		CsrfToken token = deferred.get();
+		return new CsrfTokenResponse(token.getHeaderName(), token.getToken());
+	}
+
 	@PostMapping("/auth/magic-link")
 	ResponseEntity<MagicLinkResponse> requestMagicLink(@RequestBody MagicLinkRequest request) {
 		accounts.requestMagicLink(request == null ? null : request.email());
@@ -49,12 +74,14 @@ public class AccountController {
 	}
 
 	@PostMapping(path = "/auth/login", consumes = MediaType.APPLICATION_JSON_VALUE)
+	@Operation(summary = "Log in with a magic-link token", description = LOGIN_DESCRIPTION)
 	ResponseEntity<MeResponse> loginJson(@RequestBody LoginRequest request, HttpServletRequest httpRequest,
 			HttpServletResponse httpResponse) {
 		return login(request == null ? null : request.token(), httpRequest, httpResponse);
 	}
 
 	@PostMapping(path = "/auth/login", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	@Operation(summary = "Log in with a magic-link token", description = LOGIN_DESCRIPTION)
 	ResponseEntity<MeResponse> loginForm(@RequestParam("token") String token, HttpServletRequest httpRequest,
 			HttpServletResponse httpResponse) {
 		return login(token, httpRequest, httpResponse);
