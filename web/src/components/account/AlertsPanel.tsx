@@ -5,46 +5,30 @@
  * one (optional kind, optional instrument from the public list, threshold as a
  * percent) and delete one with a confirmation. Any 401 leaves for `/ingresar`:
  * a page with no session has nothing to show.
+ *
+ * The panel owns the session, the data and the requests; `AlertCreateForm` and
+ * `AlertRuleList` render the two sections, and the notices go through the shared
+ * `StatusNotice`/`ProblemNotice` surfaces (T12c).
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { accountApi, type AlertRule, type InstrumentSummary } from '../../lib/account';
 import { ApiProblem } from '../../lib/api';
 import {
   alertRequest,
-  instrumentLabelById,
-  percentToFraction,
   selectableInstruments,
   validateAlertForm,
   type AlertFormState,
 } from '../../lib/accountForm';
 import { problemText, sessionAction, toProblem } from '../../lib/accountStatus';
-import { formatPercent } from '../../lib/format';
-import { KIND_OPTIONS, kindLabel } from '../../lib/labels';
-import InstrumentPicker from './InstrumentPicker';
+import AlertCreateForm from './AlertCreateForm';
+import AlertRuleList from './AlertRuleList';
 import ProblemNotice from './ProblemNotice';
-import {
-  buttonPrimaryClass,
-  buttonSecondaryClass,
-  cardClass,
-  errorTextClass,
-  fieldGroupClass,
-  inputClass,
-  labelClass,
-} from './ui';
+import StatusNotice from './StatusNotice';
 
 const LOGIN_PATH = '/ingresar';
 const EMPTY_FORM: AlertFormState = { kind: '', instrumentId: '', thresholdPercent: '' };
 
 type Status = 'loading' | 'ready' | 'error';
-
-function ruleKindLabel(rule: AlertRule): string {
-  return rule.kind === null ? 'Cualquier tipo' : kindLabel(rule.kind);
-}
-
-function ruleInstrumentLabel(rule: AlertRule, instruments: InstrumentSummary[]): string {
-  if (rule.instrumentId === null) return 'Cualquier opción';
-  return instrumentLabelById(instruments, rule.instrumentId) ?? `La opción #${rule.instrumentId}`;
-}
 
 /** The fields this form renders; anything else the API blames goes to the notice instead. */
 function isFormField(parameter: string | null): parameter is string {
@@ -64,7 +48,6 @@ export default function AlertsPanel() {
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [actionProblem, setActionProblem] = useState<ApiProblem | null>(null);
-  const confirmRef = useRef<HTMLButtonElement>(null);
 
   const load = useCallback(async (): Promise<void> => {
     setStatus('loading');
@@ -99,11 +82,6 @@ export default function AlertsPanel() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  // The confirmation takes over the row, so focus moves into it and back out.
-  useEffect(() => {
-    if (confirmingId !== null) confirmRef.current?.focus();
-  }, [confirmingId]);
 
   async function onCreate(event: { preventDefault: () => void }): Promise<void> {
     event.preventDefault();
@@ -180,88 +158,23 @@ export default function AlertsPanel() {
         </p>
 
         {created && (
-          <div
-            role="status"
-            className="rounded-lg border border-border bg-gain-surface px-4 py-3 text-body-sm text-on-gain"
-          >
-            Alerta creada. La vas a ver abajo y te avisamos cuando se cumpla.
-          </div>
+          <StatusNotice role="status" tone="gain" title="Alerta creada">
+            <p className="text-body-sm">
+              La vas a ver abajo y te avisamos cuando se cumpla.
+            </p>
+          </StatusNotice>
         )}
         {actionProblem !== null && <ProblemNotice problem={actionProblem} />}
 
-        <form onSubmit={onCreate} noValidate className={`${cardClass} flex flex-col gap-block`}>
-          <div className={fieldGroupClass}>
-            <label htmlFor="alerta-tipo" className={labelClass}>
-              Tipo de opción
-            </label>
-            <select
-              id="alerta-tipo"
-              name="tipo"
-              value={form.kind}
-              onChange={(event) => setForm({ ...form, kind: event.target.value })}
-              className={inputClass}
-            >
-              <option value="">Cualquier tipo</option>
-              {KIND_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <fieldset className="flex flex-col gap-2">
-            <legend className={labelClass}>Opción (opcional)</legend>
-            {optionsFailed ? (
-              <p className="text-body-sm text-loss">
-                No pudimos cargar la lista de opciones. Podés crear la alerta sin elegir una.
-              </p>
-            ) : (
-              <InstrumentPicker
-                id="alerta-instrumento"
-                instruments={instruments}
-                selectedId={form.instrumentId === '' ? null : Number(form.instrumentId)}
-                onSelect={(id) => setForm({ ...form, instrumentId: id === null ? '' : String(id) })}
-                describedBy={errors.instrumentId !== undefined ? 'alerta-instrumento-error' : undefined}
-              />
-            )}
-            {errors.instrumentId !== undefined && (
-              <p id="alerta-instrumento-error" className={errorTextClass}>
-                {errors.instrumentId}
-              </p>
-            )}
-          </fieldset>
-
-          <div className={fieldGroupClass}>
-            <label htmlFor="alerta-tasa" className={labelClass}>
-              Avisame si supera esta tasa (TNA anual en porcentaje)
-            </label>
-            <input
-              id="alerta-tasa"
-              name="tasa"
-              inputMode="decimal"
-              value={form.thresholdPercent}
-              aria-invalid={errors.thresholdPercent !== undefined}
-              aria-describedby={
-                errors.thresholdPercent === undefined ? 'alerta-tasa-ayuda' : 'alerta-tasa-ayuda alerta-tasa-error'
-              }
-              onChange={(event) => setForm({ ...form, thresholdPercent: event.target.value })}
-              className={inputClass}
-            />
-            <p id="alerta-tasa-ayuda" className="text-caption text-muted">
-              Escribí el número sin el signo %: por ejemplo, 25 para 25% de TNA.
-            </p>
-            {errors.thresholdPercent !== undefined && (
-              <p id="alerta-tasa-error" className={errorTextClass}>
-                {errors.thresholdPercent}
-              </p>
-            )}
-          </div>
-
-          <button type="submit" disabled={creating} className={`${buttonPrimaryClass} self-start`}>
-            {creating ? 'Creando…' : 'Crear alerta'}
-          </button>
-        </form>
+        <AlertCreateForm
+          form={form}
+          errors={errors}
+          instruments={instruments}
+          optionsFailed={optionsFailed}
+          creating={creating}
+          onChange={setForm}
+          onSubmit={(event) => void onCreate(event)}
+        />
       </section>
 
       <section aria-labelledby="tus-alertas" className="flex flex-col gap-block">
@@ -269,81 +182,19 @@ export default function AlertsPanel() {
           Tus alertas
         </h2>
 
-        {alerts.length === 0 ? (
-          <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-raised p-block">
-            <p className="font-medium">Todavía no tenés alertas</p>
-            <p className="text-body-sm text-muted">
-              Una alerta te avisa por email cuando una opción supera la tasa que le pongas. Armá la
-              primera con el formulario de arriba.
-            </p>
-          </div>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {alerts.map((rule) => {
-              const instrument = ruleInstrumentLabel(rule, instruments);
-              const description = `Eliminar la alerta de ${ruleKindLabel(rule)} sobre ${instrument}`;
-              return (
-                <li
-                  key={rule.id}
-                  className="flex flex-col gap-3 rounded-lg border border-border bg-surface-raised p-block sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <p className="font-medium">{ruleKindLabel(rule)}</p>
-                    <p className="text-body-sm text-muted">
-                      {instrument} · avisa si la tasa supera{' '}
-                      <span className="tabular-nums">
-                        {formatPercent(percentToFraction(rule.thresholdPercent))}
-                      </span>
-                    </p>
-                    {rule.active === false && (
-                      <p className="text-body-sm text-warning">Pausada: no envía avisos.</p>
-                    )}
-                  </div>
-                  {confirmingId === rule.id ? (
-                    <div
-                      role="group"
-                      aria-label={`Confirmar: ${description}`}
-                      className="flex flex-col gap-2"
-                    >
-                      <p className="text-body-sm">¿Eliminar esta alerta?</p>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          ref={confirmRef}
-                          type="button"
-                          disabled={deletingId === rule.id}
-                          onClick={() => void onDelete(rule.id)}
-                          className={buttonPrimaryClass}
-                        >
-                          {deletingId === rule.id ? 'Eliminando…' : 'Sí, eliminar la alerta'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setConfirmingId(null);
-                            document.getElementById(`alerta-eliminar-${rule.id}`)?.focus();
-                          }}
-                          className={buttonSecondaryClass}
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      id={`alerta-eliminar-${rule.id}`}
-                      type="button"
-                      aria-label={description}
-                      onClick={() => setConfirmingId(rule.id)}
-                      className={buttonSecondaryClass}
-                    >
-                      Eliminar
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <AlertRuleList
+          rules={alerts}
+          instruments={instruments}
+          confirmingId={confirmingId}
+          deletingId={deletingId}
+          onRequestDelete={setConfirmingId}
+          onCancelDelete={(id) => {
+            setConfirmingId(null);
+            // The confirmation closed on a click the row's own button now takes back.
+            document.getElementById(`alerta-eliminar-${id}`)?.focus();
+          }}
+          onConfirmDelete={(id) => void onDelete(id)}
+        />
       </section>
     </div>
   );
