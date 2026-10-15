@@ -7,12 +7,14 @@ import java.time.Clock;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The alert-rules API of T6c (S3, S13). A rule belongs to the authenticated email; the threshold arrives as a
  * percent and is stored as the fraction the evaluation compares against. Values the caller got wrong are 400s
  * naming the field ({@code ApiException}), an unknown rule of the caller's is a 404, and the per-user cap of active
- * rules is refused with the cap in the detail.
+ * rules is refused with the cap in the detail. The create runs in one transaction that first locks the user's
+ * {@code app_user} row, so concurrent creates of one user are serialized and the cap holds exactly.
  */
 @Service
 public class AlertService {
@@ -35,12 +37,14 @@ public class AlertService {
 		return rules.findByEmail(email).stream().map(AlertResponse::of).toList();
 	}
 
+	@Transactional
 	public AlertResponse create(String email, AlertRequest request) {
 		RankedKind kind = kind(request);
 		BigDecimal threshold = threshold(request);
 		if (request.instrumentId() != null && !rules.instrumentExists(request.instrumentId())) {
 			throw ApiException.badRequest("instrumentId", "Instrument " + request.instrumentId() + " is unknown");
 		}
+		rules.lockUser(email);
 		if (rules.countActive(email) >= MAX_ACTIVE_RULES) {
 			throw ApiException.badRequest(null,
 					"At most " + MAX_ACTIVE_RULES + " active alert rules per user; delete one first");
