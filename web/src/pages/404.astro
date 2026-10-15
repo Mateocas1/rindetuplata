@@ -1,7 +1,10 @@
 ---
+/**
+ * 404 (T7b, T13c): one line at the display role and one way back to the
+ * ranking. The title and description still explain the page to a search
+ * engine, but the page itself states the one fact and the one next step.
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
-
-const linkClass = 'link';
 ---
 
 <BaseLayout
@@ -9,16 +12,8 @@ const linkClass = 'link';
   description="La página que buscás no existe o cambió de dirección. Volvé al ranking de hoy o mirá cómo calculamos cada número."
   noindex
 >
-  <div class="flex max-w-prose flex-col gap-block py-section">
-    <p class="text-body-sm font-semibold text-muted">Error 404</p>
-    <h1 class="text-h1 font-semibold text-balance">No encontramos esta página</h1>
-    <p class="text-lead text-muted text-pretty">
-      Puede que el link esté viejo o mal escrito. Podés volver al ranking de hoy o ver cómo
-      calculamos cada número.
-    </p>
-    <ul class="flex flex-wrap gap-x-6 gap-y-2">
-      <li><a class={linkClass} href="/">Ver el ranking de hoy</a></li>
-      <li><a class={linkClass} href="/metodologia/">Cómo se calcula</a></li>
-    </ul>
+  <div class="flex max-w-prose flex-col gap-section py-section">
+    <h1 class="type-display">No encontramos esta página</h1>
+    <a class="link self-start type-body" href="/">Ver el ranking de hoy</a>
   </div>
 </BaseLayout>

@@ -36,8 +36,7 @@ const rows = dates.map((date) => ({
 
 const ratePointCount = rateSeries?.points.length ?? 0;
 const rateColor = 'text-accent';
-const inflationColor = 'text-muted';
-const description =
+const inflationColor = 'text-muted';const description =
   history === null || rateSeries === undefined || inflationSeries === undefined
     ? ''
     : `${rateSeries.label} y ${inflationSeries.label} de ${history.displayName} ` +
@@ -49,13 +48,13 @@ const description =
   {
     chart !== null && chart.hasData && history !== null && rateSeries !== undefined && inflationSeries !== undefined ? (
       <>
-        <p class="text-caption text-muted md:hidden">
+        <p class="type-data text-muted md:hidden">
           Deslizá el gráfico para ver todo el período.
         </p>
         {/*
           The chart is drawn at its intrinsic pixel size (T12b): a viewBox that
           scaled with the container would scale the axis labels with it, from a
-          legible 13px (`text-caption`) down to single digits on a phone. Fixed
+          legible 13px (`type-data`) down to single digits on a phone. Fixed
           pixels plus a labelled scroll region keeps every label at its token
           size on every screen.
         */}
@@ -90,7 +89,7 @@ const description =
                   x={chart.plot.x0 - 8}
                   y={tick.position + 3}
                   text-anchor="end"
-                  class="fill-muted text-caption tabular-nums"
+                  class="fill-muted type-data"
                 >
                   {tick.label}
                 </text>
@@ -102,7 +101,7 @@ const description =
                 x={tick.position}
                 y={chart.plot.y1 + 18}
                 text-anchor="middle"
-                class="fill-muted text-caption tabular-nums"
+                class="fill-muted type-data"
               >
                 {tick.label}
               </text>
@@ -148,7 +147,7 @@ const description =
           </svg>
         </div>
 
-        <ul class="flex flex-wrap gap-x-6 gap-y-2 text-body-sm">
+        <ul class="flex flex-wrap gap-x-6 gap-y-2">
           {chart.series.map((entry, index) => (
             <li class="flex items-center gap-2">
               <svg viewBox="0 0 32 12" width="32" height="12" aria-hidden="true" class={`shrink-0 ${index === 0 ? rateColor : inflationColor}`}>
@@ -167,7 +166,7 @@ const description =
                   <circle cx="16" cy="6" r="3.5" fill="currentColor" />
                 )}
               </svg>
-              <span>
+              <span class="type-data">
                 {entry.label}
                 <span class="text-muted">
                   {entry.dashed ? ' · línea punteada y cuadrados' : ' · línea llena y círculos'}
@@ -177,32 +176,29 @@ const description =
           ))}
         </ul>
 
-        <p class="text-caption text-muted">
+        <p class="type-body max-w-prose text-muted">
           La tasa es anual y cada punto de inflación es la variación mensual del IPC del INDEC.
-          El histórico se arma con una ingesta diaria: hay {formatInteger(ratePointCount)}{' '}
-          {ratePointCount === 1 ? 'registro de tasa' : 'registros de tasa'} entre el{' '}
-          {formatDate(history.from)} y el {formatDate(history.to)}.
         </p>
 
-        <details class="disclosure rounded-md border border-border bg-surface-raised px-4 py-3">
-          <summary class="cursor-pointer text-body-sm font-semibold text-accent">
+        <details class="disclosure card px-4 py-3">
+          <summary class="type-label hover:text-text">
             Ver los datos del gráfico en una tabla
           </summary>
-          <div class="mt-3 overflow-x-auto">
-            <table class="w-full min-w-[28rem] border-separate border-spacing-0 text-caption">
+          <div class="mt-2 overflow-x-auto">
+            <table class="w-full min-w-[28rem] border-separate border-spacing-0">
               <caption class="sr-only">
                 {rateSeries.label} y {inflationSeries.label} de {history.displayName}, fecha por
                 fecha. Los mismos datos que muestra el gráfico.
               </caption>
               <thead>
                 <tr>
-                  <th scope="col" class="border-b border-border px-3 py-2 text-start font-semibold text-muted">
+                  <th scope="col" class="type-label border-b border-border px-3 py-2 text-start">
                     Fecha
                   </th>
-                  <th scope="col" class="border-b border-border px-3 py-2 text-end font-semibold text-muted">
+                  <th scope="col" class="type-label border-b border-border px-3 py-2 text-end">
                     {rateSeries.label}
                   </th>
-                  <th scope="col" class="border-b border-border px-3 py-2 text-end font-semibold text-muted">
+                  <th scope="col" class="type-label border-b border-border px-3 py-2 text-end">
                     {inflationSeries.label}
                   </th>
                 </tr>
@@ -210,13 +206,13 @@ const description =
               <tbody>
                 {rows.map((row) => (
                   <tr>
-                    <th scope="row" class="border-b border-border px-3 py-2 text-start font-normal tabular-nums">
+                    <th scope="row" class="type-data border-b border-border px-3 py-2 text-start font-normal">
                       {formatDate(row.date)}
                     </th>
-                    <td class="border-b border-border px-3 py-2 text-end tabular-nums">
+                    <td class="type-data border-b border-border px-3 py-2 text-end">
                       {row.rate === null ? '—' : formatPercent(row.rate)}
                     </td>
-                    <td class="border-b border-border px-3 py-2 text-end tabular-nums">
+                    <td class="type-data border-b border-border px-3 py-2 text-end">
                       {row.inflation === null ? '—' : formatPercent(row.inflation)}
                     </td>
                   </tr>
@@ -224,12 +220,17 @@ const description =
               </tbody>
             </table>
           </div>
+          <p class="type-data text-muted mt-3">
+            El histórico se arma con una ingesta diaria: hay {formatInteger(ratePointCount)}{' '}
+            {ratePointCount === 1 ? 'registro de tasa' : 'registros de tasa'} entre el{' '}
+            {formatDate(history.from)} y el {formatDate(history.to)}.
+          </p>
         </details>
       </>
     ) : (
-      <div class="card flex max-w-prose flex-col gap-2 p-6">
-        <p class="font-medium">Todavía no hay historial para este instrumento</p>
-        <p class="text-body-sm text-muted">
+      <div class="card max-w-prose p-6">
+        <p class="type-label">Todavía no hay historial para este instrumento</p>
+        <p class="type-body mt-2 max-w-prose">
           El histórico se arma con una ingesta diaria y todavía no hay fechas para comparar.
           Mientras tanto, arriba están la tasa y las condiciones de hoy.
         </p>
