@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const linkClass = 'text-accent underline decoration-from-font underline-offset-2 hover:no-underline';
+---
+
+<BaseLayout
+  title="No encontramos esta página | rindetuplata"
+  description="La página que buscás no existe o cambió de dirección. Volvé al ranking de hoy o mirá cómo calculamos cada número."
+  noindex
+>
+  <div class="flex max-w-prose flex-col gap-block py-section">
+    <p class="text-body-sm font-semibold text-muted">Error 404</p>
+    <h1 class="text-h1 font-semibold text-balance">No encontramos esta página</h1>
+    <p class="text-lead text-muted text-pretty">
+      Puede que el link esté viejo o mal escrito. Podés volver al ranking de hoy o ver cómo
+      calculamos cada número.
+    </p>
+    <ul class="flex flex-wrap gap-x-6 gap-y-2">
+      <li><a class={linkClass} href="/">Ver el ranking de hoy</a></li>
+      <li><a class={linkClass} href="/metodologia">Cómo se calcula</a></li>
+    </ul>
+  </div>
+</BaseLayout>

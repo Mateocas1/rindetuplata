@@ -1,0 +1,45 @@
+---
+/**
+ * Site chrome: a sticky header with the wordmark and the two public pages.
+ * The height (3.5rem) must stay in sync with `scroll-padding-block-start` in
+ * global.css so anchors and focused elements never land under it.
+ */
+const current = Astro.url.pathname;
+const links = [
+  { href: '/', label: 'Ranking' },
+  { href: '/metodologia', label: 'Cómo se calcula' },
+];
+---
+
+<header class="sticky top-0 z-10 border-b border-border bg-surface-raised">
+  <div
+    class="mx-auto flex h-14 w-full max-w-page items-center justify-between gap-4 px-gutter"
+  >
+    <a
+      href="/"
+      class="rounded-sm text-body-sm font-semibold tracking-tight text-text no-underline"
+    >
+      rindetuplata
+    </a>
+    <nav aria-label="Secciones">
+      <ul class="flex items-center gap-2 sm:gap-4">
+        {
+          links.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                aria-current={current === link.href ? 'page' : undefined}
+                class="block rounded-sm px-2 py-2 text-body-sm no-underline aria-[current=page]:font-semibold"
+                class:list={[
+                  current === link.href ? 'text-text' : 'text-muted hover:text-text',
+                ]}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>

@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/**
+ * Base layer only: colour and type come from the tokens, and the one global
+ * focus indicator is set here so every control shares it. No motion ships in
+ * T7b, so nothing here needs a reduced-motion fallback.
+ */
+@layer base {
+  html {
+    /* Sticky header (3.5rem) plus breathing room, so anchors and focused
+       elements never land under it (WCAG 2.4.11). */
+    scroll-padding-block-start: 4.5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Always offset from the control it outlines: against a filled control no
+     single colour can hold 3:1 on both the fill and the page surface. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
