@@ -1,0 +1,35 @@
+---
+/**
+ * `/admin/tasas` (S12, T7d): curation of wallet rates. `noindex` and client
+ * only — the island asks the admin API for the session, so a visitor without
+ * `ROLE_ADMIN` gets the "Sin permiso" state and the HTML holds nothing.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import WalletRatesPanel from '../../components/account/WalletRatesPanel';
+import LogoutButton from '../../components/account/LogoutButton';
+---
+
+<BaseLayout
+  title="Tasas de billeteras | rindetuplata"
+  description="Panel para cargar y verificar las tasas de billeteras remuneradas que no tienen fuente automática."
+  noindex
+>
+  <div class="flex flex-col gap-section py-section">
+    <header class="flex max-w-prose flex-col gap-block">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <h1 class="text-h1 font-semibold text-balance">Tasas de billeteras</h1>
+        <div id="admin-tasas-logout">
+          <LogoutButton client:only="react" />
+        </div>
+      </div>
+      <p class="text-lead text-muted text-pretty">
+        Cargá y verificá a mano las tasas de las billeteras que no publican una fuente automática.
+        Cada guardado registra la fecha de verificación y queda en el historial.
+      </p>
+    </header>
+
+    <div id="admin-tasas-island">
+      <WalletRatesPanel client:only="react" />
+    </div>
+  </div>
+</BaseLayout>

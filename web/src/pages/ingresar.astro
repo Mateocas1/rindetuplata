@@ -1,0 +1,29 @@
+---
+/**
+ * `/ingresar` (S13, T7d): the magic-link login. `noindex` and no build-time API
+ * data: the island reads the email, the `?token=` and the session in the
+ * browser, so the prerendered HTML holds nothing personal.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LoginPanel from '../components/account/LoginPanel';
+---
+
+<BaseLayout
+  title="Ingresar | rindetuplata"
+  description="Entrá a tus alertas de rindetuplata con un link de un solo uso: sin contraseñas."
+  noindex
+>
+  <div class="flex max-w-prose flex-col gap-section py-section">
+    <header class="flex flex-col gap-block">
+      <h1 class="text-h1 font-semibold text-balance">Ingresar</h1>
+      <p class="text-lead text-muted text-pretty">
+        Entrá con tu email para crear y seguir tus alertas. Te mandamos un link de un solo uso, sin
+        contraseñas.
+      </p>
+    </header>
+
+    <div id="ingresar-island">
+      <LoginPanel client:only="react" />
+    </div>
+  </div>
+</BaseLayout>
