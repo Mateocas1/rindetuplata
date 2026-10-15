@@ -6,7 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { CATEGORIES } from '../src/lib/categories';
 import { CHART_HEIGHT, CHART_WIDTH } from '../src/lib/chart';
 import { CATALOG_LIMIT, loadRanking } from '../src/lib/data';
-import { formatDate, formatPercent } from '../src/lib/format';
+import { formatDate, formatMoney, formatPercent } from '../src/lib/format';
 import { loadInstrumentPages } from '../src/lib/pages';
 import { DEFAULT_RANKING_QUERY } from '../src/lib/rankingQuery';
 import { instrumentPath, instrumentSlug } from '../src/lib/slug';
@@ -137,14 +137,28 @@ describe('instrument pages', () => {
   it('exists once per kind with its own H1, rate, source and dates', () => {
     for (const { entry, slug } of samplePerKind) {
       const page = instrumentHtml(slug);
-      expect(page, slug).toContain(`<h1 class="text-h1`);
+      expect(page, slug).toContain(`<h1 class="type-display`);
       expect(page, slug).toContain(entry.name);
       expect(page, slug).toContain(formatPercent(entry.rateUsed.fraction));
-      // The headline figure and its unit never run together ("19,10% TNA", T12e).
-      expect(page, slug).toMatch(new RegExp(`${formatPercent(entry.rateUsed.fraction).replace(/[.%]/g, '\\$&')}\\s+<span`));
+      // The rate and its unit are separate readout cells, never run together (T13c).
+      expect(page, slug).toContain(`<dt class="type-label">${entry.rateUsed.basis}</dt>`);
+      expect(page, slug).toContain(`<dd class="type-data">${formatPercent(entry.rateUsed.fraction)}</dd>`);
       expect(page, slug).toContain(entry.source.displayName);
-      expect(page, slug).toContain('Fecha del dato');
-      expect(page, slug).toContain(formatDate(entry.dataDate));
+      // Source and data date travel in one quiet provenance line (T13c, L77).
+      expect(page, slug).toContain(`· dato del ${formatDate(entry.dataDate)}`);
+    }
+  });
+
+  it("features the default query's pesos earned as the page figure", () => {
+    for (const { entry, slug } of samplePerKind) {
+      const page = instrumentHtml(slug);
+      // The hero states the same fact as the reference plate: what the default
+      // ranking's amount earns in the default term, as the protagonist figure.
+      expect(page, slug).toContain('class="type-figure');
+      expect(page, slug).toContain(formatMoney(entry.earned));
+      expect(page, slug).toContain('en 30 días con');
+      // Provenance is one quiet data line, not a wall of small grey prose (L77).
+      expect(page, slug).toMatch(/class="type-data text-muted/);
     }
   });
 
@@ -181,8 +195,8 @@ describe('instrument pages', () => {
       expect(tag, slug).not.toContain('w-full');
       // Inside the row-reverse scroller (T12e) the svg is a flex item: shrink-0 keeps its 640px.
       expect(tag, slug).toMatch(/class="[^"]*\bshrink-0\b/);
-      // 13px from --text-caption: the labels sit on a 1:1 surface, never a scaled one.
-      expect(page, slug).toContain('fill-muted text-caption tabular-nums');
+      // 13px from --text-data: the labels sit on a 1:1 surface, never a scaled one.
+      expect(page, slug).toContain('fill-muted type-data');
     }
   });
 
