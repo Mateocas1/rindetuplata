@@ -7,3 +7,20 @@ services:
       POSTGRES_PASSWORD: rindetuplata
     ports:
       - "5432:5432"
+  # T6d: the alert events. The application talks AMQP on 5672; 15672 is the management UI (guest/guest locally).
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+  # T6d: local SMTP catcher for the magic link and the alert emails. The UI is on 8025.
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
