@@ -49,13 +49,29 @@ const description =
   {
     chart !== null && chart.hasData && history !== null && rateSeries !== undefined && inflationSeries !== undefined ? (
       <>
-        <div class="overflow-hidden rounded-lg border border-border bg-surface-raised p-block">
+        <p class="text-caption text-muted md:hidden">
+          Deslizá el gráfico para ver todo el período.
+        </p>
+        {/*
+          The chart is drawn at its intrinsic pixel size (T12b): a viewBox that
+          scaled with the container would scale the axis labels with it, from a
+          legible 13px (`text-caption`) down to single digits on a phone. Fixed
+          pixels plus a labelled scroll region keeps every label at its token
+          size on every screen.
+        */}
+        <div
+          class="card w-fit max-w-full overflow-x-auto p-block"
+          role="region"
+          aria-label={`Gráfico: ${rateSeries.label} contra ${inflationSeries.label}`}
+          tabindex="0"
+        >
           <svg
+            width={chart.width}
+            height={chart.height}
             viewBox={`0 0 ${chart.width} ${chart.height}`}
-            class="h-auto w-full"
+            class="block"
             role="img"
             aria-labelledby={`${titleId} ${descId}`}
-            preserveAspectRatio="none"
           >
             <title id={titleId}>{`${rateSeries.label} contra ${inflationSeries.label}`}</title>
             <desc id={descId}>{description}</desc>
@@ -168,7 +184,7 @@ const description =
           {formatDate(history.from)} y el {formatDate(history.to)}.
         </p>
 
-        <details class="rounded-md border border-border bg-surface px-4 py-3">
+        <details class="rounded-md border border-border bg-surface-raised px-4 py-3">
           <summary class="cursor-pointer text-body-sm font-semibold text-accent">
             Ver los datos del gráfico en una tabla
           </summary>
@@ -211,7 +227,7 @@ const description =
         </details>
       </>
     ) : (
-      <div class="flex flex-col gap-2 rounded-lg border border-border bg-surface-raised p-block">
+      <div class="card flex max-w-prose flex-col gap-2 p-6">
         <p class="font-medium">Todavía no hay historial para este instrumento</p>
         <p class="text-body-sm text-muted">
           El histórico se arma con una ingesta diaria y todavía no hay fechas para comparar.

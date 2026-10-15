@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { formatMoney } from '../src/lib/format';
@@ -35,6 +35,32 @@ function normalize(html: string): string {
 
 function html(path: string): string {
   return normalize(readFileSync(join(dist, path), 'utf8'));
+}
+
+/** Every HTML file the build emitted, at any depth, except the asset folder. */
+function htmlFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const full = join(directory, entry.name);
+    if (entry.isDirectory()) return entry.name === '_astro' ? [] : htmlFiles(full);
+    return entry.name.endsWith('.html') ? [full] : [];
+  });
+}
+
+/** Only the text a reader sees: no script, no style, no markup. */
+function renderedText(page: string): string {
+  return page
+    .replace(/<script[\s\S]*?<\/script>/g, ' ')
+    .replace(/<style[\s\S]*?<\/style>/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replaceAll('&nbsp;', '\u00a0')
+    .replaceAll('&#160;', '\u00a0');
+}
+
+/** The visible text of every row header cell, in document order. */
+function rowHeaderTexts(page: string): string[] {
+  return [...page.matchAll(/<th[^>]*scope="row"[^>]*>([\s\S]*?)<\/th>/g)].map((match) =>
+    renderedText(match[1]).replace(/\s+/g, ' ').trim(),
+  );
 }
 
 beforeAll(() => {
@@ -77,6 +103,16 @@ describe('prerendered home page', () => {
     }
   });
 
+  it('numbers each ranked row inside its own row header cell', () => {
+    const headers = rowHeaderTexts(html('index.html'));
+    const expected = fixture.ranked.slice(0, 3);
+    expect(headers.length).toBeGreaterThanOrEqual(expected.length);
+    for (const [index, entry] of expected.entries()) {
+      expect(headers[index], `row ${index + 1}`).toMatch(new RegExp(`^${index + 1}\\s`));
+      expect(headers[index], `row ${index + 1}`).toContain(entry.name);
+    }
+  });
+
   it('states where the data comes from (S11)', () => {
     const page = html('index.html');
     expect(page).toContain('ArgentinaDatos');
@@ -95,6 +131,16 @@ describe('prerendered home page', () => {
 
   it('hydrates the explorer island', () => {
     expect(html('index.html')).toContain('<script');
+  });
+});
+
+describe('rendered copy', () => {
+  it('never shows an internal spec id to the reader', () => {
+    const offenders = htmlFiles(dist).flatMap((file) => {
+      const match = /\(S\d+\)/.exec(renderedText(readFileSync(file, 'utf8')));
+      return match === null ? [] : [`${relative(dist, file)}: ${match[0]}`];
+    });
+    expect(offenders).toEqual([]);
   });
 });
 

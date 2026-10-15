@@ -4,6 +4,7 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { CATEGORIES } from '../src/lib/categories';
+import { CHART_HEIGHT, CHART_WIDTH } from '../src/lib/chart';
 import { CATALOG_LIMIT, loadRanking } from '../src/lib/data';
 import { formatDate, formatPercent } from '../src/lib/format';
 import { loadInstrumentPages } from '../src/lib/pages';
@@ -164,6 +165,20 @@ describe('instrument pages', () => {
       expect(page, slug).toContain(`<desc id="chart-desc-${entry.id}">`);
       expect(page, slug).toContain('Inflación mensual (INDEC)');
       expect(page, slug).toContain('role="img"');
+    }
+  });
+
+  it('draws the chart at its intrinsic pixel size, so axis labels never scale with the viewBox', () => {
+    for (const { slug } of samplePerKind) {
+      const page = instrumentHtml(slug);
+      const tag = page.match(/<svg[^>]*role="img"[^>]*>/)?.[0];
+      if (tag === undefined) throw new Error(`${slug} has no chart svg`);
+      expect(tag, slug).toContain(`viewBox="0 0 ${CHART_WIDTH} ${CHART_HEIGHT}"`);
+      expect(tag, slug).toContain(`width="${CHART_WIDTH}"`);
+      expect(tag, slug).toContain(`height="${CHART_HEIGHT}"`);
+      expect(tag, slug).not.toContain('w-full');
+      // 13px from --text-caption: the labels sit on a 1:1 surface, never a scaled one.
+      expect(page, slug).toContain('fill-muted text-caption tabular-nums');
     }
   });
 

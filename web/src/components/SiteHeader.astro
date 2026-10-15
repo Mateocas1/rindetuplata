@@ -5,6 +5,10 @@
  * (3.5rem) must stay in sync with `scroll-padding-block-start` in global.css so
  * anchors and focused elements never land under it. On narrow screens the nav
  * scrolls sideways rather than wrapping, so the header height never changes.
+ *
+ * The current page is marked twice (T12b): `aria-current` states it for
+ * assistive technology and a 2px accent bar under the link shows it visually, so
+ * the state never depends on colour alone.
  */
 import { CATEGORIES } from '../lib/categories';
 
@@ -34,20 +38,29 @@ const links = [
     <nav aria-label="Secciones" class="min-w-0 flex-1 overflow-x-auto">
       <ul class="flex items-center gap-1 whitespace-nowrap sm:gap-2">
         {
-          links.map((link) => (
-            <li>
-              <a
-                href={link.href}
-                aria-current={current === normalizedPath(link.href) ? 'page' : undefined}
-                class="block rounded-sm px-2 py-2 text-body-sm no-underline aria-[current=page]:font-semibold"
-                class:list={[
-                  current === normalizedPath(link.href) ? 'text-text' : 'text-muted hover:text-text',
-                ]}
-              >
-                {link.label}
-              </a>
-            </li>
-          ))
+          links.map((link) => {
+            const active = current === normalizedPath(link.href);
+            return (
+              <li>
+                <a
+                  href={link.href}
+                  aria-current={active ? 'page' : undefined}
+                  class:list={[
+                    'relative block rounded-sm px-2 py-2 text-body-sm no-underline',
+                    active ? 'font-semibold text-text' : 'text-muted hover:text-text',
+                  ]}
+                >
+                  {link.label}
+                  {active && (
+                    <span
+                      aria-hidden="true"
+                      class="absolute inset-x-2 bottom-0 h-0.5 rounded-pill bg-accent"
+                    />
+                  )}
+                </a>
+              </li>
+            );
+          })
         }
       </ul>
     </nav>

@@ -35,8 +35,9 @@ export interface RankingExplorerProps {
 }
 
 const DEBOUNCE_MS = 400;
-const inputClass =
-  'w-full max-w-56 rounded-md border border-border-strong bg-surface px-3 py-2 text-base tabular-nums sm:text-body-sm';
+// One recipe, one place (T12a): the field shape comes from `field`, the layout
+// width from here.
+const inputClass = 'field max-w-56 tabular-nums';
 const labelClass = 'text-body-sm font-semibold';
 
 export default function RankingExplorer({
@@ -171,7 +172,7 @@ export default function RankingExplorer({
         <h2 id="armar-ranking" className="text-h2 font-semibold">
           Armá tu ranking
         </h2>
-        <div className="flex flex-col gap-6 rounded-lg border border-border bg-surface-raised p-block sm:p-6">
+        <div className="card flex flex-col gap-6 p-6">
           <div className="flex flex-wrap items-end gap-x-8 gap-y-block">
             <div className="flex flex-col gap-1">
               <label htmlFor="monto" className={labelClass}>
@@ -260,7 +261,7 @@ export default function RankingExplorer({
           <fieldset className="flex flex-col gap-2">
             <legend className={labelClass}>Soy cliente de… (opcional)</legend>
             <p className="text-caption text-muted">
-              Marcá tus bancos y el ranking de plazos fijos usa la tasa para clientes (S19).
+              Marcá tus bancos y el ranking de plazos fijos usa la tasa para clientes.
             </p>
             <details className="rounded-md border border-border bg-surface px-4 py-3">
               <summary className="cursor-pointer text-body-sm text-accent">
@@ -328,13 +329,13 @@ export default function RankingExplorer({
               <button
                 type="button"
                 onClick={() => setRetryToken((token) => token + 1)}
-                className="self-start rounded-md bg-accent-solid px-4 py-2 text-body-sm font-semibold text-on-accent hover:bg-accent"
+                className="btn-primary self-start"
               >
                 Reintentar
               </button>
             </div>
           ) : ranking.ranked.length === 0 ? (
-            <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-raised p-block">
+            <div className="card flex flex-col gap-2 p-6">
               <p className="font-medium">No hay opciones para este monto y plazo</p>
               <p className="text-body-sm text-muted">
                 Probá con otro monto, con más días o marcando más tipos de opción. Más abajo están
