@@ -9,15 +9,161 @@
  * switch cannot smear and the zero-JS pages need no suppression script.
  */
 
-/* A raised surface: shadow for elevation, a transparent border so forced-colors
-   mode (which drops box-shadow) still draws an edge. Cards hold controls at a
-   1rem-1.5rem inset, past better-ui's concentric cutoff, so the card keeps its
-   own radius token instead of control + inset. */
+/* A raised surface (T13a): one step up the surface ladder, bounded by a
+   hairline instead of a shadow; in dark the step adds a 1px inner top
+   highlight. Nearly square, like every Cobalto Cristal panel. */
 @utility card {
-  border: 1px solid transparent;
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
   background-color: var(--color-surface-raised);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--surface-lift);
+}
+
+/*
+ * Text roles (T13a, L77: at most seven). Every text on a page takes one of
+ * these; weight or the muted color may vary inside a role, size never does
+ * except for the named steps (figure: hero and `text-figure-row`; body: prose
+ * and `text-lead`).
+ */
+
+/* 1. Mono caps label: eyebrows, nav, control labels, column heads, footnotes. */
+@utility type-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  font-weight: 400;
+  line-height: var(--text-label--line-height);
+  letter-spacing: var(--text-label--letter-spacing);
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+}
+
+/* 2. The page headline. */
+@utility type-display {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: 500;
+  line-height: var(--text-display--line-height);
+  letter-spacing: var(--text-display--letter-spacing);
+  text-wrap: balance;
+}
+
+/* 3. Section titles (h2). */
+@utility type-section {
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  font-weight: 500;
+  line-height: var(--text-section--line-height);
+  letter-spacing: var(--text-section--letter-spacing);
+  text-wrap: balance;
+}
+
+/* 4. The protagonist figure (pesos earned); add `text-figure-row` inside a row. */
+@utility type-figure {
+  font-family: var(--font-display);
+  font-size: var(--text-figure);
+  font-weight: 700;
+  line-height: var(--text-figure--line-height);
+  letter-spacing: var(--text-figure--letter-spacing);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 5. Reading text; add `text-lead` for the intro step, `font-medium` for names. */
+@utility type-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* 6. Mono tabular data: rates, real return, provenance; `text-muted` when secondary. */
+@utility type-data {
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+  font-weight: 400;
+  line-height: var(--text-data--line-height);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 7. The 01-08 index gutter. */
+@utility type-index {
+  font-family: var(--font-mono);
+  font-size: var(--text-data);
+  font-weight: 400;
+  line-height: var(--text-data--line-height);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
+}
+
+/* The one serif per page: an accent word inside `type-display`, in cobalt.
+   0.95em matches Space Grotesk's x-height (0.486em vs Instrument Serif's 0.510em). */
+@utility serif-accent {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.95em;
+  letter-spacing: 0;
+  color: var(--color-accent);
+}
+
+/*
+ * Frosted glass (T13a): ONE element per page (the best-option card), placed
+ * inside a `glass-field` that paints the cobalt glow and hairline grid it
+ * blurs. Without backdrop-filter, or under reduced transparency, it is the
+ * opaque raised card.
+ */
+@utility glass {
+  position: relative;
+  border: 1px solid var(--glass-line);
+  border-radius: var(--radius-panel);
+  background-color: var(--glass-fill);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--glass-lift);
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    border-color: var(--color-border);
+    background-color: var(--color-surface-raised);
+    box-shadow: var(--surface-lift);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    border-color: var(--color-border);
+    background-color: var(--color-surface-raised);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: var(--surface-lift);
+  }
+}
+
+/* What the glass blurs, painted behind it inside its own column; the grid
+   fades out at the edges, so no text outside the glass sits over either. The
+   parent clips the overflow (`overflow-hidden`). */
+@utility glass-field {
+  position: relative;
+  isolation: isolate;
+  min-inline-size: 0;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+  }
+  &::before {
+    inset: -3rem -1.5rem -3rem -2rem;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 2.5rem 2.5rem;
+    -webkit-mask-image: radial-gradient(closest-side, black 35%, transparent);
+    mask-image: radial-gradient(closest-side, black 35%, transparent);
+  }
+  &::after {
+    inset: -4rem -3rem;
+    background: radial-gradient(closest-side, var(--glow), transparent);
+  }
 }
 
 /* The one filled action of a view. */
