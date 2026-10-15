@@ -59,6 +59,15 @@ public class AlertRuleRepository {
 			.single();
 	}
 
+	/**
+	 * Locks the user's {@code app_user} row until the surrounding transaction ends (T11b): creates of one user queue
+	 * up behind it, so the count that follows sees every rule committed before it.
+	 */
+	public void lockUser(String email) {
+		userId(email).orElseThrow(() -> new IllegalStateException("No account for the authenticated email " + email));
+		jdbc.sql("select id from app_user where email = :email for update").param("email", email).query(Long.class).list();
+	}
+
 	public boolean instrumentExists(long instrumentId) {
 		return jdbc.sql("select exists(select 1 from instrument where id = :instrumentId)")
 			.param("instrumentId", instrumentId)
