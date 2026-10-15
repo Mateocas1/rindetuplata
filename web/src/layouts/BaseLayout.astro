@@ -4,7 +4,8 @@
  * header and footer. Colours and type come from the tokens.
  */
 import '../styles/global.css';
-import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wght-normal.woff2?url';
+import spaceGroteskLatin from '@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2?url';
 import Seo from '../components/Seo.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
@@ -24,7 +25,8 @@ const { title, description, jsonLd = null, noindex = false } = Astro.props;
 <html lang="es-AR">
   <head>
     <Seo title={title} description={description} jsonLd={jsonLd} noindex={noindex} />
-    <link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={spaceGroteskLatin} as="font" type="font/woff2" crossorigin />
   </head>
   <body class="flex min-h-dvh flex-col bg-surface font-sans text-body text-text">
     <a

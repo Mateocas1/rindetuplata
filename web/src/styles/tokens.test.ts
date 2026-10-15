@@ -16,7 +16,10 @@ import { describe, expect, it } from 'vitest';
 const webRoot = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const tokensPath = join(webRoot, 'src/styles/tokens.css');
 
-type Oklch = { l: number; c: number; h: number };
+const recipesPath = join(webRoot, 'src/styles/recipes.css');
+const globalPath = join(webRoot, 'src/styles/global.css');
+
+type Oklch = { l: number; c: number; h: number; alpha?: number };
 
 function parseTokens(css: string): Map<string, string> {
   const tokens = new Map<string, string>();
@@ -49,15 +52,40 @@ function oklchToLinearSrgb(color: Oklch): [number, number, number] {
 }
 
 function parseColor(value: string): Oklch {
-  const match = /^oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)\s*\)$/.exec(value);
+  const match = /^oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.]+)\s*(?:\/\s*([\d.]+))?\s*\)$/.exec(value);
   if (!match) {
     throw new Error(`Unsupported color notation in tokens.css: ${value}`);
   }
   const lightness = match[1].endsWith('%')
     ? Number.parseFloat(match[1]) / 100
     : Number.parseFloat(match[1]);
-  return { l: lightness, c: Number.parseFloat(match[2]), h: Number.parseFloat(match[3]) };
+  return {
+    l: lightness,
+    c: Number.parseFloat(match[2]),
+    h: Number.parseFloat(match[3]),
+    alpha: match[4] === undefined ? 1 : Number.parseFloat(match[4]),
+  };
 }
+
+const toGamma = (v: number) => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055);
+const toLinear = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+
+/** Source-over in gamma sRGB, as browsers blend: returns the opaque result's linear channels. */
+function composite(layers: Oklch[]): [number, number, number] {
+  let [r, g, b] = oklchToLinearSrgb({ ...layers[0], alpha: 1 }).map((v) => toGamma(Math.min(1, Math.max(0, v))));
+  for (const layer of layers.slice(1)) {
+    const a = layer.alpha ?? 1;
+    const top = oklchToLinearSrgb(layer).map((v) => toGamma(Math.min(1, Math.max(0, v))));
+    [r, g, b] = [r + (top[0] - r) * a, g + (top[1] - g) * a, b + (top[2] - b) * a];
+  }
+  return [toLinear(r), toLinear(g), toLinear(b)];
+}
+
+function ratioOfLuminances(a: number, b: number): number {
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+const luminanceOfLinear = ([r, g, b]: [number, number, number]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
 function relativeLuminance(color: Oklch): number {
   const [r, g, b] = oklchToLinearSrgb(color);
@@ -136,6 +164,8 @@ const requiredRoles = [
   '--color-warning-surface',
   '--color-on-warning',
   '--color-focus',
+  '--color-thumb',
+  '--color-on-thumb',
 ];
 
 /** [label, foreground token, background token, minimum ratio] */
@@ -172,7 +202,18 @@ const contrastPairs: Array<[string, string, string, number]> = [
   ['loss on loss-surface (notice border)', '--color-loss', '--color-loss-surface', 3],
   ['gain on gain-surface (notice border)', '--color-gain', '--color-gain-surface', 3],
   ['warning on warning-surface (notice border)', '--color-warning', '--color-warning-surface', 3],
+  // T13a segmented control: the selected thumb is a shape on the track (subtle-surface)
+  // and carries its own ink (L81: the dark prototype read grey-on-grey).
+  ['on-thumb on thumb (selected segment)', '--color-on-thumb', '--color-thumb', 4.5],
+  ['thumb on subtle-surface (segment track)', '--color-thumb', '--color-subtle-surface', 3],
+  ['muted on subtle-surface (unselected segment)', '--color-muted', '--color-subtle-surface', 4.5],
 ];
+
+/** T13a glass: tokens declared outside @theme, repointed in the dark block. */
+const glassTokens = ['--glass-fill', '--glass-line', '--glass-lift', '--glow', '--grid-line', '--surface-lift'];
+
+/** The seven text roles of Cobalto Cristal (L77: at most 7), each one `@utility type-*`. */
+const textRoles = ['label', 'display', 'section', 'figure', 'body', 'data', 'index'];
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
@@ -225,20 +266,71 @@ describe('design tokens', () => {
     ).toBeGreaterThanOrEqual(minimum);
   });
 
-  it('declares elevation shadows for both appearances', () => {
-    for (const name of ['--shadow-card', '--shadow-card-hover']) {
+  it('declares the glass and surface-ladder tokens for both appearances', () => {
+    for (const name of glassTokens) {
       expect(light.has(name), `${name} light`).toBe(true);
       expect(darkOnly.has(name), `${name} dark`).toBe(true);
     }
   });
 
-  it('sets Inter Variable first in the sans stack and ships it as a dependency', () => {
-    expect(tokens.get('--font-sans')).toMatch(/^'Inter Variable',/);
-    const pkg = JSON.parse(readFileSync(join(webRoot, 'package.json'), 'utf8'));
-    expect(pkg.dependencies['@fontsource-variable/inter']).toBeDefined();
+  // Worst case under the glass: the glow at full strength over the page surface.
+  it.each(
+    bySchema.flatMap(([scheme, map]) =>
+      (['--color-text', '--color-muted'] as const).map((fg) => [scheme, fg, map] as const),
+    ),
+  )('%s: %s on glass over the glow holds 4.5:1', (scheme, foreground, map) => {
+    const behind = composite([
+      parseColor(resolveToken(map, '--color-surface')),
+      parseColor(map.get('--glow')!),
+      parseColor(map.get('--glass-fill')!),
+    ]);
+    const ratio = ratioOfLuminances(
+      relativeLuminance(parseColor(resolveToken(map, foreground))),
+      luminanceOfLinear(behind),
+    );
+    expect(Number(ratio.toFixed(2)), `${scheme} ${foreground} on glass ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
   });
 
-  const primitiveName = /^--color-(slate|blue|green|red|amber)-\d+$/;
+  it('ships the four Cobalto Cristal families and no Inter', () => {
+    expect(tokens.get('--font-sans')).toMatch(/^'Archivo Variable',/);
+    expect(tokens.get('--font-display')).toMatch(/^'Space Grotesk Variable',/);
+    expect(tokens.get('--font-mono')).toMatch(/^'Geist Mono Variable',/);
+    expect(tokens.get('--font-serif')).toMatch(/^'Instrument Serif',/);
+    const pkg = JSON.parse(readFileSync(join(webRoot, 'package.json'), 'utf8'));
+    for (const dep of [
+      '@fontsource-variable/archivo',
+      '@fontsource-variable/space-grotesk',
+      '@fontsource-variable/geist-mono',
+      '@fontsource/instrument-serif',
+    ]) {
+      expect(pkg.dependencies[dep], dep).toBeDefined();
+    }
+    expect(pkg.dependencies['@fontsource-variable/inter']).toBeUndefined();
+    const global = readFileSync(globalPath, 'utf8');
+    expect(global).not.toMatch(/inter/i);
+    expect(global).toMatch(/instrument-serif\/400-italic\.css/);
+  });
+
+  it('defines exactly the seven text roles and the one serif accent as recipes', () => {
+    const recipes = readFileSync(recipesPath, 'utf8');
+    const declared = [...recipes.matchAll(/@utility type-([a-z-]+)/g)].map((m) => m[1]);
+    expect(declared.sort()).toEqual([...textRoles].sort());
+    expect(recipes).toMatch(/@utility serif-accent/);
+    for (const step of ['label', 'data', 'body', 'lead', 'section', 'figure', 'figure-row', 'display']) {
+      expect(tokens.has(`--text-${step}`), `--text-${step}`).toBe(true);
+      expect(tokens.has(`--text-${step}--line-height`), `--text-${step}--line-height`).toBe(true);
+    }
+  });
+
+  it('makes the glass opaque without backdrop-filter or under reduced transparency', () => {
+    const recipes = readFileSync(recipesPath, 'utf8');
+    expect(recipes).toMatch(/@utility glass\b/);
+    expect(recipes).toMatch(/@utility glass-field\b/);
+    expect(recipes).toMatch(/@supports not \(\(backdrop-filter/);
+    expect(recipes).toMatch(/prefers-reduced-transparency: reduce/);
+  });
+
+  const primitiveName = /^--color-(graphite|cobalt|green|red|amber)-\d+$/;
   const primitives = [...tokens.entries()].filter(([name]) => primitiveName.test(name));
 
   it('keeps every declared color primitive inside the sRGB gamut', () => {
@@ -260,7 +352,7 @@ describe('design tokens', () => {
       ([name]) => name.startsWith('--color-') && !primitiveName.test(name),
     );
     const dangling = roles
-      .filter(([, value]) => !/^var\(\s*--color-(slate|blue|green|red|amber)-\d+\s*\)$/.test(value))
+      .filter(([, value]) => !/^var\(\s*--color-(graphite|cobalt|green|red|amber)-\d+\s*\)$/.test(value))
       .map(([name, value]) => `${name}: ${value}`);
     expect(dangling).toEqual([]);
   });
