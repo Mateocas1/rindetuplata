@@ -4,17 +4,23 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { formatMoney } from '../src/lib/format';
+import { ACCOUNT_PATHS } from '../src/lib/sitemapPaths.js';
 
 /**
- * Build smoke test (T7b).
+ * Build smoke test (T7b, T7e).
  *
  * Builds the site in fixture mode (`WEB_FIXTURES=1 astro build`) and checks the
  * prerendered output: the ranking table is in the HTML in ranked order with the
- * API's own amounts, the SEO head is complete, and the page that ships no island
- * ships no script at all.
+ * API's own amounts, the SEO head is complete, the page that ships no island
+ * ships no script at all, and the generated `robots.txt` takes its host from
+ * `SITE_URL`.
+ *
+ * `SITE_URL` is passed explicitly so the canonical URLs and the `robots.txt`
+ * host are tied to that one variable instead of to the config's fallback.
  */
 const webRoot = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const dist = join(webRoot, 'dist');
+const SITE_URL = 'https://smoke.rindetuplata.test';
 
 const fixture = JSON.parse(
   readFileSync(join(webRoot, 'fixtures/ranking-default.json'), 'utf8'),
@@ -35,7 +41,7 @@ beforeAll(() => {
   try {
     execFileSync('npm', ['run', 'build'], {
       cwd: webRoot,
-      env: { ...process.env, WEB_FIXTURES: '1' },
+      env: { ...process.env, WEB_FIXTURES: '1', SITE_URL },
       stdio: 'pipe',
     });
   } catch (error) {
@@ -79,7 +85,7 @@ describe('prerendered home page', () => {
 
   it('carries the canonical link, the social tags and the WebSite JSON-LD', () => {
     const page = html('index.html');
-    expect(page).toContain('rel="canonical" href="http://localhost:4321/"');
+    expect(page).toContain(`rel="canonical" href="${SITE_URL}/"`);
     expect(page).toContain('property="og:title"');
     expect(page).toContain('name="twitter:card"');
     expect(page).toContain('application/ld+json');
@@ -99,6 +105,20 @@ describe('prerendered methodology page', () => {
 
   it('ships no script tag at all', () => {
     expect(html('metodologia/index.html')).not.toContain('<script');
+  });
+});
+
+describe('robots.txt', () => {
+  it('points at the sitemap of the site the build was configured with', () => {
+    const robots = readFileSync(join(dist, 'robots.txt'), 'utf8');
+    expect(robots).toContain(`Sitemap: ${SITE_URL}/sitemap-index.xml`);
+  });
+
+  it('keeps the account pages out of the crawler', () => {
+    const robots = readFileSync(join(dist, 'robots.txt'), 'utf8');
+    for (const path of ACCOUNT_PATHS) {
+      expect(robots, `${path} must be disallowed`).toContain(`Disallow: ${path}`);
+    }
   });
 });
 
