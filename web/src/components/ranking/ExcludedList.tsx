@@ -37,7 +37,7 @@ export default function ExcludedList({ ranking }: ExcludedListProps) {
   }
 
   return (
-    <details className="card px-4 py-3">
+    <details className="disclosure card px-4 py-3">
       <summary className="cursor-pointer text-body-sm font-semibold text-accent">
         {formatInteger(total)} opciones quedaron afuera: mirá por qué
       </summary>

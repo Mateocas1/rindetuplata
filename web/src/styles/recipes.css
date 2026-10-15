@@ -2,7 +2,11 @@
  * Component recipes (T12a): the one place a surface, button, field, chip or
  * link takes its shape. Components compose these with layout utilities and
  * never re-derive their values; every color still comes from a role token.
- * Motion (press feedback, transitions) is added by T12d.
+ *
+ * Motion (T12d, `animate` + better-ui): buttons scale to 0.96 on press, the
+ * disclosure chevron rotates and its panel grows; every movement runs only
+ * without a reduced-motion preference. Colors never transition, so an OS theme
+ * switch cannot smear and the zero-JS pages need no suppression script.
  */
 
 /* A raised surface: shadow for elevation, a transparent border so forced-colors
@@ -18,12 +22,24 @@
 @utility btn-primary {
   @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-accent-solid px-4 py-2 text-body-sm font-semibold text-on-accent;
   @apply hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60;
+  /* Press feedback: scale only, 150ms ease-out; never when disabled or under reduced motion. */
+  transition-property: scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+  -webkit-tap-highlight-color: transparent;
+  @apply motion-safe:enabled:active:scale-[0.96];
 }
 
 /* Peer actions: neutral, never colored. */
 @utility btn-secondary {
   @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-raised px-4 py-2 text-body-sm font-semibold text-text;
   @apply hover:bg-subtle-surface disabled:cursor-not-allowed disabled:opacity-60;
+  /* Press feedback: scale only, 150ms ease-out; never when disabled or under reduced motion. */
+  transition-property: scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+  -webkit-tap-highlight-color: transparent;
+  @apply motion-safe:enabled:active:scale-[0.96];
 }
 
 /* Text inputs and selects: a 3:1 boundary, 16px on mobile so iOS never zooms. */
@@ -39,4 +55,58 @@
 /* Inline text link. */
 @utility link {
   @apply text-accent underline decoration-from-font underline-offset-2 hover:decoration-transparent;
+}
+
+/* Every <details>: a chevron that points at the panel, which fades in; the
+   chevron's rotation and the panel's height only move without reduced motion.
+   The surface (card, inline) stays the caller's choice. */
+@utility disclosure {
+  & > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+  }
+  & > summary::-webkit-details-marker {
+    display: none;
+  }
+  & > summary::before {
+    content: '';
+    flex: none;
+    inline-size: 0.4375rem;
+    block-size: 0.4375rem;
+    border-inline-end: 2px solid currentColor;
+    border-block-end: 2px solid currentColor;
+    rotate: -45deg;
+  }
+  &[open] > summary::before {
+    rotate: 45deg;
+  }
+  &::details-content {
+    opacity: 0;
+    transition:
+      opacity 150ms ease-out,
+      content-visibility 150ms allow-discrete;
+  }
+  &[open]::details-content {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    & > summary::before {
+      transition: rotate 200ms var(--ease-standard);
+    }
+    &::details-content {
+      block-size: 0;
+      overflow: clip;
+      interpolate-size: allow-keywords;
+      transition:
+        opacity 200ms ease-out,
+        block-size 200ms var(--ease-standard),
+        content-visibility 200ms allow-discrete;
+    }
+    &[open]::details-content {
+      block-size: auto;
+    }
+  }
 }

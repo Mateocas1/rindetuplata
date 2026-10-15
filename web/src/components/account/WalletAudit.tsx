@@ -101,7 +101,7 @@ export default function WalletAudit({ walletId, onProblem }: WalletAuditProps) {
                   {formatDate(entry.at.slice(0, 10))}
                 </td>
                 <td className={cell}>
-                  <details>
+                  <details className="disclosure">
                     <summary className="link cursor-pointer text-caption">
                       Ver lo que quedó guardado
                     </summary>
