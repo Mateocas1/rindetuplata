@@ -8,9 +8,12 @@
  * trailing edge fades as a scroll cue, and its links draw an inset focus ring the
  * scroller cannot clip (T12e).
  *
- * The current page is marked twice (T12b): `aria-current` states it for
- * assistive technology and a 2px accent bar under the link shows it visually, so
- * the state never depends on colour alone.
+ * T13b (Cobalto Cristal): the wordmark is set in the display family, the nav is
+ * the mono caps `type-label` role separated by whitespace and one hairline under
+ * the band, and the current page is marked twice — `aria-current` for assistive
+ * technology and an ink bar under the link (a shape, so the state never depends
+ * on colour alone). The bar is ink, not cobalt: on this site cobalt marks the
+ * day's leader and the serif "plata" of the headline, one job per viewport.
  */
 import { CATEGORIES } from '../lib/categories';
 
@@ -27,13 +30,13 @@ const links = [
 ];
 ---
 
-<header class="sticky top-0 z-10 border-b border-border bg-surface-raised">
+<header class="sticky top-0 z-10 border-b border-border bg-surface">
   <div
     class="mx-auto flex h-14 w-full max-w-page items-center gap-4 px-gutter"
   >
     <a
       href="/"
-      class="shrink-0 rounded-sm text-body-sm font-semibold tracking-tight text-text no-underline"
+      class="shrink-0 font-display text-body font-medium tracking-tight text-text no-underline"
     >
       rindetuplata
     </a>
@@ -41,7 +44,7 @@ const links = [
       aria-label="Secciones"
       class="min-w-0 flex-1 overflow-x-auto [mask-image:linear-gradient(to_left,transparent,black_2rem)] sm:[mask-image:none]"
     >
-      <ul class="flex items-center gap-1 pe-8 whitespace-nowrap sm:gap-2 sm:pe-0">
+      <ul class="flex items-center gap-2 pe-8 whitespace-nowrap sm:gap-4 sm:pe-0">
         {
           links.map((link) => {
             const active = current === normalizedPath(link.href);
@@ -51,16 +54,13 @@ const links = [
                   href={link.href}
                   aria-current={active ? 'page' : undefined}
                   class:list={[
-                    'relative block rounded-sm px-2 py-2 text-body-sm no-underline focus-visible:-outline-offset-2',
-                    active ? 'font-semibold text-text' : 'text-muted hover:text-text',
+                    'type-label relative block py-2 no-underline focus-visible:-outline-offset-2',
+                    active ? 'text-text' : 'hover:text-text',
                   ]}
                 >
                   {link.label}
                   {active && (
-                    <span
-                      aria-hidden="true"
-                      class="absolute inset-x-2 bottom-0 h-0.5 rounded-pill bg-accent"
-                    />
+                    <span aria-hidden="true" class="absolute inset-x-0 bottom-0 h-0.5 bg-text" />
                   )}
                 </a>
               </li>

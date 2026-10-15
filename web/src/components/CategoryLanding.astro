@@ -1,17 +1,23 @@
 ---
 /**
- * Category landing page (T7c, S14).
+ * Category landing page (T7c, S14; T13b Cobalto Cristal).
  *
  * The day's ranking filtered by one kind, prerendered with the same table
  * component the home page uses. No island: the table is static markup and each
  * row links to the instrument page. Own H1, intro copy, title, description and
  * breadcrumb.
+ *
+ * Hierarchy (L77): the H1 is the display role, the intro is the reading role at
+ * its lead step, and the provenance of the whole page — its date and the query
+ * the ranking was run with — is ONE quiet `type-data` line, not a stack of small
+ * grey prose. The links are ink with a hairline underline: cobalt stays with the
+ * day's leader.
  */
 import RankingTable from './ranking/RankingTable';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import type { Category } from '../lib/categories';
 import { loadRanking, CATALOG_LIMIT } from '../lib/data';
-import { formatDate } from '../lib/format';
+import { formatDate, formatDays, formatMoney } from '../lib/format';
 import { loadInstrumentPages } from '../lib/pages';
 import { DEFAULT_RANKING_QUERY } from '../lib/rankingQuery';
 import { breadcrumbJsonLd } from '../lib/seo';
@@ -36,45 +42,45 @@ const jsonLd = breadcrumbJsonLd([
   { name: 'Inicio', url: new URL('/', site).href },
   { name: category.navLabel, url: canonical.href },
 ]);
+
+const linkClass =
+  'text-text underline decoration-border-strong underline-offset-2 hover:decoration-text';
 ---
 
 <BaseLayout title={category.title} description={description} jsonLd={jsonLd}>
   <div class="flex flex-col gap-section py-section">
     <header class="flex max-w-prose flex-col gap-block">
-      <nav aria-label="Ubicación" class="text-caption text-muted">
-        <ol class="flex flex-wrap gap-x-2">
+      <nav aria-label="Ubicación" class="type-label">
+        <ol class="flex flex-wrap items-center gap-x-2">
           <li>
-            <a class="link" href="/">
-              Inicio
-            </a>
+            <a class={linkClass} href="/">Inicio</a>
           </li>
           <li aria-current="page"><span aria-hidden="true">/</span> {category.navLabel}</li>
         </ol>
       </nav>
-      <h1 class="text-display font-semibold text-balance">{category.h1}</h1>
-      <p class="text-lead text-muted text-pretty">{category.intro}</p>
-      <p class="text-body-sm text-muted">
-        Ordenado por los pesos que ganás con $&nbsp;1.000.000 a 30 días. Cada fila indica su
-        fuente, la fecha del dato y si quedó desactualizado.
-      </p>
-      <p class="chip self-start bg-subtle-surface text-muted">
-        Datos del {formatDate(ranking.request.asOf)}
+      <h1 class="type-display">{category.h1}</h1>
+      <p class="type-body text-lead text-muted">{category.intro}</p>
+      <p class="type-data text-muted">
+        Datos del {formatDate(ranking.request.asOf)} · sobre {formatMoney(ranking.request.amount)} a
+        {' '}{formatDays(ranking.request.days)} · ordenado por los pesos que ganás.
       </p>
     </header>
 
     <section class="flex flex-col gap-block" aria-labelledby="ranking-de-hoy">
-      <h2 id="ranking-de-hoy" class="text-h2 font-semibold">El ranking de hoy</h2>
+      <h2 id="ranking-de-hoy" class="type-section">El ranking de hoy</h2>
       <RankingTable ranking={ranking} pageSlugs={pages.slugs} />
     </section>
 
-    <p class="max-w-prose text-body-sm">
-      <a class="link" href="/">
-        Ver todas las opciones juntas, con tu monto y tu plazo
+    <p class="type-data text-muted">
+      Mirá{' '}
+      <a class={linkClass} href="/">
+        todas las opciones juntas, con tu monto y tu plazo
       </a>
-      {' '}·{' '}
-      <a class="link" href="/metodologia/">
-        Cómo se calcula cada número
+      {' '}o cómo{' '}
+      <a class={linkClass} href="/metodologia/">
+        se calcula cada número
       </a>
+      .
     </p>
   </div>
 </BaseLayout>
