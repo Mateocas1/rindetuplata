@@ -32,17 +32,29 @@ const jsonLd = {
 ---
 
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
-  <div class="flex flex-col gap-section py-section">
+  {
+    /* The hero band clips the cobalt glow and hairline grid the best-option card
+       blurs: the card's `glass-field` paints them past its own edges, so the band
+       that owns them is the one that cuts them. `-mx-1 px-1` keeps its padding
+       box 4px wider than the page gutter, so no focus ring is ever clipped. */
+  }
+  <div class="-mx-1 flex flex-col gap-section overflow-hidden px-1 py-section">
     <header class="flex max-w-prose flex-col gap-block">
-      <h1 class="text-display font-semibold text-balance">¿Dónde rinde tu plata hoy?</h1>
-      <p class="text-lead text-muted text-pretty">
+      <p class="flex items-center gap-2.5 type-label">
+        <span aria-hidden="true" class="h-px w-3.5 bg-border-strong"></span>
+        Comparador · datos del {formatDate(dataDate)}
+      </p>
+      <h1 class="type-display">
+        ¿Dónde rinde tu <span class="serif-accent">plata</span> hoy?
+      </h1>
+      <p class="type-body text-lead text-muted">
         Plazos fijos, billeteras remuneradas, fondos money market y cripto, ordenados por cuánto
         ganás en pesos con tu monto y tu plazo. Al lado de cada uno, cuánto de eso le gana a la
         inflación esperada.
       </p>
-      <p class="text-body-sm text-muted">
-        Datos del {formatDate(dataDate)}. El ranking se ordena por los pesos que ganás, no por la
-        tasa, y cada fila indica su fuente y la fecha del dato.
+      <p class="type-data text-muted">
+        El orden sale de los pesos que ganás, no de la tasa. Cada fila indica su fuente y la fecha
+        del dato.
       </p>
     </header>
 

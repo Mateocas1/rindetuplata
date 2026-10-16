@@ -1,0 +1,66 @@
+---
+/**
+ * One ranking row of the "grafito" board (direction C3).
+ *
+ * A real table row, so the column heads stay associated with every cell; the
+ * narrow-screen layout changes `display` only, and keeps the explicit roles.
+ * The pesos earned are the dominant figure of the row at every width.
+ */
+import { formatMoney, formatPercent, formatSignedPercent } from '../../../lib/format';
+import { flagLabel, kindLabel } from '../../../lib/labels';
+import type { RankedEntry } from '../../../lib/types';
+
+interface Props {
+  entry: RankedEntry;
+  position: number;
+  leader: boolean;
+}
+
+const { entry, position, leader } = Astro.props;
+
+const earned = formatMoney(entry.earned);
+const tna = formatPercent(entry.rateUsed.fraction);
+const real = entry.realReturn;
+const realText = real === null ? null : formatSignedPercent(real);
+const direction = real === null || real === 0 ? 'flat' : real > 0 ? 'gain' : 'loss';
+const kind = kindLabel(entry.kind);
+const entity = entry.entity !== null && entry.entity !== entry.name ? entry.entity : null;
+const warning = entry.warnings.length > 0 ? flagLabel(entry.warnings[0].code) : null;
+---
+
+<tr class:list={['row', leader && 'row--leader']} role="row">
+  <td class="row__index index" role="cell">{String(position).padStart(2, '0')}</td>
+  <th scope="row" class="row__ident" role="rowheader">
+    <span class="row__name">
+      {entry.name}{leader && <span class="chip label">Mejor</span>}
+    </span>
+    <span class="row__kind data data--muted">
+      {kind}{entity !== null && <>{' · '}{entity}</>}
+    </span>
+    {warning !== null && <span class="row__warn data">{warning}</span>}
+  </th>
+  <td class="row__earn" role="cell">
+    <span class="figure figure--row">{earned}</span>
+    <span class="unit data data--muted"> ganancia</span>
+  </td>
+  <td class="row__real" role="cell">
+    {
+      realText === null ? (
+        <span class="data data--muted">sin dato</span>
+      ) : (
+        <span class={`delta delta--${direction}`}>
+          {direction !== 'flat' && (
+            <svg class="delta__arrow" viewBox="0 0 8 8" aria-hidden="true" focusable="false">
+              <path d="M4 0.6 7.6 7.4 0.4 7.4Z" fill="currentColor" />
+            </svg>
+          )}
+          <span>{realText}</span>
+          <span class="delta__word">real</span>
+        </span>
+      )
+    }
+  </td>
+  <td class="row__tna data" role="cell">
+    <span class="unit data--muted">TNA </span>{tna}
+  </td>
+</tr>

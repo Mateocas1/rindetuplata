@@ -5,60 +5,27 @@
  * ones flagged, never shown as current), an edit form, a one-click confirm and
  * the audit trail per wallet. A 403 becomes the "Sin permiso" state; a 401
  * leaves for `/ingresar`.
+ *
+ * T12c/T13d: one `card` per wallet, the tier tables read like the ranking table
+ * (mono caps `type-label` heads, mono tabular `type-data` figures, right-aligned
+ * numbers), each wallet carries one quiet mono provenance line, and every notice
+ * — the confirmation, a failure, the 403 — goes through the shared surfaces.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { accountApi, type WalletRate, type WalletTier } from '../../lib/account';
+import { accountApi, type WalletRate } from '../../lib/account';
 import { ApiProblem } from '../../lib/api';
-import { percentToFraction } from '../../lib/accountForm';
 import { FORBIDDEN_MESSAGE, isStale, sessionAction, stalenessText, toProblem } from '../../lib/accountStatus';
-import { formatDate, formatMoney, formatPercent } from '../../lib/format';
+import { formatDate } from '../../lib/format';
 import ProblemNotice from './ProblemNotice';
+import StatusNotice from './StatusNotice';
 import WalletAudit from './WalletAudit';
 import WalletRateEditor from './WalletRateEditor';
-import { buttonSecondaryClass } from './ui';
+import WalletTierTable from './WalletTierTable';
+import { buttonSecondaryClass, cardClass } from './ui';
 
 const LOGIN_PATH = '/ingresar';
 
 type Status = 'loading' | 'ready' | 'forbidden' | 'error';
-
-function TierTable({ tiers }: { tiers: WalletTier[] }) {
-  if (tiers.length === 0) {
-    return <p className="text-body-sm text-muted">Sin franjas.</p>;
-  }
-  return (
-    <table className="w-full max-w-lg border-collapse text-body-sm">
-      <caption className="sr-only">Franjas de tasa</caption>
-      <thead>
-        <tr>
-          <th scope="col" className="border-b border-border p-2 text-start font-semibold">
-            Desde
-          </th>
-          <th scope="col" className="border-b border-border p-2 text-start font-semibold">
-            Hasta
-          </th>
-          <th scope="col" className="border-b border-border p-2 text-start font-semibold">
-            TNA
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {tiers.map((tier, index) => (
-          <tr key={index}>
-            <td className="border-b border-border p-2 tabular-nums">
-              {tier.floor === null ? 'Sin piso' : formatMoney(tier.floor)}
-            </td>
-            <td className="border-b border-border p-2 tabular-nums">
-              {tier.ceiling === null ? 'Sin techo' : formatMoney(tier.ceiling)}
-            </td>
-            <td className="border-b border-border p-2 tabular-nums">
-              {formatPercent(percentToFraction(tier.tnaPercent))}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
 
 export default function WalletRatesPanel() {
   const [status, setStatus] = useState<Status>('loading');
@@ -123,7 +90,7 @@ export default function WalletRatesPanel() {
 
   if (status === 'loading') {
     return (
-      <p role="status" className="text-body-sm text-muted">
+      <p role="status" className="type-body text-muted">
         Cargando las tasas cargadas a mano…
       </p>
     );
@@ -131,16 +98,11 @@ export default function WalletRatesPanel() {
 
   if (status === 'forbidden') {
     return (
-      <div className="flex flex-col gap-2 rounded-lg border border-loss bg-loss-surface px-4 py-3">
-        <p className="font-semibold text-on-loss">Sin permiso</p>
-        <p className="text-body-sm text-on-loss">{FORBIDDEN_MESSAGE}</p>
-        <a
-          href="/"
-          className="self-start rounded-md bg-accent-solid px-4 py-2 text-body-sm font-semibold text-on-accent hover:bg-accent"
-        >
+      <ProblemNotice problem={{ status: 403, message: FORBIDDEN_MESSAGE }} title="Sin permiso">
+        <a href="/" className={`${buttonSecondaryClass} mt-1 self-start`}>
           Volver al ranking
         </a>
-      </div>
+      </ProblemNotice>
     );
   }
 
@@ -151,19 +113,12 @@ export default function WalletRatesPanel() {
   return (
     <div className="flex flex-col gap-section">
       {problem !== null && <ProblemNotice problem={problem} />}
-      {message !== null && (
-        <div
-          role="status"
-          className="rounded-lg border border-border bg-gain-surface px-4 py-3 text-body-sm text-on-gain"
-        >
-          {message}
-        </div>
-      )}
+      {message !== null && <StatusNotice role="status" tone="gain" title={message} />}
 
       {rates.length === 0 ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-raised p-block">
-          <p className="font-medium">No hay tasas cargadas a mano</p>
-          <p className="text-body-sm text-muted">
+        <div className={`${cardClass} flex flex-col gap-2`}>
+          <p className="type-body font-medium">No hay tasas cargadas a mano</p>
+          <p className="type-body text-muted">
             Cuando exista una, va a aparecer acá para editarla, confirmarla y ver su historial.
           </p>
         </div>
@@ -172,10 +127,7 @@ export default function WalletRatesPanel() {
           {rates.map((rate) => {
             const stale = isStale(rate.daysSinceVerified);
             return (
-              <li
-                key={rate.walletId}
-                className="flex flex-col gap-3 rounded-lg border border-border bg-surface-raised p-block"
-              >
+              <li key={rate.walletId} className={`${cardClass} flex flex-col gap-3`}>
                 {editingId === rate.walletId ? (
                   <WalletRateEditor
                     rate={rate}
@@ -193,17 +145,10 @@ export default function WalletRatesPanel() {
                   <>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="flex min-w-0 flex-col gap-1">
-                        <h2 className="text-h3 font-semibold">{rate.name}</h2>
-                        <p className="text-caption text-muted">
-                          Identificador: <code>{rate.walletId}</code>
-                        </p>
-                        <p className={stale ? 'text-body-sm text-warning' : 'text-body-sm text-muted'}>
-                          {stalenessText(rate.daysSinceVerified)}
-                          {stale ? '. Conviene reverificarla.' : '.'}
-                        </p>
-                        <p className="text-caption text-muted">
-                          Última actualización: {formatDate(rate.updatedAt.slice(0, 10))} por{' '}
-                          {rate.updatedBy}
+                        <h2 className="type-section">{rate.name}</h2>
+                        <p className={stale ? 'type-data text-warning' : 'type-data text-muted'}>
+                          {rate.walletId} · {stalenessText(rate.daysSinceVerified)} ·{' '}
+                          {formatDate(rate.updatedAt.slice(0, 10))} por {rate.updatedBy}
                         </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -228,30 +173,34 @@ export default function WalletRatesPanel() {
                       </div>
                     </div>
 
-                    <TierTable tiers={rate.tiers} />
+                    <WalletTierTable tiers={rate.tiers} label="Franjas de tasa" />
 
                     {rate.conditions.length > 0 && (
                       <div className="flex flex-col gap-2">
-                        <h3 className="text-body-sm font-semibold">Condiciones</h3>
+                        <h3 className="type-label">Condiciones</h3>
                         {rate.conditions.map((condition, index) => (
                           <div key={index} className="flex flex-col gap-1">
-                            <p className="text-body-sm">{condition.condition}</p>
-                            <TierTable tiers={condition.tiers} />
+                            <p className="type-body">{condition.condition}</p>
+                            <WalletTierTable
+                              tiers={condition.tiers}
+                              label={`Franjas de la condición: ${condition.condition}`}
+                            />
                           </div>
                         ))}
                       </div>
                     )}
 
                     {rate.note !== null && rate.note !== '' && (
-                      <p className="text-body-sm text-muted">Nota: {rate.note}</p>
+                      <p className="type-body text-muted">Nota: {rate.note}</p>
                     )}
 
                     <details
+                      className="disclosure"
                       onToggle={(event) =>
                         setAuditOpenId(event.currentTarget.open ? rate.walletId : null)
                       }
                     >
-                      <summary className="cursor-pointer text-body-sm font-semibold text-accent">
+                      <summary className="type-label cursor-pointer">
                         Historial de cambios
                       </summary>
                       <div className="mt-3">

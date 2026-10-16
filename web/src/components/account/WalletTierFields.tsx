@@ -5,7 +5,7 @@
  * and for each condition's schedule. Errors are keyed by the API's own
  * `parameter` names, so a 400 from `PUT /wallet-rates/{id}` lands on the same
  * input. Empty floor or ceiling means "no bound", which is what the API stores
- * as null.
+ * as null. Labels use the one field label style of the account pages (T12c).
  */
 import type { TierFormState } from '../../lib/accountForm';
 import { formatInteger } from '../../lib/format';
@@ -45,7 +45,7 @@ export default function WalletTierFields({
       aria-describedby={describedIds.length > 0 ? describedIds.join(' ') : undefined}
     >
       <legend className={labelClass}>{legend}</legend>
-      <p className="text-caption text-muted">
+      <p className="type-body text-muted">
         Dejá el piso o el techo vacío cuando la franja no tiene ese límite.
       </p>
       {orderingError !== undefined && (
@@ -62,10 +62,10 @@ export default function WalletTierFields({
           return (
             <li
               key={index}
-              className="flex flex-wrap items-start gap-x-4 gap-y-3 rounded-md border border-border bg-surface p-3"
+              className="flex flex-wrap items-start gap-x-4 gap-y-3 rounded-panel border border-border bg-surface p-3"
             >
               <div className="flex flex-col gap-1">
-                <label htmlFor={floorId} className="text-caption text-muted">
+                <label htmlFor={floorId} className={labelClass}>
                   Piso en pesos
                 </label>
                 <input
@@ -86,7 +86,7 @@ export default function WalletTierFields({
               </div>
 
               <div className="flex flex-col gap-1">
-                <label htmlFor={ceilingId} className="text-caption text-muted">
+                <label htmlFor={ceilingId} className={labelClass}>
                   Techo en pesos
                 </label>
                 <input
@@ -109,7 +109,7 @@ export default function WalletTierFields({
               </div>
 
               <div className="flex flex-col gap-1">
-                <label htmlFor={tnaId} className="text-caption text-muted">
+                <label htmlFor={tnaId} className={labelClass}>
                   TNA en porcentaje
                 </label>
                 <input

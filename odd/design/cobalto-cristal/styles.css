@@ -1,0 +1,943 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/archivo';
+@import '@fontsource-variable/geist-mono';
+@import '@fontsource/instrument-serif/400-italic.css';
+
+/* ==========================================================================
+   Grafito Cobalto — prototype stylesheet (T13, direction C3)
+
+   Deliberately self-contained: it does not import global.css or tokens.css, so
+   the direction gets judged on its own values. Tailwind is here for its
+   preflight and its @theme surface; the design itself is plain CSS with
+   semantic role classes, because the argument of this direction is the type
+   and surface system, not utilities.
+
+   SEVEN TEXT ROLES, plus one accent:
+     1. label    Geist Mono 400 · 12px · uppercase on fixed labels · +0.08em · muted
+                 -> eyebrow, nav, control labels, column heads, chip, footnote, proto note
+     2. display  Space Grotesk 500 · hero clamp(2.2rem -> 3.4rem) · lh 1.05 · -0.02em
+                 -> h1 (wordmark is the same role at a 17px step)
+     3. section  Space Grotesk 500 · 28px · lh 1.2 · -0.01em -> h2
+     4. figure   Space Grotesk 700 · tabular · two steps:
+                 hero clamp(2.5rem -> 3.75rem) and row 21px -> the pesos earned
+     5. body     Archivo 400 · two steps: lead 18px, prose 16px · lh 1.5-1.55
+                 (row names are the same role at weight 500)
+     6. data     Geist Mono 400 · 13px · tabular · ink (--muted for secondary)
+                 -> TNA, real return, kind · entity, provenance
+                 (hero readout is the same role at a 17px step)
+     7. index    Geist Mono 400 · 13px · muted -> the 01-08 gutter
+     +  accent   Instrument Serif italic 400 · 0.95em of the display size · cobalt
+                 -> the word "plata" in the h1, the only serif on the page
+
+   ONE ACCENT, ONE JOB. Cobalt marks the day's leader and the one accent word it
+   shares with the headline: the serif "plata" in the h1, the 2px rail on the hero
+   plate, and the 2px rail plus "Mejor" chip on ranking row 01. They state the same
+   fact, never a second job. No cobalt link, no cobalt fill, no cobalt CTA; the one
+   action ("Ver las ... opciones") is ink.
+
+   SURFACES, NOT SHADOWS. base -> raised -> inset. On light the raised step is
+   white against a #f7f8fa canvas, so the plate and the leader row are bounded
+   by a hairline plus the cobalt rail; on dark the raised step adds the 1px
+   inner top highlight the direction asks for.
+
+   GLASS ON ONE ELEMENT. The best-option plate is frosted: a translucent raised fill
+   that blurs one cobalt glow and a hairline grid, both painted only behind it and
+   only in its column. Without backdrop-filter, or under reduced transparency, it is
+   the opaque raised plate.
+   ========================================================================== */
+
+@theme {
+  --font-display: 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Archivo Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* Motion language: one curve, one duration for state changes. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Graphite geometry: nearly square panels, pills only for the one control. */
+  --radius-panel: 3px;
+  --radius-pill: 999px;
+}
+
+:root {
+  color-scheme: light dark;
+
+  /* --- surfaces and ink (light) ---------------------------------------- */
+  --canvas: #f7f8fa;
+  --raised: #ffffff;
+  --inset: #eef0f4;
+  --ink: #0b0d12;
+  --muted: #5a6070;
+  --line: #e2e5ea;
+  --line-strong: #848da0; /* form-control boundary: 3.14:1 on canvas */
+  --cobalt: #2947e0;
+  --gain: #0f6b3d;
+  --loss: #b3261e;
+  --warn: #8a5a00;
+  /* The selected segment: in light it is the ink end of the ramp, in dark a
+     graphite pill, so it never outshouts the day's figure. */
+  --thumb: var(--ink);
+  --thumb-ink: var(--canvas);
+  --lift: 0 0 0 rgba(0, 0, 0, 0); /* light: no inner highlight needed */
+
+  /* Frosted glass, the best-option plate only. Light: white over the canvas. */
+  --glass: rgb(255 255 255 / 0.62);
+  --glass-line: rgb(11 13 18 / 0.12);
+  --glass-lift: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --glow: rgb(41 71 224 / 0.18); /* cobalt, at most 0.18 in light */
+  --grid-line: rgb(11 13 18 / 0.06);
+
+  /* --- type roles ------------------------------------------------------ */
+  --t-label: 0.75rem;
+  --t-data: 0.8125rem;
+  --t-body: 1rem;
+  --t-lead: 1.125rem;
+  --t-section: 1.75rem;
+  --t-figure-row: 1.3125rem;
+  --t-wordmark: 1.0625rem;
+  --t-display: clamp(2.2rem, 1.5rem + 3vw, 3.4rem);
+  --t-figure: clamp(2.5rem, 2rem + 2.5vw, 3.75rem);
+
+  /* --- measure and rhythm --------------------------------------------- */
+  --measure: 34rem;
+  --gutter: clamp(1.25rem, 4vw, 3rem);
+  --band: clamp(4rem, 8vw, 7.5rem);
+  --page-max: 72rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #0b0d12;
+    --raised: #141721;
+    --inset: #1b1f2b;
+    --ink: #f2f4f8;
+    --muted: #a9b0be;
+    --line: rgba(255, 255, 255, 0.1);
+    --line-strong: #5d6678; /* 3.37:1 on canvas */
+    --cobalt: #7c92ff;
+    --gain: #5fbf86;
+    --loss: #ff8a7a;
+    --warn: #e0b357;
+    --thumb: #7a8296; /* 4.27:1 on the track, canvas label 5.05:1 */
+    --thumb-ink: var(--canvas);
+    --lift: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    /* Frosted glass: the raised surface at 0.55 over canvas and glow. */
+    --glass: rgb(20 23 33 / 0.55);
+    --glass-line: rgb(255 255 255 / 0.12);
+    --glass-lift: inset 0 1px 0 rgb(255 255 255 / 0.12);
+    --glow: rgb(124 146 255 / 0.22); /* cobalt, at most 0.22 in dark */
+    --grid-line: rgb(255 255 255 / 0.06);
+  }
+}
+
+@layer base {
+  html {
+    background-color: var(--canvas);
+    -webkit-text-size-adjust: 100%;
+    /* The column-head strip is sticky; anchored targets clear it. */
+    scroll-padding-block-start: 4.5rem;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: var(--t-body);
+    font-weight: 400;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Inverse selection: legible, and unmistakably not the accent. */
+  ::selection {
+    background-color: var(--ink);
+    color: var(--canvas);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+@layer components {
+  /* ---------------------------------------------------------------- roles */
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: var(--t-label);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    text-box: trim-both cap alphabetic;
+  }
+
+  .display {
+    font-family: var(--font-display);
+    font-size: var(--t-display);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  /* The one serif: the word "plata" in the h1. 0.95em matches the Space Grotesk
+     x-height (0.486 em / 0.510 em of Instrument Serif); 1.12em would be ~17% taller. */
+  .display__accent {
+    font-family: 'Instrument Serif', ui-serif, Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 0.95em;
+    letter-spacing: 0;
+    color: var(--cobalt);
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: var(--t-section);
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .figure {
+    font-family: var(--font-display);
+    font-size: var(--t-figure);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+  }
+
+  .figure--row {
+    font-size: var(--t-figure-row);
+    line-height: 1.15;
+    letter-spacing: 0;
+  }
+
+  .body {
+    margin: 0;
+    font-size: var(--t-body);
+    line-height: 1.55;
+    max-inline-size: var(--measure);
+    text-wrap: pretty;
+  }
+
+  .body--lead {
+    font-size: var(--t-lead);
+  }
+
+  .body--muted {
+    color: var(--muted);
+  }
+
+  .data {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-data);
+    font-weight: 400;
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  .data--muted {
+    color: var(--muted);
+  }
+
+  .index {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-data);
+    font-weight: 400;
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+
+  /* ------------------------------------------------------------- plumbing */
+
+  .sr-only {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .page {
+    max-inline-size: var(--page-max);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* -------------------------------------------------------------- top bar */
+
+  .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem clamp(1rem, 4vw, 2.5rem);
+    padding-block: 1.5rem;
+    border-block-end: 1px solid var(--line);
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: var(--t-wordmark);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nav__link {
+    text-decoration: none;
+    padding-block: 0.375rem;
+  }
+
+  .nav__link:hover {
+    color: var(--ink);
+  }
+
+  .nav__link[aria-current='page'] {
+    color: var(--ink);
+  }
+
+  /* ------------------------------------------------------------ hero band */
+
+  .hero {
+    padding-block: clamp(3rem, 6vw, 5.5rem) clamp(3.5rem, 7vw, 6rem);
+    border-block-end: 1px solid var(--line);
+    overflow: hidden; /* clips the glow and grid to the hero */
+  }
+
+  .hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(2.5rem, 6vw, 4.5rem);
+    align-items: start;
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+    min-inline-size: 0;
+  }
+
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  /* A 14px hairline tick: the instrument's zero mark, not decoration. */
+  .eyebrow::before {
+    content: '';
+    inline-size: 14px;
+    block-size: 1px;
+    background-color: var(--line-strong);
+  }
+
+  /* ------------------------------------------------- one control, one pill */
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem clamp(1.5rem, 4vw, 2.5rem);
+    align-items: flex-start;
+    margin-block-start: 0.5rem;
+  }
+
+  .seg {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-inline-size: 0;
+  }
+
+  .seg__legend {
+    display: block;
+    margin-block-end: 0.5rem;
+    padding: 0;
+  }
+
+  .seg__track {
+    position: relative;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    padding: 3px;
+    background-color: var(--inset);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-pill);
+  }
+
+  /* The selected segment is a shape, not only a colour: the thumb is visible
+     at 3:1 or better against the track, so it survives reduced motion. */
+  .seg__thumb {
+    position: absolute;
+    inset-block: 3px;
+    inset-inline-start: 3px;
+    inline-size: calc((100% - 6px) / var(--seg-count));
+    background-color: var(--thumb);
+    border-radius: var(--radius-pill);
+  }
+
+  .seg__opt {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 2.5rem;
+    padding-inline: 0.875rem;
+    cursor: pointer;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .seg__opt input {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: 0;
+    opacity: 0;
+  }
+
+  .seg__opt:has(input:checked) {
+    color: var(--thumb-ink);
+  }
+
+  /* The role classes set their own ink, so the selected inset text has to be
+     handed the thumb's ink explicitly or it vanishes on the thumb. */
+  .seg__opt:has(input:checked) .data {
+    color: var(--thumb-ink);
+  }
+
+  .seg__opt:has(input:focus-visible) {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  /* The thumb slides with transform only; one curve, one duration. */
+  .seg__track:has(> .seg__opt:nth-of-type(1) > input:checked) {
+    --seg-i: 0;
+  }
+  .seg__track:has(> .seg__opt:nth-of-type(2) > input:checked) {
+    --seg-i: 1;
+  }
+  .seg__track:has(> .seg__opt:nth-of-type(3) > input:checked) {
+    --seg-i: 2;
+  }
+
+  .seg__thumb {
+    transform: translateX(calc(var(--seg-i, 0) * 100%));
+  }
+
+  [dir='rtl'] .seg__thumb {
+    transform: translateX(calc(-1 * var(--seg-i, 0) * 100%));
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .seg__thumb {
+      transition: transform 180ms var(--ease-standard);
+    }
+  }
+
+  /* ------------------------------------------------------- protagonist plate */
+
+  .plate {
+    position: relative;
+    min-inline-size: 0;
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    background-color: var(--glass);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid var(--glass-line);
+    border-inline-start: 2px solid var(--cobalt);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--glass-lift);
+  }
+
+  /* Opaque fallback: no backdrop-filter support, or reduced transparency.
+     The rail keeps its cobalt colour; every other edge is the normal line. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .plate {
+      background-color: var(--raised);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      border-color: var(--line);
+      border-inline-start-color: var(--cobalt);
+      box-shadow: var(--lift);
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .plate {
+      background-color: var(--raised);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      border-color: var(--line);
+      border-inline-start-color: var(--cobalt);
+      box-shadow: var(--lift);
+    }
+  }
+
+  /* What the glass blurs: one cobalt glow and a hairline grid, painted behind
+     the plate inside its own column. The grid bleeds past the plate, and the
+     hero clips it, so no body text ever sits over either. */
+  .field {
+    position: relative;
+    isolation: isolate;
+    min-inline-size: 0;
+  }
+
+  .field::before,
+  .field::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .field::before {
+    inset-block: -3rem;
+    inset-inline: -2rem -1.5rem;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 2.5rem 2.5rem;
+    -webkit-mask-image: radial-gradient(closest-side, #000 35%, transparent);
+    mask-image: radial-gradient(closest-side, #000 35%, transparent);
+  }
+
+  .field::after {
+    inset: -4rem -3rem;
+    background: radial-gradient(closest-side, var(--glow), transparent);
+  }
+
+  .plate__figure {
+    margin-block: 0.625rem 0.5rem;
+    overflow-wrap: break-word;
+  }
+
+  .plate__name {
+    font-weight: 500;
+    max-inline-size: 30rem;
+  }
+
+  .readout {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-block-start: 1.5rem;
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--line);
+  }
+
+  /* Labels may wrap on a narrow screen; the figures stay on one line because
+     each cell pushes its value to the bottom of the row. */
+  .readout > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .readout__value {
+    font-size: 1.0625rem;
+  }
+
+  .plate__source {
+    margin-block-start: 1.25rem;
+  }
+
+  /* -------------------------------------------------------------- ranking */
+
+  .ranking {
+    padding-block: var(--band);
+  }
+
+  .ranking__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+    margin-block-end: clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  .board {
+    inline-size: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+  }
+
+  .board__col--index {
+    width: 2.75rem;
+  }
+  .board__col--earn {
+    width: 13rem;
+  }
+  .board__col--real {
+    width: 12.5rem;
+  }
+  .board__col--tna {
+    width: 5rem;
+  }
+
+  .board th,
+  .board td {
+    text-align: start;
+    vertical-align: baseline;
+    padding-block: 0;
+    padding-inline: 0 1.25rem;
+    font-weight: 400;
+  }
+
+  .board th:last-child,
+  .board td:last-child {
+    padding-inline-end: 0;
+  }
+
+  .board__head th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+    background-color: var(--inset);
+    padding-block: 0.75rem;
+    border-block: 1px solid var(--line);
+  }
+
+  .board__num {
+    text-align: end;
+  }
+
+  /* Hairlines instead of boxes: one rule between rows, no vertical dividers. */
+  .row > * {
+    border-block-end: 1px solid var(--line);
+    padding-block: 1.125rem;
+  }
+
+  .row {
+    position: relative;
+  }
+
+  .row__name {
+    display: block;
+    font-size: var(--t-body);
+    font-weight: 500;
+    line-height: 1.4;
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+  }
+
+  .row__kind {
+    display: block;
+    margin-block-start: 0.375rem;
+  }
+
+  .row__warn {
+    display: block;
+    margin-block-start: 0.25rem;
+    color: var(--warn);
+  }
+
+  .row__earn {
+    text-align: end;
+  }
+
+  .row__real {
+    text-align: end;
+  }
+
+  .row__tna {
+    text-align: end;
+  }
+
+  .chip {
+    display: inline-block;
+    margin-inline-start: 0.625rem;
+    padding-inline: 0.375rem;
+    color: var(--cobalt);
+    background-color: var(--inset);
+    border-radius: 2px;
+    vertical-align: 0.1em;
+  }
+
+  /* Row 01 is one surface step up, with the cobalt rail. No shadow.
+     The rail lives on the row's first cell on purpose: a pseudo-element on the
+     <tr> itself makes Chrome invent a sixth table column and shifts every
+     cell. */
+  .row--leader > * {
+    background-color: var(--raised);
+    /* Dark only: the 1px inner highlight that marks a lifted panel. */
+    box-shadow: var(--lift);
+  }
+
+  .row--leader .row__index {
+    position: relative;
+    padding-inline-start: 0.5rem;
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .row--leader .row__index::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: 2px;
+    background-color: var(--cobalt);
+  }
+
+  /* --------------------------------------------------- sign, never colour */
+
+  .delta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.375rem;
+    white-space: nowrap;
+  }
+
+  .delta__arrow {
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    flex: none;
+    align-self: center;
+  }
+
+  .delta--gain {
+    color: var(--gain);
+  }
+
+  .delta--loss {
+    color: var(--loss);
+  }
+
+  .delta--loss .delta__arrow {
+    transform: rotate(180deg);
+  }
+
+  .delta__word {
+    color: var(--muted);
+  }
+
+  /* Inline units carry the column meaning on narrow screens, where the sticky
+     head is hidden. */
+  .unit {
+    display: none;
+  }
+
+  /* --------------------------------------------------------- notes / footer */
+
+  .note {
+    max-inline-size: var(--measure);
+    margin-block-start: 1.5rem;
+  }
+
+  .sources {
+    margin-block-start: 1.5rem;
+    border-block-start: 1px solid var(--line);
+  }
+
+  .sources__summary {
+    display: inline-block;
+    padding-block: 1rem;
+    cursor: pointer;
+    color: var(--ink);
+  }
+
+  .sources__list {
+    display: grid;
+    gap: 0.625rem;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sources__item {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: baseline;
+  }
+
+  .sources__line {
+    margin: 0;
+    overflow-wrap: break-word;
+  }
+
+  .more {
+    display: inline-block;
+    margin-block-start: 1rem;
+    color: var(--ink);
+    text-decoration: none;
+    border-block-end: 1px solid var(--line-strong);
+    padding-block-end: 0.125rem;
+    font-weight: 500;
+  }
+
+  .more:hover {
+    border-block-end-color: var(--ink);
+  }
+
+  .more__arrow {
+    margin-inline-start: 0.375rem;
+  }
+
+  .how {
+    padding-block: var(--band);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .how__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+  }
+
+  .steps {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: baseline;
+    padding-block-end: 1.25rem;
+    border-block-end: 1px solid var(--line);
+  }
+
+  .step:last-child {
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+
+  .footer {
+    padding-block: clamp(2.5rem, 5vw, 4rem);
+    border-block-start: 1px solid var(--line);
+  }
+
+  .footer__grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem clamp(2rem, 6vw, 4rem);
+  }
+
+  .footer__disclaimer {
+    margin: 0;
+    max-inline-size: var(--measure);
+    color: var(--muted);
+  }
+
+  .proto-note {
+    margin-block-start: 2rem;
+  }
+
+  /* ------------------------------------------------------------ narrow screen */
+
+  @media (max-width: 63.99rem) {
+    .hero__grid,
+    .how__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 47.99rem) {
+    /* The board stacks. Roles stay explicit on each cell, and each cell keeps
+       its own unit word, so nothing is lost when the head strip is gone. */
+    .board,
+    .board thead,
+    .board tbody,
+    .board tr {
+      display: block;
+    }
+
+    .board thead {
+      display: none;
+    }
+
+    .unit {
+      display: inline;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+      grid-template-areas:
+        'index ident ident'
+        'index earn  earn'
+        'index real  tna';
+      column-gap: 0.875rem;
+      row-gap: 0.375rem;
+      padding-block: 1.125rem;
+      border-block-end: 1px solid var(--line);
+    }
+
+    .row > * {
+      display: block;
+      padding: 0;
+      border-block-end: 0;
+    }
+
+    .row__index {
+      grid-area: index;
+    }
+    .row__ident {
+      grid-area: ident;
+    }
+    .row__earn {
+      grid-area: earn;
+      text-align: start;
+      margin-block-start: 0.375rem;
+    }
+    .row__real {
+      grid-area: real;
+      text-align: start;
+    }
+    .row__tna {
+      grid-area: tna;
+      text-align: end;
+    }
+  }
+}

@@ -8,7 +8,7 @@
  */
 import { useState } from 'react';
 import { ApiProblem, api } from '../../lib/api';
-import { formatDate, formatMoney, formatPercent } from '../../lib/format';
+import { formatDate, formatDays, formatMoney, formatPercent, formatSignedPercent } from '../../lib/format';
 import { confidenceLabel, flagLabel, rateKindLabel } from '../../lib/labels';
 import {
   DEFAULT_AMOUNT,
@@ -18,7 +18,6 @@ import {
 } from '../../lib/rankingQuery';
 import { problemMessage, simulationOutcome, type SimulationOutcome } from '../../lib/simulator';
 import type { Simulation } from '../../lib/types';
-import RealReturnBadge from '../ranking/RealReturnBadge';
 
 export interface Props {
   instrumentId: string;
@@ -28,60 +27,69 @@ export interface Props {
   defaultDays?: number;
 }
 
-const inputClass =
-  'w-full rounded-md border border-border-strong bg-surface-raised px-3 py-2 text-body tabular-nums';
-const labelClass = 'flex flex-col gap-1 text-body-sm font-medium';
+const inputClass = 'field tabular-nums';
+const labelClass = 'flex flex-col gap-1 type-label';
+
+/** The sign is text; the tone only reinforces it, never replaces it (S10). */
+function realReturnTone(value: number | null): string {
+  if (value === null || value === 0) return 'text-muted';
+  return value > 0 ? 'text-gain' : 'text-loss';
+}
 
 function SimulatedResult({
   entry,
+  amount,
+  days,
   inflationIndexLabel,
 }: {
   entry: Extract<SimulationOutcome, { status: 'simulated' }>['entry'];
+  amount: number;
+  days: number;
   inflationIndexLabel: string;
 }) {
   const isStale = entry.warnings.some((warning) => warning.code === 'STALE');
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-lead">
-        Con tu monto y tu plazo ganás <span className="font-semibold tabular-nums">{formatMoney(entry.earned)}</span>.
-      </p>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-body-sm">
+    <div className="flex flex-col gap-4">
+      <div>
+        <p className="type-label">Ganancia estimada</p>
+        <p className="type-figure mt-2">{formatMoney(entry.earned)}</p>
+        <p className="type-data text-muted mt-1">
+          en {formatDays(days)} con {formatMoney(amount)}
+        </p>
+      </div>
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-4 sm:grid-cols-3">
         <div>
-          <dt className="text-muted">Al vencimiento</dt>
-          <dd className="tabular-nums">{formatMoney(entry.finalAmount)}</dd>
+          <dt className="type-label">Al vencimiento</dt>
+          <dd className="type-figure text-figure-row">{formatMoney(entry.finalAmount)}</dd>
         </div>
         <div>
-          <dt className="text-muted">Rendimiento real</dt>
-          <dd>
-            <RealReturnBadge realReturn={entry.realReturn} indexLabel={inflationIndexLabel} />
-          </dd>
+          <dt className="type-label">{entry.rateUsed.basis}</dt>
+          <dd className="type-figure text-figure-row">{formatPercent(entry.rateUsed.fraction)}</dd>
         </div>
-        <div>
-          <dt className="text-muted">Tasa usada</dt>
-          <dd className="tabular-nums">
-            {formatPercent(entry.rateUsed.fraction)}{' '}
-            <span className="text-muted">({rateKindLabel(entry.rateUsed.kind)})</span>
-          </dd>
-        </div>
-        <div>
-          <dt className="text-muted">Fuente y fecha</dt>
-          <dd>
-            {entry.source.displayName}
-            {entry.source.official ? ' · oficial' : ''} · dato del {formatDate(entry.dataDate)} ·{' '}
-            {confidenceLabel(entry.confidence)}
-            {entry.verifiedAt !== null ? ` · verificada el ${formatDate(entry.verifiedAt)}` : ''}
+        <div className="col-span-2 sm:col-span-1">
+          <dt className="type-label">Rendimiento real</dt>
+          <dd className={`type-figure text-figure-row ${realReturnTone(entry.realReturn)}`}>
+            {entry.realReturn === null ? 'sin dato' : formatSignedPercent(entry.realReturn)}
+            <span className="sr-only">
+              {' '}
+              real contra la inflación esperada ({inflationIndexLabel})
+            </span>
           </dd>
         </div>
       </dl>
+      <p className="type-data text-muted">
+        {entry.source.displayName}
+        {entry.source.official ? ' · oficial' : ''} · {rateKindLabel(entry.rateUsed.kind)} · dato del{' '}
+        {formatDate(entry.dataDate)} · {confidenceLabel(entry.confidence)}
+        {entry.verifiedAt !== null ? ` · verificada el ${formatDate(entry.verifiedAt)}` : ''}
+      </p>
       {entry.upTo !== null && (
-        <p className="text-body-sm text-warning tabular-nums">
+        <p className="type-data text-warning">
           Hasta {formatMoney(entry.upTo.finalAmount)} {entry.upTo.condition}.
         </p>
       )}
       {isStale && (
-        <p className="inline-flex self-start rounded-pill bg-warning-surface px-2 py-1 text-caption text-on-warning">
-          {flagLabel('STALE')}
-        </p>
+        <p className="chip self-start bg-warning-surface text-on-warning">{flagLabel('STALE')}</p>
       )}
     </div>
   );
@@ -98,6 +106,9 @@ export default function SimulatorIsland({
   const [amountError, setAmountError] = useState<string | null>(null);
   const [daysError, setDaysError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<SimulationOutcome | null>(null);
+  // The amount and term the shown result belongs to, so editing a field never
+  // silently relabels a result that came from the previous query.
+  const [submitted, setSubmitted] = useState<{ amount: number; days: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -112,6 +123,7 @@ export default function SimulatorIsland({
     setDaysError(parsedDays === null ? 'Ingresá los días como número entero entre 1 y 3650.' : null);
     if (parsedAmount === null || parsedDays === null) {
       setOutcome(null);
+      setSubmitted(null);
       setError(null);
       return;
     }
@@ -119,6 +131,7 @@ export default function SimulatorIsland({
     setLoading(true);
     setError(null);
     setOutcome(null);
+    setSubmitted(null);
     try {
       const params = new URLSearchParams({
         instrumentId,
@@ -126,6 +139,7 @@ export default function SimulatorIsland({
         days: String(parsedDays),
       });
       const simulation = await api.get<Simulation>('/api/v1/simulations', params);
+      setSubmitted({ amount: parsedAmount, days: parsedDays });
       setOutcome(simulationOutcome(simulation, { amount: parsedAmount, days: parsedDays }));
     } catch (caught) {
       setError(
@@ -156,7 +170,7 @@ export default function SimulatorIsland({
               aria-describedby={amountError !== null ? `sim-monto-error-${instrumentId}` : undefined}
             />
             {amountError !== null && (
-              <p id={`sim-monto-error-${instrumentId}`} className="text-caption text-loss">
+              <p id={`sim-monto-error-${instrumentId}`} className="type-data text-loss">
                 {amountError}
               </p>
             )}
@@ -175,17 +189,13 @@ export default function SimulatorIsland({
               aria-describedby={daysError !== null ? `sim-dias-error-${instrumentId}` : undefined}
             />
             {daysError !== null && (
-              <p id={`sim-dias-error-${instrumentId}`} className="text-caption text-loss">
+              <p id={`sim-dias-error-${instrumentId}`} className="type-data text-loss">
                 {daysError}
               </p>
             )}
           </div>
         </div>
-        <button
-          type="submit"
-          className="self-start rounded-md bg-accent-solid px-4 py-2 font-semibold text-on-accent hover:bg-accent aria-disabled:opacity-60"
-          aria-disabled={loading}
-        >
+        <button type="submit" className="btn-secondary self-start aria-disabled:opacity-60" aria-disabled={loading}>
           {loading ? 'Simulando…' : 'Simular'}
         </button>
       </form>
@@ -194,36 +204,41 @@ export default function SimulatorIsland({
         role="status"
         aria-live="polite"
         aria-busy={loading}
-        className="min-h-6 rounded-lg border border-border bg-surface-raised px-4 py-3"
+        className="card min-h-6 p-6"
       >
-        {loading && <p className="text-body-sm text-muted">Simulando con tu monto y tu plazo…</p>}
-        {!loading && error !== null && <p className="text-body-sm text-loss">{error}</p>}
+        {loading && <p className="type-body text-muted">Simulando con tu monto y tu plazo…</p>}
+        {!loading && error !== null && <p className="type-body text-loss">{error}</p>}
         {!loading && outcome?.status === 'simulated' && (
-          <SimulatedResult entry={outcome.entry} inflationIndexLabel={inflationIndexLabel} />
+          <SimulatedResult
+            entry={outcome.entry}
+            amount={submitted?.amount ?? defaultAmount}
+            days={submitted?.days ?? defaultDays}
+            inflationIndexLabel={inflationIndexLabel}
+          />
         )}
         {!loading && outcome?.status === 'ineligible' && (
           <div className="flex flex-col gap-1">
-            <p className="font-medium">Con ese monto y ese plazo esta opción no entra</p>
-            <p className="text-body-sm text-muted">{outcome.message}</p>
+            <p className="type-label">Con ese monto y ese plazo esta opción no entra</p>
+            <p className="type-body text-muted">{outcome.message}</p>
           </div>
         )}
         {!loading && outcome?.status === 'excluded' && (
           <div className="flex flex-col gap-1">
-            <p className="font-medium">Esta opción no se puede simular hoy</p>
-            <p className="text-body-sm text-muted">{outcome.message}</p>
+            <p className="type-label">Esta opción no se puede simular hoy</p>
+            <p className="type-body text-muted">{outcome.message}</p>
           </div>
         )}
         {!loading && outcome?.status === 'unknown' && (
-          <p className="text-body-sm text-muted">{outcome.message}</p>
+          <p className="type-body text-muted">{outcome.message}</p>
         )}
         {!loading && outcome === null && error === null && (
-          <p className="text-body-sm text-muted">
+          <p className="type-body text-muted">
             Poné tu monto y tus días y te mostramos cuánto ganás, con la tasa que publica la
             fuente.
           </p>
         )}
       </div>
-      <p className="text-caption text-muted">
+      <p className="type-data text-muted">
         La cuenta la hace la API con la tasa y las condiciones de cada producto. Es información,
         no asesoramiento financiero.
       </p>

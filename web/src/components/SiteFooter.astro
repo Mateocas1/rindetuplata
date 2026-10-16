@@ -2,47 +2,63 @@
 /**
  * Footer: the disclaimer (S8 L-G), the neutrality statement (S11) and the
  * source note. Informational wording only, no advice.
+ *
+ * T13b (Cobalto Cristal): the wordmark is set in the display family, the links
+ * are the mono caps `type-label` role, and the band is separated from the page
+ * by one hairline (`border-t`) instead of a surface or a shadow. The links are
+ * ink with a hairline underline, so the one cobalt of a viewport stays with the
+ * day's leader.
  */
 const year = new Date().getFullYear();
 ---
 
-<footer class="mt-section border-t border-border bg-surface-raised">
-  <div class="mx-auto flex w-full max-w-page flex-col gap-block px-gutter py-section">
+<footer class="mt-section border-t border-border">
+  <div class="mx-auto flex w-full max-w-page flex-col gap-section px-gutter py-section">
+    <div class="flex flex-wrap items-baseline justify-between gap-block">
+      <a
+        href="/"
+        class="wordmark text-text no-underline"
+      >
+        rindetuplata
+      </a>
+      <nav aria-label="Enlaces del pie">
+        <ul class="flex flex-wrap gap-x-6 gap-y-2">
+          <li>
+            <a
+              class="type-label text-text underline decoration-border-strong underline-offset-2 hover:decoration-text"
+              href="/metodologia/"
+            >
+              Cómo se calcula
+            </a>
+          </li>
+          <li>
+            <a
+              class="type-label text-text underline decoration-border-strong underline-offset-2 hover:decoration-text"
+              href="https://github.com/Mateocas1/rindetuplata"
+              rel="noopener"
+            >
+              Código y capturas diarias
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
     <div class="flex max-w-prose flex-col gap-block">
-      <p class="text-body-sm text-muted">
+      <p class="type-body text-muted">
         rindetuplata compara tasas públicas y muestra cuánto le ganás a la inflación con tu monto y
         tu plazo. Es información, no asesoramiento financiero: no recomendamos dónde poner tu plata.
       </p>
-      <p class="text-body-sm text-muted">
+      <p class="type-body text-muted">
         El orden del ranking sale de una cuenta que podés revisar, no de acuerdos comerciales.
         Ninguna entidad que comparamos nos paga por aparecer.
       </p>
-      <p class="text-body-sm text-muted">
+      <p class="type-body text-muted">
         Los datos salen de fuentes públicas (BCRA, ArgentinaDatos y los sitios de cada entidad) y
         cada fila indica su fuente y la fecha del dato.
       </p>
     </div>
-    <nav aria-label="Enlaces del pie">
-      <ul class="flex flex-wrap gap-x-6 gap-y-2">
-        <li>
-          <a
-            class="text-body-sm text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-            href="/metodologia/"
-          >
-            Cómo se calcula
-          </a>
-        </li>
-        <li>
-          <a
-            class="text-body-sm text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-            href="https://github.com/Mateocas1/rindetuplata"
-            rel="noopener"
-          >
-            Código y capturas diarias
-          </a>
-        </li>
-      </ul>
-    </nav>
-    <p class="text-caption text-muted">© {year} rindetuplata</p>
+
+    <p class="type-label">© {year} rindetuplata</p>
   </div>
 </footer>

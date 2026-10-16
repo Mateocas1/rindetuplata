@@ -7,12 +7,21 @@
  * (`?monto=&dias=&tipo=&cliente=`) and reports loading, error and empty states
  * through an always-rendered `role="status"` region.
  *
+ * T13b: the hero of the page is this island's first band — the two capsule
+ * segmented controls (the prototype's amounts and terms) on one side and the
+ * one frosted-glass card with the best option of the current query on the
+ * other. The presets are shortcuts over the same query state as the free
+ * inputs: picking one goes through `applyAmountPreset` / `applyDaysPreset` and
+ * re-queries, and the reader's own value simply leaves the control unselected.
+ * The kind filters and the bank list moved behind one disclosure, so the screen
+ * asks for a monto and a plazo first and nothing else.
+ *
  * No financial maths happens here: the API returns the amounts and we format them.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ApiProblem, api } from '../../lib/api';
-import { formatDate, formatDays, formatInteger, formatMoney, formatPercent } from '../../lib/format';
-import { KIND_OPTIONS, inflationIndexLabel } from '../../lib/labels';
+import { formatDays, formatInteger, formatMoney } from '../../lib/format';
+import { KIND_OPTIONS } from '../../lib/labels';
 import {
   parseRankingQuery,
   serializeRankingQuery,
@@ -22,7 +31,10 @@ import {
 } from '../../lib/rankingQuery';
 import { RANKING_KINDS, type BankOption, type RankedKind, type Ranking } from '../../lib/types';
 import ExcludedList from './ExcludedList';
+import BestOptionPlate from './BestOptionPlate';
 import RankingTable from './RankingTable';
+import Segmented from '../ui/Segmented';
+import { AMOUNT_PRESETS, DAYS_PRESETS, applyAmountPreset, applyDaysPreset, matchPreset } from './presets';
 
 export interface RankingExplorerProps {
   /** The default ranking, rendered on the server. */
@@ -35,9 +47,12 @@ export interface RankingExplorerProps {
 }
 
 const DEBOUNCE_MS = 400;
-const inputClass =
-  'w-full max-w-56 rounded-md border border-border-strong bg-surface px-3 py-2 text-base tabular-nums sm:text-body-sm';
-const labelClass = 'text-body-sm font-semibold';
+/** The board is the day's best eight; the rest follow behind a disclosure. */
+const BOARD_SIZE = 8;
+// One recipe, one place (T12a): the field shape comes from `field`, the layout
+// width from here.
+const inputClass = 'field max-w-56 tabular-nums';
+const labelClass = 'type-label';
 
 export default function RankingExplorer({
   initialRanking,
@@ -84,16 +99,23 @@ export default function RankingExplorer({
   const noKinds = checkedKinds.length === 0;
   const invalidSelection = noKinds || parsedAmount === null || parsedDays === null;
 
+  /** Adopt a whole selection: a preset pick, or the query string of a shared URL. */
+  const adopt = (next: RankingQueryState) => {
+    setAmount(next.amount);
+    setDays(next.days);
+    setAmountText(String(next.amount));
+    setDaysText(String(next.days));
+    setAmountTouched(true);
+    setDaysTouched(true);
+    setCheckedKinds(next.kinds.length > 0 ? next.kinds : [...RANKING_KINDS]);
+    setClientOf(next.clientOf);
+  };
+
   // Adopt a shared URL once on mount (?monto=&dias=&tipo=&cliente=).
   useEffect(() => {
     const fromUrl = parseRankingQuery(window.location.search);
     if (serializeRankingQuery(fromUrl) === serializeRankingQuery(initialQuery)) return;
-    setAmount(fromUrl.amount);
-    setDays(fromUrl.days);
-    setAmountText(String(fromUrl.amount));
-    setDaysText(String(fromUrl.days));
-    setCheckedKinds(fromUrl.kinds.length > 0 ? fromUrl.kinds : [...RANKING_KINDS]);
-    setClientOf(fromUrl.clientOf);
+    adopt(fromUrl);
   }, [initialQuery]);
 
   // Debounce typing so a request is not fired per keystroke.
@@ -165,184 +187,209 @@ export default function RankingExplorer({
     )} opciones para ${formatMoney(ranking.request.amount)} a ${formatDays(ranking.request.days)}.`;
   })();
 
+  const best = ranking.ranked[0];
+  const rest = Math.max(ranking.ranked.length - BOARD_SIZE, 0);
+
   return (
     <div className="flex flex-col gap-section">
-      <section aria-labelledby="armar-ranking" className="flex flex-col gap-block">
-        <h2 id="armar-ranking" className="text-h2 font-semibold">
+      <section aria-labelledby="armar-ranking">
+        <h2 id="armar-ranking" className="sr-only">
           Armá tu ranking
         </h2>
-        <div className="flex flex-col gap-6 rounded-lg border border-border bg-surface-raised p-block sm:p-6">
-          <div className="flex flex-wrap items-end gap-x-8 gap-y-block">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="monto" className={labelClass}>
-                Monto en pesos
-              </label>
-              <input
-                id="monto"
-                name="monto"
-                type="number"
-                inputMode="numeric"
-                min="1"
-                step="any"
-                value={amountText}
-                aria-invalid={amountError !== null}
-                aria-describedby={amountError !== null ? 'monto-error' : undefined}
-                onChange={(event) => {
-                  setAmountTouched(true);
-                  setAmountText(event.target.value);
-                }}
-                className={inputClass}
+        <div className="grid gap-section lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start">
+          <div className="flex min-w-0 flex-col gap-6">
+            <div className="flex flex-wrap items-end gap-x-8 gap-y-block">
+              <Segmented
+                name="monto-preset"
+                legend="Montos frecuentes"
+                options={AMOUNT_PRESETS}
+                selected={matchPreset(AMOUNT_PRESETS, amount)}
+                onSelect={(value) => adopt(applyAmountPreset(selection, value))}
               />
-              {amountError !== null && (
-                <p id="monto-error" className="text-body-sm text-loss">
-                  {amountError}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-1">
-              <label htmlFor="dias" className={labelClass}>
-                Plazo en días
-              </label>
-              <input
-                id="dias"
-                name="dias"
-                type="number"
-                inputMode="numeric"
-                min="1"
-                max="3650"
-                step="1"
-                value={daysText}
-                aria-invalid={daysError !== null}
-                aria-describedby={daysError !== null ? 'dias-error' : undefined}
-                onChange={(event) => {
-                  setDaysTouched(true);
-                  setDaysText(event.target.value);
-                }}
-                className={inputClass}
-              />
-              {daysError !== null && (
-                <p id="dias-error" className="text-body-sm text-loss">
-                  {daysError}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <fieldset
-            className="flex flex-col gap-2"
-            aria-describedby={noKinds ? 'tipos-ayuda tipos-error' : 'tipos-ayuda'}
-          >
-            <legend className={labelClass}>Tipos de opción</legend>
-            <p id="tipos-ayuda" className="text-caption text-muted">
-              Con los cuatro marcados comparás todo. Si sacás alguno, el ranking solo muestra los
-              que quedan.
-            </p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
-              {KIND_OPTIONS.map((option) => (
-                <label key={option.value} className="flex items-center gap-2 text-body-sm">
-                  <input
-                    type="checkbox"
-                    className="size-6 accent-accent-solid"
-                    checked={checkedKinds.includes(option.value)}
-                    onChange={() => toggleKind(option.value)}
-                  />
-                  {option.label}
+              <div className="flex flex-col gap-1">
+                <label htmlFor="monto" className={labelClass}>
+                  Monto en pesos
                 </label>
-              ))}
+                <input
+                  id="monto"
+                  name="monto"
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  step="any"
+                  value={amountText}
+                  aria-invalid={amountError !== null}
+                  aria-describedby={amountError !== null ? 'monto-error' : undefined}
+                  onChange={(event) => {
+                    setAmountTouched(true);
+                    setAmountText(event.target.value);
+                  }}
+                  className={inputClass}
+                />
+                {amountError !== null && (
+                  <p id="monto-error" className="type-body text-loss">
+                    {amountError}
+                  </p>
+                )}
+              </div>
             </div>
-            {noKinds && (
-              <p id="tipos-error" className="text-body-sm text-loss">
-                Elegí al menos un tipo de opción.
-              </p>
-            )}
-          </fieldset>
 
-          <fieldset className="flex flex-col gap-2">
-            <legend className={labelClass}>Soy cliente de… (opcional)</legend>
-            <p className="text-caption text-muted">
-              Marcá tus bancos y el ranking de plazos fijos usa la tasa para clientes (S19).
-            </p>
-            <details className="rounded-md border border-border bg-surface px-4 py-3">
-              <summary className="cursor-pointer text-body-sm text-accent">
+            <div className="flex flex-wrap items-end gap-x-8 gap-y-block">
+              <Segmented
+                name="plazo-preset"
+                legend="Plazos frecuentes"
+                options={DAYS_PRESETS}
+                selected={matchPreset(DAYS_PRESETS, days)}
+                onSelect={(value) => adopt(applyDaysPreset(selection, value))}
+              />
+              <div className="flex flex-col gap-1">
+                <label htmlFor="dias" className={labelClass}>
+                  Plazo en días
+                </label>
+                <input
+                  id="dias"
+                  name="dias"
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  max="3650"
+                  step="1"
+                  value={daysText}
+                  aria-invalid={daysError !== null}
+                  aria-describedby={daysError !== null ? 'dias-error' : undefined}
+                  onChange={(event) => {
+                    setDaysTouched(true);
+                    setDaysText(event.target.value);
+                  }}
+                  className={inputClass}
+                />
+                {daysError !== null && (
+                  <p id="dias-error" className="type-body text-loss">
+                    {daysError}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <details className="disclosure card px-4 py-3">
+              <summary className="type-label text-text">
+                Más filtros · {formatInteger(checkedKinds.length)} de {KIND_OPTIONS.length} tipos
                 {clientOf.length === 0
-                  ? 'Elegir bancos'
-                  : `${formatInteger(clientOf.length)} ${
-                      clientOf.length === 1 ? 'banco marcado' : 'bancos marcados'
+                  ? ''
+                  : ` · ${formatInteger(clientOf.length)} ${
+                      clientOf.length === 1 ? 'banco' : 'bancos'
                     }`}
               </summary>
-              <div className="mt-3 max-h-80 overflow-y-auto overscroll-contain pe-2">
-                <ul className="flex flex-col gap-2">
-                  {banks.map((bank) => (
-                    <li key={bank.id}>
-                      <label className="flex items-center gap-2 text-body-sm">
+              <div className="mt-4 flex flex-col gap-6">
+                <fieldset
+                  className="flex flex-col gap-2 border-0 p-0"
+                  aria-describedby={noKinds ? 'tipos-ayuda tipos-error' : 'tipos-ayuda'}
+                >
+                  <legend className={labelClass}>Tipos de opción</legend>
+                  <p id="tipos-ayuda" className="type-data text-muted">
+                    Con los cuatro marcados comparás todo. Si sacás alguno, el ranking solo muestra
+                    los que quedan.
+                  </p>
+                  <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    {KIND_OPTIONS.map((option) => (
+                      <label key={option.value} className="flex items-center gap-2 type-body">
                         <input
                           type="checkbox"
-                          className="size-6 accent-accent-solid"
-                          checked={clientOf.includes(bank.id)}
-                          onChange={() => toggleBank(bank.id)}
+                          className="size-6 accent-text"
+                          checked={checkedKinds.includes(option.value)}
+                          onChange={() => toggleKind(option.value)}
                         />
-                        <span className="min-w-0 break-words">{bank.name}</span>
+                        {option.label}
                       </label>
-                    </li>
-                  ))}
-                </ul>
+                    ))}
+                  </div>
+                  {noKinds && (
+                    <p id="tipos-error" className="type-body text-loss">
+                      Elegí al menos un tipo de opción.
+                    </p>
+                  )}
+                </fieldset>
+
+                <fieldset className="flex flex-col gap-2 border-0 p-0">
+                  <legend className={labelClass}>Soy cliente de… (opcional)</legend>
+                  <p className="type-data text-muted">
+                    Marcá tus bancos y el ranking de plazos fijos usa la tasa para clientes.
+                  </p>
+                  <div className="max-h-80 overflow-y-auto overscroll-contain pe-2">
+                    <ul className="flex flex-col gap-2">
+                      {banks.map((bank) => (
+                        <li key={bank.id}>
+                          <label className="flex items-center gap-2 type-body">
+                            <input
+                              type="checkbox"
+                              className="size-6 accent-text"
+                              checked={clientOf.includes(bank.id)}
+                              onChange={() => toggleBank(bank.id)}
+                            />
+                            <span className="min-w-0 break-words">{bank.name}</span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </fieldset>
               </div>
             </details>
-          </fieldset>
+          </div>
+
+          <div className="min-w-0">
+            {status !== 'error' && best !== undefined && (
+              <BestOptionPlate ranking={ranking} best={best} />
+            )}
+          </div>
         </div>
       </section>
 
       <section aria-labelledby="resultado" className="flex flex-col gap-block">
-        <div className="flex flex-col gap-2">
-          <h2 id="resultado" className="text-h2 font-semibold">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
+          <h2 id="resultado" className="type-section">
             El ranking de hoy
           </h2>
-          <p role="status" className="text-body-sm text-muted">
+          <p role="status" className="type-label">
             {statusMessage}
           </p>
-          {status !== 'error' && ranking.inflation !== null && (
-            <p className="text-body-sm text-muted">
-              El rendimiento real compara contra la inflación esperada del{' '}
-              {inflationIndexLabel(ranking.inflation.index)}:{' '}
-              {formatPercent(ranking.inflation.twelveMonthRate)} a 12 meses,{' '}
-              {formatPercent(ranking.inflation.overHorizon)} en {formatDays(ranking.request.days)}.
-              Observación del {formatDate(ranking.inflation.observationDate)}.
-            </p>
-          )}
-          {status !== 'error' && ranking.inflation === null && (
-            <p className="text-body-sm text-muted">
-              No hay dato de inflación disponible, así que no mostramos rendimiento real: las
-              tasas y los montos son los que devuelve la API.
-            </p>
-          )}
         </div>
 
         <div aria-busy={status === 'loading'}>
           {status === 'error' && error !== null ? (
-            <div
-              role="alert"
-              className="flex flex-col gap-2 rounded-lg border border-loss bg-loss-surface px-4 py-3"
-            >
-              <p className="font-semibold text-on-loss">No se pudo cargar el ranking</p>
-              <p className="text-body-sm text-on-loss">{error.message}</p>
+            <div className="card flex flex-col gap-2 border-loss bg-loss-surface p-6" role="alert">
+              <p className="type-body font-semibold text-on-loss">No se pudo cargar el ranking</p>
+              <p className="type-body text-on-loss">{error.message}</p>
               <button
                 type="button"
                 onClick={() => setRetryToken((token) => token + 1)}
-                className="self-start rounded-md bg-accent-solid px-4 py-2 text-body-sm font-semibold text-on-accent hover:bg-accent"
+                className="btn-primary self-start"
               >
                 Reintentar
               </button>
             </div>
           ) : ranking.ranked.length === 0 ? (
-            <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-raised p-block">
-              <p className="font-medium">No hay opciones para este monto y plazo</p>
-              <p className="text-body-sm text-muted">
+            <div className="card flex flex-col gap-2 p-6">
+              <p className="type-body font-medium">No hay opciones para este monto y plazo</p>
+              <p className="type-body text-muted">
                 Probá con otro monto, con más días o marcando más tipos de opción. Más abajo están
                 las opciones que quedaron afuera y por qué.
               </p>
             </div>
           ) : (
-            <RankingTable ranking={ranking} pageSlugs={pageSlugs} />
+            <>
+              <RankingTable ranking={ranking} pageSlugs={pageSlugs} limit={BOARD_SIZE} />
+              {rest > 0 && (
+                <details className="disclosure mt-6">
+                  <summary className="type-label text-text">
+                    Las {formatInteger(rest)} opciones siguientes
+                  </summary>
+                  <div className="mt-4">
+                    <RankingTable ranking={ranking} pageSlugs={pageSlugs} offset={BOARD_SIZE} />
+                  </div>
+                </details>
+              )}
+            </>
           )}
         </div>
 

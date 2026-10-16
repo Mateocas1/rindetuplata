@@ -14,7 +14,15 @@ import { ApiProblem } from '../../lib/api';
 import { normalizeEmail, validateEmail } from '../../lib/accountForm';
 import { toProblem } from '../../lib/accountStatus';
 import ProblemNotice from './ProblemNotice';
-import { buttonPrimaryClass, fieldGroupClass, inputClass, labelClass } from './ui';
+import StatusNotice from './StatusNotice';
+import {
+  buttonPrimaryClass,
+  cardClass,
+  errorTextClass,
+  fieldGroupClass,
+  inputClass,
+  labelClass,
+} from './ui';
 
 const ALERTS_PATH = '/alertas';
 const EMAIL_INPUT_ID = 'ingresar-email';
@@ -52,8 +60,9 @@ export default function LoginPanel() {
       .then(() => {
         window.location.assign(ALERTS_PATH);
       })
-      .catch((reason: unknown) => {
-        setProblem(toProblem(reason));
+      .catch(() => {
+        // A consumed or expired link is the overwhelmingly likely cause, and the
+        // form below already carries the way forward.
         setStatus('token-error');
       });
   }, []);
@@ -89,7 +98,7 @@ export default function LoginPanel() {
 
   if (status === 'consuming') {
     return (
-      <p role="status" className="text-body-sm text-muted">
+      <p role="status" className="type-body text-muted">
         Estamos entrando con tu link…
       </p>
     );
@@ -102,35 +111,25 @@ export default function LoginPanel() {
   return (
     <div className="flex flex-col gap-block">
       {status === 'token-error' && (
-        <div
-          role="alert"
-          className="flex flex-col gap-1 rounded-lg border border-loss bg-loss-surface px-4 py-3"
-        >
-          <p className="font-semibold text-on-loss">No pudimos entrar con ese link</p>
-          <p className="text-body-sm text-on-loss">
-            El link ya se usó o venció. Pedí uno nuevo con tu email.
-          </p>
-        </div>
+        <StatusNotice role="alert" tone="loss" title="No pudimos entrar con ese link">
+          <p className="type-body">El link ya se usó o venció. Pedí uno nuevo con tu email.</p>
+        </StatusNotice>
       )}
 
       {status === 'sent' && (
-        <div
-          role="status"
-          className="flex flex-col gap-1 rounded-lg border border-border bg-gain-surface px-4 py-3"
-        >
-          <p className="font-semibold text-on-gain">Revisá tu email</p>
-          <p className="text-body-sm text-on-gain">
+        <StatusNotice role="status" tone="gain" title="Revisá tu email">
+          <p className="type-body">
             Si esa dirección está bien escrita, te llega un link para entrar. Puede tardar unos
             minutos; fijate también en el correo no deseado.
           </p>
-        </div>
+        </StatusNotice>
       )}
 
       {problem !== null && (
         <ProblemNotice problem={problem} onRetry={() => void requestLink()} />
       )}
 
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-block">
+      <form onSubmit={onSubmit} noValidate className={`${cardClass} flex flex-col gap-block`}>
         <div className={fieldGroupClass}>
           <label htmlFor={EMAIL_INPUT_ID} className={labelClass}>
             Tu email
@@ -152,11 +151,11 @@ export default function LoginPanel() {
             }}
             className={inputClass}
           />
-          <p id={EMAIL_HINT_ID} className="text-caption text-muted">
+          <p id={EMAIL_HINT_ID} className="type-body text-muted">
             Sin contraseñas: te mandamos un link de un solo uso, válido por 15 minutos.
           </p>
           {emailError !== null && (
-            <p id={EMAIL_ERROR_ID} className="text-body-sm text-loss">
+            <p id={EMAIL_ERROR_ID} className={errorTextClass}>
               {emailError}
             </p>
           )}
