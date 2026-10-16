@@ -50,6 +50,9 @@ const webDir = process.env.WEB_DIR ?? '/app/web';
 const apiUrl = process.env.API_URL ?? '';
 const siteUrl = process.env.SITE_URL ?? '';
 const keepBuilds = Number(process.env.REBUILDER_KEEP_BUILDS ?? '2');
+// T14c: the API's startup ingestion can finish before this sidecar listens, and its hook is then lost
+// (the API does not retry). One build at startup covers that window; a hook that arrives later queues.
+const buildOnStart = process.env.REBUILDER_BUILD_ON_START === 'true';
 
 /** The build root Caddy mounts on /srv: one directory per build plus the `current` symlink. */
 const siteDir = join(webDir, '.site');
@@ -295,6 +298,10 @@ server.listen(port, '0.0.0.0', () => {
     `rebuilder listening on 0.0.0.0:${server.address().port}; builds run in ${webDir} ` +
       `and are published as ${currentLink} (keeping the last ${keepBuilds})`,
   );
+  if (buildOnStart) {
+    log('startup build requested (REBUILDER_BUILD_ON_START=true)');
+    startBuild();
+  }
 });
 
 server.on('error', (error) => {

@@ -334,6 +334,24 @@ check "current serves the new build" "serving .site/build-4" "$(current_html)"
 check "the run is reported ok" "True" "$(json_last "$scratch/state-prune.json" ok)"
 
 echo
+echo "== REBUILDER_BUILD_ON_START builds once without a POST (a hook sent before the sidecar listened is not lost) =="
+mkdir -p "$scratch/web2/node_modules/.bin"
+cp "$scratch/web/package.json" "$scratch/web2/"
+cp "$scratch/web/node_modules/.bin/astro" "$scratch/web2/node_modules/.bin/astro"
+WEB_DIR="$scratch/web2" REBUILDER_PORT=0 REBUILDER_BUILD_ON_START=true API_URL=http://web \
+  SITE_URL=https://preview.example.ts.net node deploy/rebuilder/server.mjs > "$scratch/server2.log" 2>&1 &
+server2_pid=$!
+for _ in $(seq 1 100); do
+  [ -L "$scratch/web2/.site/current" ] && break
+  sleep 0.1
+done
+kill "$server2_pid" 2>/dev/null || true
+wait "$server2_pid" 2>/dev/null || true
+check "the startup build is published with no POST" "build-1" "$(readlink "$scratch/web2/.site/current" 2>/dev/null || echo '(no current)')"
+check_log_line="$(grep -c 'startup build requested' "$scratch/server2.log" || true)"
+check "the startup build is logged" "1" "$check_log_line"
+
+echo
 echo "== unknown route =="
 check "GET /nope answers 404" "404" "$(curl -sS -o "$scratch/notfound.json" -w '%{http_code}' "http://127.0.0.1:$port/nope")"
 
