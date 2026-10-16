@@ -4,14 +4,15 @@
  * A plain search input plus a list of buttons, not a fake combobox: the ARIA
  * combobox pattern brings a key map and `aria-activedescendant` this list does
  * not need, and native buttons keep the keyboard path intact. The result count
- * is announced politely, and the chosen option collapses to a chip with a way
- * back ("Quitar").
+ * is announced politely, and the chosen option collapses to a panel chip with a
+ * way back ("Quitar"), a quiet ink inline action: cobalt stays for the view's
+ * one primary action (T13d).
  */
 import { useMemo, useState } from 'react';
 import type { InstrumentSummary } from '../../lib/account';
 import { instrumentOptionLabel } from '../../lib/accountForm';
 import { formatInteger } from '../../lib/format';
-import { inputClass } from './ui';
+import { inlineActionClass, inputClass } from './ui';
 
 const MAX_RESULTS = 8;
 
@@ -48,13 +49,13 @@ export default function InstrumentPicker({
   if (selectedId !== null) {
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-md border border-border bg-subtle-surface px-3 py-2 text-body-sm">
+        <span className="rounded-panel border border-border bg-subtle-surface px-3 py-2 type-body">
           {selected === undefined ? `Opción #${selectedId}` : instrumentOptionLabel(selected)}
         </span>
         <button
           type="button"
           onClick={() => onSelect(null)}
-          className="rounded-sm px-2 py-2 text-body-sm text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
+          className={`${inlineActionClass} rounded-sm px-2 py-2`}
         >
           Quitar
         </button>
@@ -81,17 +82,17 @@ export default function InstrumentPicker({
         placeholder="Buscar por nombre, banco o fondo"
         className={`${inputClass} max-w-none`}
       />
-      <p id={hintId} className="text-caption text-muted">
+      <p id={hintId} className="type-body text-muted">
         Escribí para buscar entre {formatInteger(instruments.length)} opciones. Si no elegís
         ninguna, la alerta mira todas las de ese tipo.
       </p>
-      <p id={statusId} role="status" className="text-caption text-muted">
+      <p id={statusId} role="status" className="type-data text-muted">
         {matches.length === 0
           ? 'Sin coincidencias.'
           : `Mostrando ${formatInteger(matches.length)} de ${formatInteger(instruments.length)} opciones.`}
       </p>
       {matches.length > 0 && (
-        <ul className="flex max-h-64 flex-col gap-1 overflow-y-auto overscroll-contain rounded-md border border-border bg-surface-raised p-2">
+        <ul className="card flex max-h-64 flex-col gap-1 overflow-y-auto overscroll-contain p-2">
           {matches.map((instrument) => (
             <li key={instrument.id}>
               <button
@@ -100,7 +101,7 @@ export default function InstrumentPicker({
                   onSelect(Number(instrument.id));
                   setQuery('');
                 }}
-                className="w-full rounded-sm px-2 py-2 text-start text-body-sm hover:bg-subtle-surface"
+                className="w-full rounded-sm px-2 py-2 text-start type-body hover:bg-subtle-surface"
               >
                 {instrumentOptionLabel(instrument)}
               </button>

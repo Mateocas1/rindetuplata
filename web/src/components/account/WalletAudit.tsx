@@ -4,13 +4,15 @@
  * Mounted only when the reader opens the disclosure, so the panel does not
  * fetch every wallet's history up front. Each entry states the action, who did
  * it and when, with the stored document available on demand: a past action
- * stays readable after the rate changes.
+ * stays readable after the rate changes. The table itself is `WalletAuditTable`
+ * (T13d), a markup half a test can render; this half owns the fetch.
  */
 import { useEffect, useState } from 'react';
 import { accountApi, type AuditEntry } from '../../lib/account';
 import { ApiProblem } from '../../lib/api';
-import { auditActionLabel, problemText, sessionAction, toProblem } from '../../lib/accountStatus';
-import { formatDate } from '../../lib/format';
+import { sessionAction, toProblem } from '../../lib/accountStatus';
+import ProblemNotice from './ProblemNotice';
+import WalletAuditTable from './WalletAuditTable';
 
 const LOGIN_PATH = '/ingresar';
 
@@ -46,41 +48,20 @@ export default function WalletAudit({ walletId, onProblem }: WalletAuditProps) {
   }, [walletId, onProblem]);
 
   if (problem !== null) {
-    return <p className="text-body-sm text-loss">{problemText(problem)}</p>;
+    return <ProblemNotice problem={problem} title="No pudimos cargar el historial" />;
   }
 
   if (entries === null) {
     return (
-      <p role="status" className="text-body-sm text-muted">
+      <p role="status" className="type-body text-muted">
         Cargando el historial…
       </p>
     );
   }
 
   if (entries.length === 0) {
-    return <p className="text-body-sm text-muted">Sin movimientos registrados.</p>;
+    return <p className="type-body text-muted">Sin movimientos registrados.</p>;
   }
 
-  return (
-    <ol className="flex flex-col gap-3">
-      {entries.map((entry) => (
-        <li key={entry.id} className="flex flex-col gap-1 border-s-2 border-border ps-3">
-          <p className="text-body-sm font-medium">
-            {auditActionLabel(entry.action)}
-          </p>
-          <p className="text-caption text-muted">
-            {entry.actor} · {formatDate(entry.at.slice(0, 10))}
-          </p>
-          <details>
-            <summary className="cursor-pointer text-caption text-accent">
-              Ver lo que quedó guardado
-            </summary>
-            <pre className="mt-2 max-h-64 overflow-auto rounded-md border border-border bg-surface p-3 text-caption">
-              {JSON.stringify(entry.payload, null, 2)}
-            </pre>
-          </details>
-        </li>
-      ))}
-    </ol>
-  );
+  return <WalletAuditTable entries={entries} />;
 }

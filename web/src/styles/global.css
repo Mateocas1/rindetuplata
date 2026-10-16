@@ -1,10 +1,15 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/archivo/wght.css';
+@import '@fontsource-variable/space-grotesk/wght.css';
+@import '@fontsource-variable/geist-mono/wght.css';
+@import '@fontsource/instrument-serif/400-italic.css';
 @import './tokens.css';
+@import './recipes.css';
 
 /**
- * Base layer only: colour and type come from the tokens, and the one global
- * focus indicator is set here so every control shares it. No motion ships in
- * T7b, so nothing here needs a reduced-motion fallback.
+ * Base layer only: color and type come from the tokens, component shapes from
+ * the recipes, and the one global focus indicator is set here so every control
+ * shares it. Motion lives in the recipes (T12d).
  */
 @layer base {
   html {
@@ -22,9 +27,17 @@
   }
 
   /* Always offset from the control it outlines: against a filled control no
-     single colour can hold 3:1 on both the fill and the page surface. */
+     single color can hold 3:1 on both the fill and the page surface. */
   :focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
+  }
+
+  /* A region waiting for fresh data keeps full contrast (T12e: a 0.6 dim
+     dropped its text to 2.62:1); its status message carries the busy state. */
+
+  ::selection {
+    background-color: var(--color-accent-surface);
+    color: var(--color-text);
   }
 }

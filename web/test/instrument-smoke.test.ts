@@ -4,8 +4,9 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { CATEGORIES } from '../src/lib/categories';
+import { CHART_HEIGHT, CHART_WIDTH } from '../src/lib/chart';
 import { CATALOG_LIMIT, loadRanking } from '../src/lib/data';
-import { formatDate, formatPercent } from '../src/lib/format';
+import { formatDate, formatMoney, formatPercent } from '../src/lib/format';
 import { loadInstrumentPages } from '../src/lib/pages';
 import { DEFAULT_RANKING_QUERY } from '../src/lib/rankingQuery';
 import { instrumentPath, instrumentSlug } from '../src/lib/slug';
@@ -136,12 +137,28 @@ describe('instrument pages', () => {
   it('exists once per kind with its own H1, rate, source and dates', () => {
     for (const { entry, slug } of samplePerKind) {
       const page = instrumentHtml(slug);
-      expect(page, slug).toContain(`<h1 class="text-h1`);
+      expect(page, slug).toContain(`<h1 class="type-display`);
       expect(page, slug).toContain(entry.name);
       expect(page, slug).toContain(formatPercent(entry.rateUsed.fraction));
+      // The rate and its unit are separate readout cells, never run together (T13c).
+      expect(page, slug).toContain(`<dt class="type-label">${entry.rateUsed.basis}</dt>`);
+      expect(page, slug).toContain(`<dd class="type-data">${formatPercent(entry.rateUsed.fraction)}</dd>`);
       expect(page, slug).toContain(entry.source.displayName);
-      expect(page, slug).toContain('Fecha del dato');
-      expect(page, slug).toContain(formatDate(entry.dataDate));
+      // Source and data date travel in one quiet provenance line (T13c, L77).
+      expect(page, slug).toContain(`· dato del ${formatDate(entry.dataDate)}`);
+    }
+  });
+
+  it("features the default query's pesos earned as the page figure", () => {
+    for (const { entry, slug } of samplePerKind) {
+      const page = instrumentHtml(slug);
+      // The hero states the same fact as the reference plate: what the default
+      // ranking's amount earns in the default term, as the protagonist figure.
+      expect(page, slug).toContain('class="type-figure');
+      expect(page, slug).toContain(formatMoney(entry.earned));
+      expect(page, slug).toContain('en 30 días con');
+      // Provenance is one quiet data line, not a wall of small grey prose (L77).
+      expect(page, slug).toMatch(/class="type-data text-muted/);
     }
   });
 
@@ -165,6 +182,53 @@ describe('instrument pages', () => {
       expect(page, slug).toContain('Inflación mensual (INDEC)');
       expect(page, slug).toContain('role="img"');
     }
+  });
+
+  it('draws the chart at its intrinsic pixel size, so axis labels never scale with the viewBox', () => {
+    for (const { slug } of samplePerKind) {
+      const page = instrumentHtml(slug);
+      const tag = page.match(/<svg[^>]*role="img"[^>]*>/)?.[0];
+      if (tag === undefined) throw new Error(`${slug} has no chart svg`);
+      expect(tag, slug).toContain(`viewBox="0 0 ${CHART_WIDTH} ${CHART_HEIGHT}"`);
+      expect(tag, slug).toContain(`width="${CHART_WIDTH}"`);
+      expect(tag, slug).toContain(`height="${CHART_HEIGHT}"`);
+      expect(tag, slug).not.toContain('w-full');
+      // Inside the row-reverse scroller (T12e) the svg is a flex item: shrink-0 keeps its 640px.
+      expect(tag, slug).toMatch(/class="[^"]*\bshrink-0\b/);
+      // 13px from --text-data: the labels sit on a 1:1 surface, never a scaled one.
+      expect(page, slug).toContain('fill-muted type-data');
+    }
+  });
+
+  it('pins the y-axis outside the chart scroll region (T13e item 8)', () => {
+    const page = instrumentHtml(samplePerKind[0].slug);
+    const [before, ...rest] = page.split(/<div class="[^"]*" role="region" aria-label="Gráfico:/);
+    const region = rest.join('');
+    const axis = /<svg[^>]*chart-axis[^>]*>[\s\S]*?<\/svg>/.exec(page)?.[0];
+
+    // The tick labels live in an aria-hidden strip pinned outside the scroller, so
+    // a 320px screen keeps the scale while the plot scrolls under it.
+    expect(axis, 'the pinned axis').toBeDefined();
+    expect(axis).toContain('aria-hidden="true"');
+    expect(axis).toContain('text-anchor="end"');
+    expect(axis).toContain('fill-muted type-data');
+    expect(before, 'the axis is not inside the scroller').toContain('chart-axis');
+    expect(region, 'no y tick label scrolls away').not.toContain('text-anchor="end"');
+  });
+
+  it('keeps the hero rail as the only cobalt decoration, and Simular a peer action (T13e item 4)', () => {
+    const page = instrumentHtml(samplePerKind[0].slug);
+    const tokens = [...page.matchAll(/class="([^"]*)"/g)].flatMap((match) =>
+      match[1].split(/\s+/),
+    );
+
+    // The hero rail is the page's cobalt moment; the chart's series colour is
+    // data, not decoration.
+    expect(tokens.filter((token) => token === 'border-s-accent')).toHaveLength(1);
+    expect(tokens.filter((token) => /^bg-accent/.test(token))).toEqual([]);
+    // The simulator's submit is a peer action, never the filled accent button.
+    expect(tokens).toContain('btn-secondary');
+    expect(tokens).not.toContain('btn-primary');
   });
 
   it('repeats the chart data in a secondary table', () => {

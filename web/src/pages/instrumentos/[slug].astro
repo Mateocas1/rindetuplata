@@ -13,7 +13,7 @@ import SimulatorIsland from '../../components/instrument/SimulatorIsland';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { categoryForKind } from '../../lib/categories';
 import { MissingHistoryRecording, loadHistory } from '../../lib/data';
-import { formatDate, formatMoney, formatPercent } from '../../lib/format';
+import { formatDate, formatDays, formatMoney, formatPercent, formatSignedPercent } from '../../lib/format';
 import {
   confidenceLabel,
   flagLabel,
@@ -97,20 +97,24 @@ if (ranked !== null) {
 }
 
 const isStale = ranked !== null && ranked.warnings.some((warning) => warning.code === 'STALE');
-const definition = 'text-body-sm';
-const term = 'text-muted';
+
+// The hero states today's fact the way the reference plate does: the pesos the
+// default amount earns in the default term as the protagonist figure, the rate
+// and its kind as data, and one quiet provenance line (L77). The simulator
+// below turns that default into the reader's own amount and term.
+const defaultMoney = formatMoney(DEFAULT_AMOUNT);
+const defaultTerm = formatDays(DEFAULT_DAYS);
+const inflationValue = inflation === null ? 'sin dato' : formatPercent(inflation.overHorizon);
+const provenance = `${entry.source.displayName}${entry.source.official ? ' · fuente oficial' : ''} · dato del ${formatDate(entry.dataDate)}`;
 ---
 
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
   <article class="flex flex-col gap-section py-section">
     <header class="flex max-w-prose flex-col gap-block">
-      <nav aria-label="Ubicación" class="text-caption text-muted">
+      <nav aria-label="Ubicación" class="type-label">
         <ol class="flex flex-wrap gap-x-2">
           <li>
-            <a
-              class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-              href="/"
-            >
+            <a class="hover:text-text" href="/">
               Inicio
             </a>
           </li>
@@ -118,10 +122,7 @@ const term = 'text-muted';
             category !== null && (
               <li>
                 <span aria-hidden="true">/</span>{' '}
-                <a
-                  class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-                  href={category.path}
-                >
+                <a class="hover:text-text" href={category.path}>
                   {category.navLabel}
                 </a>
               </li>
@@ -130,70 +131,71 @@ const term = 'text-muted';
           <li aria-current="page"><span aria-hidden="true">/</span> {entry.name}</li>
         </ol>
       </nav>
-      <h1 class="text-h1 font-semibold text-balance">{entry.name}</h1>
-      <p class="text-lead text-muted text-pretty">
-        {kindName}
-        {ranked?.entity !== null && ranked?.entity !== undefined && ranked.entity !== ranked.name
-          ? ` de ${ranked.entity}`
-          : ''}. Los datos salen de {entry.source.displayName}
-        {entry.source.official ? ' (fuente oficial)' : ''}.
-      </p>
-    </header>
+      <div class="flex flex-col gap-block">
+        <p class="type-label">
+          {kindName}
+          {ranked?.entity !== null && ranked?.entity !== undefined && ranked.entity !== ranked.name
+            ? ` · ${ranked.entity}`
+            : ''}
+        </p>
+        <h1 class="type-display max-w-prose">{entry.name}</h1>
+      </div>
 
-    <section class="flex flex-col gap-block" aria-labelledby="tasa-de-hoy">
-      <h2 id="tasa-de-hoy" class="text-h2 font-semibold">La tasa de hoy</h2>
       {
         ranked !== null ? (
-          <div class="flex max-w-prose flex-col gap-3 rounded-lg border border-border bg-surface-raised p-block">
-            <p class="text-display font-semibold tabular-nums">
-              {ratePercent}
-              <span class="text-h3 font-normal text-muted">{basis}</span>
+          <div class="card max-w-prose border-s-2 border-s-accent p-6">
+            <p class="type-label">Hoy</p>
+            <p class="type-figure mt-3">{formatMoney(ranked.earned)}</p>
+            <p class="type-data text-muted mt-1">
+              en {defaultTerm} con {defaultMoney}
             </p>
-            <p class="text-body-sm text-muted">
-              {rateKindLabel(ranked.rateUsed.kind)}. La fuente publica la tasa como {basis}; el
-              ranking la usa para calcular cuánto ganás con tu monto y tu plazo.
-            </p>
+            <dl class="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-4 sm:grid-cols-3">
+              <div>
+                <dt class="type-label">{basis}</dt>
+                <dd class="type-data">{ratePercent}</dd>
+              </div>
+              <div>
+                <dt class="type-label">Rendimiento real</dt>
+                <dd class="type-data">
+                  {ranked.realReturn === null ? 'sin dato' : formatSignedPercent(ranked.realReturn)}
+                </dd>
+              </div>
+              <div class="col-span-2 sm:col-span-1">
+                <dt class="type-label">Inflación del plazo</dt>
+                <dd class="type-data">{inflationValue}</dd>
+              </div>
+            </dl>
+            <p class="type-data text-muted mt-4">{provenance}</p>
             {ranked.upTo !== null && (
-              <p class="text-body-sm text-warning tabular-nums">
+              <p class="type-data text-warning mt-2">
                 Hasta {formatMoney(ranked.upTo.finalAmount)} {ranked.upTo.condition}.
               </p>
             )}
-            <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
-              <div class={definition}>
-                <dt class={term}>Fuente</dt>
-                <dd>
-                  {ranked.source.displayName}
-                  {ranked.source.official ? ' · oficial' : ''}
-                </dd>
-              </div>
-              <div class={definition}>
-                <dt class={term}>Confianza del dato</dt>
-                <dd>
-                  {confidenceLabel(ranked.confidence)}
-                  {ranked.verifiedAt !== null
-                    ? ` · verificada el ${formatDate(ranked.verifiedAt)}`
-                    : ''}
-                </dd>
-              </div>
-              <div class={definition}>
-                <dt class={term}>Fecha del dato</dt>
-                <dd class="tabular-nums">{formatDate(ranked.dataDate)}</dd>
-              </div>
-              <div class={definition}>
-                <dt class={term}>Fecha de captura</dt>
-                <dd class="tabular-nums">{formatDate(ranked.captureDate)}</dd>
-              </div>
-            </dl>
             {isStale && (
-              <p class="inline-flex self-start rounded-pill bg-warning-surface px-2 py-1 text-caption text-on-warning">
-                {flagLabel('STALE')}: la fuente no publica un dato más nuevo.
+              <p class="mt-3 flex flex-wrap items-baseline gap-x-2">
+                <span class="chip bg-warning-surface text-on-warning">{flagLabel('STALE')}</span>
+                <span class="type-body text-muted">
+                  la fuente no publica un dato más nuevo.
+                </span>
               </p>
             )}
+            <details class="disclosure mt-4">
+              <summary class="type-label">De dónde sale este número</summary>
+              <p class="type-body mt-2 max-w-prose text-muted">
+                {rateKindLabel(ranked.rateUsed.kind)}. La fuente publica la tasa como {basis}; el
+                ranking la usa para calcular cuánto ganás con tu monto y tu plazo. El dato se
+                capturó el {formatDate(ranked.captureDate)} con una confianza de{' '}
+                {confidenceLabel(ranked.confidence)}
+                {ranked.verifiedAt !== null
+                  ? `, verificada el ${formatDate(ranked.verifiedAt)}`
+                  : ''}.
+              </p>
+            </details>
           </div>
         ) : (
-          <div class="flex max-w-prose flex-col gap-3 rounded-lg border border-border bg-surface-raised p-block">
-            <p class="font-medium">Hoy no entra en el ranking</p>
-            <p class="text-body-sm text-muted">
+          <div class="card max-w-prose p-6">
+            <p class="type-label">Hoy no entra en el ranking</p>
+            <p class="type-body mt-2 max-w-prose">
               {ineligible === null
                 ? 'La API no lo puede rankear hoy.'
                 : ineligibleExplanation(ineligible.reason, {
@@ -201,47 +203,28 @@ const term = 'text-muted';
                     days: DEFAULT_DAYS,
                   })}
             </p>
-            {ineligible !== null && (
-              <dl class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
-                <div class={definition}>
-                  <dt class={term}>Fuente</dt>
-                  <dd>
-                    {ineligible.source.displayName}
-                    {ineligible.source.official ? ' · oficial' : ''}
-                  </dd>
-                </div>
-                <div class={definition}>
-                  <dt class={term}>Fecha del dato</dt>
-                  <dd class="tabular-nums">{formatDate(ineligible.dataDate)}</dd>
-                </div>
-                <div class={definition}>
-                  <dt class={term}>Fecha de captura</dt>
-                  <dd class="tabular-nums">{formatDate(ineligible.captureDate)}</dd>
-                </div>
-              </dl>
-            )}
+            <p class="type-data text-muted mt-3">
+              {provenance}
+              {ineligible !== null ? ` · captura del ${formatDate(ineligible.captureDate)}` : ''}
+            </p>
           </div>
         )
       }
-    </section>
+    </header>
 
     <section class="flex flex-col gap-block" aria-labelledby="historial">
-      <div class="flex max-w-prose flex-col gap-2">
-        <h2 id="historial" class="text-h2 font-semibold">Cómo viene rindiendo</h2>
-        <p class="text-body-sm text-muted">
-          La tasa del instrumento contra la inflación mensual del INDEC, la que se usa para el
-          histórico (S10). El ranking de hoy compara contra la inflación esperada del REM.
-        </p>
+      <div class="flex flex-col gap-2">
+        <h2 id="historial" class="type-section">Cómo viene rindiendo</h2>
+        <p class="type-data text-muted">Tasa anual contra IPC mensual del INDEC</p>
       </div>
       <HistoryChart history={history} />
     </section>
 
     <section class="flex max-w-prose flex-col gap-block" aria-labelledby="simulador">
       <div class="flex flex-col gap-2">
-        <h2 id="simulador" class="text-h2 font-semibold">Simulá con tu monto y tu plazo</h2>
-        <p class="text-body-sm text-muted">
-          La cuenta la hace la API con la tasa, el tope y las condiciones de este producto. El
-          rendimiento real compara contra la inflación esperada del {inflationLabel}.
+        <h2 id="simulador" class="type-section">Simulá con tu monto y tu plazo</h2>
+        <p class="type-data text-muted">
+          Rendimiento real contra la inflación esperada del {inflationLabel}
         </p>
       </div>
       <SimulatorIsland
@@ -251,29 +234,23 @@ const term = 'text-muted';
       />
     </section>
 
-    <footer class="flex max-w-prose flex-col gap-2 border-t border-border pt-block text-body-sm">
-      <p>
+    <footer class="flex max-w-prose flex-col gap-2 border-t border-border pt-block">
+      <p class="type-body">
         {
           category !== null && (
             <>
-              <a
-                class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-                href={category.path}
-              >
+              <a class="link" href={category.path}>
                 Ver {category.navLabel.toLowerCase()}
               </a>{' '}
               ·{' '}
             </>
           )
         }
-        <a
-          class="text-accent underline decoration-from-font underline-offset-2 hover:no-underline"
-          href="/metodologia/"
-        >
+        <a class="link" href="/metodologia/">
           Cómo se calcula cada número
         </a>
       </p>
-      <p class="text-caption text-muted">
+      <p class="type-data text-muted">
         Es información, no asesoramiento financiero. rindetuplata no recibe dinero de las entidades
         que compara.
       </p>

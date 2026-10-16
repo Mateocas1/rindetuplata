@@ -1,9 +1,16 @@
 /**
- * The one error box of the account pages (T7d): an urgent, untied failure
- * announced with `role="alert"`, in Spanish, never the API's English `detail`.
+ * The one failure box of the account pages (T7d, T12c): an urgent, untied
+ * failure announced with `role="alert"`, in Spanish, never the API's English
+ * `detail`.
+ *
+ * The tone, the icon and the surface come from `StatusNotice`; the retry is a
+ * peer action (`btn-secondary`) even though it is the only button here, so a
+ * view keeps its one primary for its own main action.
  */
 import type { ReactNode } from 'react';
 import { problemText } from '../../lib/accountStatus';
+import StatusNotice from './StatusNotice';
+import { buttonSecondaryClass } from './ui';
 
 export interface ProblemNoticeProps {
   problem: { status: number; message: string };
@@ -19,22 +26,18 @@ export default function ProblemNotice({
   children,
 }: ProblemNoticeProps) {
   return (
-    <div
-      role="alert"
-      className="flex flex-col gap-2 rounded-lg border border-loss bg-loss-surface px-4 py-3"
-    >
-      <p className="font-semibold text-on-loss">{title}</p>
-      <p className="text-body-sm text-on-loss">{problemText(problem)}</p>
+    <StatusNotice role="alert" tone="loss" title={title}>
+      <p className="type-body">{problemText(problem)}</p>
       {children}
       {onRetry !== undefined && (
         <button
           type="button"
           onClick={onRetry}
-          className="self-start rounded-md bg-accent-solid px-4 py-2 text-body-sm font-semibold text-on-accent hover:bg-accent"
+          className={`${buttonSecondaryClass} mt-1 self-start`}
         >
           Reintentar
         </button>
       )}
-    </div>
+    </StatusNotice>
   );
 }

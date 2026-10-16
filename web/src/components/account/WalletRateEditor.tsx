@@ -93,7 +93,7 @@ export default function WalletRateEditor({
       aria-labelledby={`editar-${rate.walletId}`}
       className={`${cardClass} flex flex-col gap-block`}
     >
-      <h3 id={`editar-${rate.walletId}`} className="text-h3 font-semibold">
+      <h3 id={`editar-${rate.walletId}`} className="type-section">
         Editar {rate.name}
       </h3>
 
@@ -126,17 +126,17 @@ export default function WalletRateEditor({
       />
 
       <section aria-labelledby="wallet-condiciones" className="flex flex-col gap-3">
-        <h4 id="wallet-condiciones" className="text-body font-semibold">
+        <h4 id="wallet-condiciones" className="type-label">
           Condiciones (opcional)
         </h4>
-        <p className="text-caption text-muted">
+        <p className="type-body text-muted">
           Por ejemplo, una tasa más alta si cumplís una condición. El ranking usa la tasa base.
         </p>
 
         {form.conditions.map((condition, index) => (
           <div
             key={index}
-            className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
+            className="flex flex-col gap-3 rounded-panel border border-border bg-surface p-4"
           >
             <div className={fieldGroupClass}>
               <label htmlFor={`conditions[${index}].condition`} className={labelClass}>

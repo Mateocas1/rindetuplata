@@ -12,6 +12,7 @@ import {
   inflationIndexShortLabel,
   kindLabel,
   rateKindLabel,
+  rateKindShortLabel,
 } from './labels';
 
 /**
@@ -102,6 +103,27 @@ describe('rateKindLabel', () => {
 
   it('falls back to the raw code', () => {
     expect(rateKindLabel('BRAND_NEW')).toBe('BRAND_NEW');
+  });
+});
+
+describe('rateKindShortLabel', () => {
+  it('gives every rate kind a column-sized name that starts with TNA (T13e item 5)', () => {
+    for (const code of Object.keys(RATE_KIND_LABELS)) {
+      const short = rateKindShortLabel(code);
+      expect(short, code).toMatch(/^TNA /);
+      // Two or three words after the unit: the TNA column is 14-15% of the board.
+      expect(short.split(/\s+/).length, code).toBeLessThanOrEqual(3);
+      expect(short.length, code).toBeLessThanOrEqual(16);
+    }
+  });
+
+  it('names each kind without repeating the reading sentence', () => {
+    expect(rateKindShortLabel('NON_CLIENT')).toBe('TNA no clientes');
+    expect(rateKindShortLabel('FUND_TNA_EQUIVALENT')).toBe('TNA fondo');
+  });
+
+  it('falls back to the raw code', () => {
+    expect(rateKindShortLabel('BRAND_NEW')).toBe('BRAND_NEW');
   });
 });
 

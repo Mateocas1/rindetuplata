@@ -5,6 +5,13 @@
  * view, where the data comes from, how much we trust each source, what is left
  * out of the maths, and the neutrality statement.
  *
+ * Long-form reading (T13c): section titles take the `type-section` role and the
+ * prose the `type-body` role at the page's 40rem measure, so nothing collapses
+ * into one small grey register (L77); the worked examples stay collapsed. Inline
+ * emphasis and links carry an explicit `{' '}` where the source line breaks
+ * before them: the build's HTML compression drops that newline and the words
+ * would otherwise run together (T13e).
+ *
  * Page that must stay script-free: it ships no island and no JSON-LD (checked
  * by the build smoke test).
  *
@@ -16,9 +23,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { CONFIDENCE_DESCRIPTIONS, CONFIDENCE_LABELS } from '../lib/labels';
 
-const linkClass = 'text-accent underline decoration-from-font underline-offset-2 hover:no-underline';
-const detailsClass = 'rounded-md border border-border bg-surface-raised px-4 py-3';
-const summaryClass = 'cursor-pointer text-body-sm font-semibold text-accent';
+// Worked examples sit on the page surface: the `card` recipe carries the edge,
+// the `disclosure` recipe the collapsed panel (T12b, T12d).
+const detailsClass = 'disclosure card px-4 py-3';
+const summaryClass = 'type-label hover:text-text';
 const confidenceOrder = [
   'OFFICIAL_AUTOMATIC',
   'AGGREGATOR_AUTOMATIC',
@@ -70,23 +78,24 @@ const sources = [
 >
   <div class="flex max-w-prose flex-col gap-section py-section">
     <header class="flex flex-col gap-block">
-      <h1 class="text-h1 font-semibold text-balance">Cómo se calcula el ranking</h1>
-      <p class="text-lead text-muted text-pretty">
+      <p class="type-label">Metodología</p>
+      <h1 class="type-display">Cómo se calcula el <em class="serif-accent">ranking</em></h1>
+      <p class="type-body text-lead text-muted">
         Todo lo que mostramos sale de datos públicos y de una cuenta que podés repetir. Acá está
         cada paso, con la fuente y la fecha de cada dato.
       </p>
     </header>
 
     <section class="flex flex-col gap-block" aria-labelledby="que-comparamos">
-      <h2 id="que-comparamos" class="text-h2 font-semibold">Qué comparamos</h2>
-      <p>
-        Cuatro familias de opciones en pesos: <strong>plazos fijos</strong> por banco,
-        <strong>billeteras remuneradas</strong>, <strong>fondos money market</strong> y
+      <h2 id="que-comparamos" class="type-section">Qué comparamos</h2>
+      <p class="type-body">
+        Cuatro familias de opciones en pesos: <strong>plazos fijos</strong> por banco,{' '}
+        <strong>billeteras remuneradas</strong>, <strong>fondos money market</strong> y{' '}
         <strong>rendimientos en cripto y fintech</strong>. Las tres primeras son las que usa la
         mayoría de los ahorristas; la cuarta queda como comparación porque también paga interés
         diario en pesos.
       </p>
-      <p>
+      <p class="type-body">
         El ranking se arma con <strong>tu monto</strong> y <strong>tu plazo</strong>: simulamos
         cada opción con esas dos variables y ordenamos por cuánto ganás en pesos, no por la tasa.
         Por defecto usamos $&nbsp;1.000.000 a 30 días.
@@ -94,20 +103,20 @@ const sources = [
     </section>
 
     <section class="flex flex-col gap-block" aria-labelledby="tna-tea">
-      <h2 id="tna-tea" class="text-h2 font-semibold">TNA y TEA: los dos números que ves</h2>
-      <p>
+      <h2 id="tna-tea" class="type-section">TNA y TEA: los dos números que ves</h2>
+      <p class="type-body">
         La <strong>TNA</strong> (tasa nominal anual) es el número que las entidades publican, sin
         capitalización. La <strong>TEA</strong> (tasa efectiva anual) es lo que termina rindiendo
         en un año cuando el interés se va sumando al capital.
       </p>
-      <p>
+      <p class="type-body">
         En el ranking la tasa principal es una <strong>TNA</strong>, porque es el número que
         publica la fuente. El monto que ves ganado ya tiene la cuenta hecha para tu plazo, así que
         comparás plata contra plata.
       </p>
       <details class={detailsClass}>
         <summary class={summaryClass}>Ver la cuenta de un plazo fijo</summary>
-        <p class="mt-3 text-body-sm">
+        <p class="type-body mt-2">
           Un plazo fijo paga interés simple sobre el plazo: capital × TNA × días ÷ 365. Con 20% de
           TNA a 30 días: 1.000.000 × 0,20 × 30 ÷ 365 = $&nbsp;16.438,36. Al vencimiento tenés
           $&nbsp;1.016.438,36.
@@ -115,7 +124,7 @@ const sources = [
       </details>
       <details class={detailsClass}>
         <summary class={summaryClass}>Ver la cuenta de una billetera o un fondo</summary>
-        <p class="mt-3 text-body-sm">
+        <p class="type-body mt-2">
           Las billeteras y los fondos acreditan interés todos los días sobre el saldo, así que el
           interés se compone: (1 + TNA ÷ 365) elevado a 365, menos 1. La misma TNA de 20% equivale
           a una TEA de 22,13% en un año.
@@ -124,29 +133,27 @@ const sources = [
     </section>
 
     <section class="flex flex-col gap-block" aria-labelledby="rendimiento-real">
-      <h2 id="rendimiento-real" class="text-h2 font-semibold">
-        Cuánto le ganás a la inflación
-      </h2>
-      <p>
+      <h2 id="rendimiento-real" class="type-section">Cuánto le ganás a la inflación</h2>
+      <p class="type-body">
         Comparar contra la inflación es la razón de ser del sitio: una tasa alta puede perder
         poder de compra igual. El <strong>rendimiento real</strong> es la cuenta de esa diferencia:
         rendimiento nominal contra inflación del mismo plazo.
       </p>
-      <p>
-        Para el ranking de hoy y para el simulador usamos la
+      <p class="type-body">
+        Para el ranking de hoy y para el simulador usamos la{' '}
         <strong>inflación esperada del REM</strong> (el Relevamiento de Expectativas de Mercado del
         BCRA, variable 29), porque la inflación del mes pasado ya pasó y no dice nada sobre los
-        próximos 30 días. Para el histórico usamos el <strong>IPC mensual del INDEC</strong>
+        próximos 30 días. Para el histórico usamos el <strong>IPC mensual del INDEC</strong>{' '}
         (variable 27), que es el dato consumado.
       </p>
-      <p>
+      <p class="type-body">
         El REM publica una expectativa <strong>a 12 meses</strong>. Para tu plazo la componemos en
         vez de dividirla: (1 + inflación a 12 meses) elevado a (días ÷ 365), menos 1. Cada vista
         indica qué índice usó y con qué fecha de observación.
       </p>
       <details class={detailsClass}>
         <summary class={summaryClass}>Ver el ejemplo completo</summary>
-        <p class="mt-3 text-body-sm">
+        <p class="type-body mt-2">
           Naranja X, 20% de TNA a 30 días sobre $&nbsp;1.000.000: ganás $&nbsp;16.438,36 (1,64% en
           el plazo). La inflación esperada del REM es 21,10% a 12 meses, que compuesta para 30
           días da 1,59%. El rendimiento real es (1 + 0,0164) ÷ (1 + 0,0159) − 1 = +0,06%: le
@@ -156,8 +163,8 @@ const sources = [
     </section>
 
     <section class="flex flex-col gap-block" aria-labelledby="orden">
-      <h2 id="orden" class="text-h2 font-semibold">Cómo se ordena</h2>
-      <ul class="flex list-disc flex-col gap-2 ps-5">
+      <h2 id="orden" class="type-section">Cómo se ordena</h2>
+      <ul class="type-body flex list-disc flex-col gap-2 ps-5">
         <li>Simulamos cada opción con tu monto y tu plazo, y ordenamos por los pesos ganados.</li>
         <li>
           Se aplican los topes, las franjas y los mínimos de cada producto: una billetera con tope
@@ -184,42 +191,42 @@ const sources = [
     </section>
 
     <section class="flex flex-col gap-block" aria-labelledby="fuentes">
-      <h2 id="fuentes" class="text-h2 font-semibold">De dónde salen los datos</h2>
-      <dl class="flex flex-col gap-4">
+      <h2 id="fuentes" class="type-section">De dónde salen los datos</h2>
+      <dl class="flex flex-col">
         {
           sources.map((source) => (
-            <div>
-              <dt class="font-semibold">{source.data}</dt>
-              <dd class="text-body-sm text-muted">
+            <div class="flex flex-col gap-1 border-t border-border py-4">
+              <dt class="type-body font-medium">{source.data}</dt>
+              <dd class="type-body text-muted">
                 {source.source}. {source.detail}
               </dd>
             </div>
           ))
         }
       </dl>
-      <p class="text-body-sm text-muted">
+      <p class="type-body text-muted">
         Guardamos una captura diaria de las respuestas crudas de las fuentes que no se pueden
         volver a consultar, así el histórico se puede reconstruir desde el primer día.
       </p>
     </section>
 
     <section class="flex flex-col gap-block" aria-labelledby="confianza">
-      <h2 id="confianza" class="text-h2 font-semibold">Cuánto confiamos en cada dato</h2>
-      <p>
+      <h2 id="confianza" class="type-section">Cuánto confiamos en cada dato</h2>
+      <p class="type-body">
         Cada fila muestra su nivel de confianza, la fuente y la fecha del dato. Ninguna tasa
         vieja se muestra como si fuera de hoy.
       </p>
-      <dl class="flex flex-col gap-4">
+      <dl class="flex flex-col">
         {
           confidenceOrder.map((code) => (
-            <div>
-              <dt class="font-semibold">{CONFIDENCE_LABELS[code]}</dt>
-              <dd class="text-body-sm text-muted">{CONFIDENCE_DESCRIPTIONS[code]}</dd>
+            <div class="flex flex-col gap-1 border-t border-border py-4">
+              <dt class="type-body font-medium">{CONFIDENCE_LABELS[code]}</dt>
+              <dd class="type-body text-muted">{CONFIDENCE_DESCRIPTIONS[code]}</dd>
             </div>
           ))
         }
       </dl>
-      <p class="text-body-sm text-muted">
+      <p class="type-body text-muted">
         Las tasas de billeteras no tienen una fuente oficial con API. Mientras no exista, las
         cargamos a mano a partir de información pública y mostramos la fecha de verificación; si
         un dato queda viejo, se marca como desactualizado y no se muestra como vigente.
@@ -227,8 +234,8 @@ const sources = [
     </section>
 
     <section class="flex flex-col gap-block" aria-labelledby="afuera">
-      <h2 id="afuera" class="text-h2 font-semibold">Qué queda afuera de la cuenta</h2>
-      <ul class="flex list-disc flex-col gap-2 ps-5">
+      <h2 id="afuera" class="type-section">Qué queda afuera de la cuenta</h2>
+      <ul class="type-body flex list-disc flex-col gap-2 ps-5">
         <li>
           <strong>Impuestos.</strong> Las cuentas no incluyen impuestos ni retenciones.
         </li>
@@ -244,15 +251,15 @@ const sources = [
           el ranking ordena números, no evalúa solvencia.
         </li>
       </ul>
-      <p>
+      <p class="type-body">
         Podés revisar la letra chica de cada opción en el sitio de la entidad, que es la fuente
         final para cualquier decisión.
       </p>
     </section>
 
     <section class="flex flex-col gap-block" aria-labelledby="neutralidad">
-      <h2 id="neutralidad" class="text-h2 font-semibold">Neutralidad</h2>
-      <ul class="flex list-disc flex-col gap-2 ps-5">
+      <h2 id="neutralidad" class="type-section">Neutralidad</h2>
+      <ul class="type-body flex list-disc flex-col gap-2 ps-5">
         <li>No cobramos comisiones de las entidades que comparamos y no hay links de afiliado.</li>
         <li>El orden sale de la cuenta descrita arriba: si cambian las tasas, cambia el orden.</li>
         <li>Cada fila indica su fuente, su fecha y su nivel de confianza para que lo verifiques.</li>
@@ -261,15 +268,15 @@ const sources = [
     </section>
 
     <section class="flex flex-col gap-block" aria-labelledby="aviso">
-      <h2 id="aviso" class="text-h2 font-semibold">Aviso</h2>
-      <p>
+      <h2 id="aviso" class="type-section">Aviso</h2>
+      <p class="type-body">
         rindetuplata es información, no asesoramiento financiero. No recomendamos dónde poner tu
         plata ni prometemos resultados: mostramos datos públicos con la cuenta a la vista.
         Cualquier decisión de inversión es tuya.
       </p>
-      <p class="text-body-sm text-muted">
-        ¿Algo no cierra? El código y las capturas diarias están en
-        <a class={linkClass} href="https://github.com/Mateocas1/rindetuplata" rel="noopener"
+      <p class="type-body text-muted">
+        ¿Algo no cierra? El código y las capturas diarias están en{' '}
+        <a class="link" href="https://github.com/Mateocas1/rindetuplata" rel="noopener"
           >github.com/Mateocas1/rindetuplata</a
         >.
       </p>
