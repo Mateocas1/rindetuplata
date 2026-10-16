@@ -13,10 +13,9 @@
  * 2. A view has one primary action: at most one `btn-primary` in the rendered
  *    markup, and the destructive confirmation confirms through the loss role
  *    while the create form keeps the alerts view's only primary.
- * 3. The direction (T13d) replaced the T12 text steps (`text-caption`,
- *    `text-body-sm`, `text-h1..h3`) with the seven `type-*` roles, and a field
- *    label wears the mono caps `type-label` role; no account surface may keep a
- *    step of the retired scale.
+ * 3. The direction (T13d) replaced the T12 text steps with the seven `type-*`
+ *    roles (the retired steps were deleted in T13e), and a field label wears the
+ *    mono caps `type-label` role; no account surface may size text by hand.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';

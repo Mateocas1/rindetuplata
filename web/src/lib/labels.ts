@@ -66,6 +66,20 @@ export const RATE_KIND_LABELS: Record<string, string> = {
   APY_TNA_EQUIVALENT: 'TNA equivalente del APY',
 };
 
+/**
+ * Column-sized names for the ranking's TNA cell (T13e): the long form above is
+ * a sentence for the instrument page's prose, and in a 14% column it wrapped
+ * into four lines at 1280. Two words each, unit first.
+ */
+export const RATE_KIND_SHORT_LABELS: Record<string, string> = {
+  NON_CLIENT: 'TNA no clientes',
+  CLIENT: 'TNA clientes',
+  CLIENT_TERM_BAND: 'TNA tu franja',
+  WALLET_BASE: 'TNA base',
+  FUND_TNA_EQUIVALENT: 'TNA fondo',
+  APY_TNA_EQUIVALENT: 'TNA del APY',
+};
+
 export const INFLATION_INDEX_LABELS: Record<string, string> = {
   REM_12M_EXPECTED: 'REM (12 meses, BCRA)',
   INDEC_CPI_MONTHLY: 'IPC mensual (INDEC)',
@@ -125,6 +139,11 @@ export function flagLabel(code: string): string {
 
 export function rateKindLabel(kind: string): string {
   return labelFrom(RATE_KIND_LABELS, kind);
+}
+
+/** The same fact at column width, for the ranking row (T13e). */
+export function rateKindShortLabel(kind: string): string {
+  return labelFrom(RATE_KIND_SHORT_LABELS, kind);
 }
 
 export function inflationIndexLabel(index: string): string {

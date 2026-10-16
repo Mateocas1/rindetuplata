@@ -108,6 +108,20 @@
 }
 
 /*
+ * The wordmark (header and footer): the ONE documented exception to the seven
+ * text roles (T13e). The logotype reads as a single word, not as reading text,
+ * so it takes the display family at the body step's size and never a role's
+ * own metrics. Everywhere else a page uses a `type-*` role.
+ */
+@utility wordmark {
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/*
  * Frosted glass (T13a): ONE element per page (the best-option card), placed
  * inside a `glass-field` that paints the cobalt glow and hairline grid it
  * blurs. Without backdrop-filter, or under reduced transparency, it is the
@@ -166,9 +180,9 @@
   }
 }
 
-/* The one filled action of a view. */
+/* The one filled action of a view. Archivo 600 at the body role's size (T13e). */
 @utility btn-primary {
-  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-accent-solid px-4 py-2 text-body-sm font-semibold text-on-accent;
+  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-accent-solid px-4 py-2 type-body font-semibold text-on-accent;
   @apply hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60;
   /* Press feedback: scale only, 150ms ease-out; never when disabled or under reduced motion. */
   transition-property: scale;
@@ -180,7 +194,7 @@
 
 /* Peer actions: neutral, never colored. */
 @utility btn-secondary {
-  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-raised px-4 py-2 text-body-sm font-semibold text-text;
+  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-raised px-4 py-2 type-body font-semibold text-text;
   @apply hover:bg-subtle-surface disabled:cursor-not-allowed disabled:opacity-60;
   /* Press feedback: scale only, 150ms ease-out; never when disabled or under reduced motion. */
   transition-property: scale;
@@ -192,7 +206,7 @@
 
 /* The destructive confirm: the loss fill, measured against on-accent in both appearances. */
 @utility btn-danger {
-  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-loss px-4 py-2 text-body-sm font-semibold text-on-accent;
+  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-loss px-4 py-2 type-body font-semibold text-on-accent;
   @apply disabled:cursor-not-allowed disabled:opacity-60;
   /* Press feedback: scale only, 150ms ease-out; never when disabled or under reduced motion. */
   transition-property: scale;
@@ -202,19 +216,22 @@
   @apply motion-safe:enabled:active:scale-[0.96];
 }
 
-/* Text inputs and selects: a 3:1 boundary, 16px on mobile so iOS never zooms. */
+/* Text inputs and selects: a 3:1 boundary, 16px at every width (the body role)
+   so iOS never zooms (T13e). */
 @utility field {
-  @apply w-full rounded-md border border-border-strong bg-surface-raised px-3 py-2 text-base text-text sm:text-body-sm;
+  @apply w-full rounded-md border border-border-strong bg-surface-raised px-3 py-2 type-body text-text;
 }
 
-/* Small labelled pill (kind, status flags); never wraps. */
+/* Small labelled pill (kind, status flags) at the mono caps `type-label`
+   metrics; never wraps. */
 @utility chip {
-  @apply inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-caption font-medium whitespace-nowrap;
+  @apply inline-flex items-center gap-1 rounded-pill px-2 py-0.5 type-label whitespace-nowrap;
 }
 
-/* Inline text link. */
+/* Inline text link: ink, carried by the underline. Cobalt belongs to the one
+   leader rail of a view, never to prose (T13e). */
 @utility link {
-  @apply text-accent underline decoration-from-font underline-offset-2 hover:decoration-transparent;
+  @apply text-text underline decoration-border-strong underline-offset-2 hover:decoration-text;
 }
 
 /* Every <details>: a chevron that points at the panel, which fades in; the

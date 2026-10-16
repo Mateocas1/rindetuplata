@@ -80,6 +80,22 @@ describe('capsule segmented control', () => {
 
     expect(markup).toMatch(/has-\[:focus-visible\]:outline/);
   });
+
+  it('shows the short amount and names the radio with it plus the full value (T13e item 7, WCAG 2.5.3)', () => {
+    const markup = render(h(Segmented, { ...segProps, selected: '1000000' }));
+
+    // Label in name: the accessible name comes from the label text, which starts
+    // with the visible short form and adds the full amount for screen readers only.
+    expect(markup).not.toContain('aria-label=');
+    for (const preset of AMOUNT_PRESETS) {
+      expect(markup, preset.value).toContain(
+        `${preset.shortLabel}<span class="sr-only"> (${preset.label})</span></label>`,
+      );
+    }
+    expect(markup).toContain('$ 500k');
+    expect(markup).toContain('$ 1M');
+    expect(markup).toContain('$ 5M');
+  });
 });
 
 const recorded = await loadRanking(DEFAULT_RANKING_QUERY, { env: FIXTURES });

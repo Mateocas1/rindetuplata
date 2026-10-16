@@ -172,8 +172,11 @@ const provenance = `${entry.source.displayName}${entry.source.official ? ' · fu
               </p>
             )}
             {isStale && (
-              <p class="chip mt-3 self-start bg-warning-surface text-on-warning">
-                {flagLabel('STALE')}: la fuente no publica un dato más nuevo.
+              <p class="mt-3 flex flex-wrap items-baseline gap-x-2">
+                <span class="chip bg-warning-surface text-on-warning">{flagLabel('STALE')}</span>
+                <span class="type-body text-muted">
+                  la fuente no publica un dato más nuevo.
+                </span>
               </p>
             )}
             <details class="disclosure mt-4">
