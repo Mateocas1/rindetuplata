@@ -24,7 +24,7 @@
 # Environments (all optional; the defaults are the intended ones):
 #   PREVIEW_PROJECT    Compose project name                rindetuplata-preview
 #   PREVIEW_ENV_FILE   env file with the secrets           deploy/preview.env
-#   PREVIEW_PROFILES   extra Compose profile(s) to enable (comma separated), e.g. `mailpit`
+#   PREVIEW_PROFILES   one extra Compose profile to enable, e.g. `mailpit`
 #   PREVIEW_BUILD_TIMEOUT  seconds `up` waits for the first sidecar build                    600
 set -Eeuo pipefail
 
@@ -358,7 +358,11 @@ cmd_funnel_off() {
   # tailnet-only sharing, which the preview never uses). It runs unconditionally: `funnel status` is
   # not a reliable gate, and resetting what is already off is harmless, while failing to reset a live
   # Funnel leaves the machine exposed (fix C of the T14c review).
-  tailscale funnel reset
+  # The failure is returned explicitly: `down` calls this inside `if !`, where errexit does not apply.
+  if ! tailscale funnel reset; then
+    echo "tailscale funnel reset failed: the Funnel may still be on." >&2
+    return 1
+  fi
   echo "funnel off: the public URL no longer reaches this machine."
 }
 

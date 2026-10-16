@@ -126,10 +126,23 @@ function publishBuild(buildName) {
   renameSync(temporaryLink, currentLink);
   log(`published ${buildName}: ${currentLink} -> ${buildName}`);
 
+  pruneBuilds();
+}
+
+/**
+ * Removes builds beyond the last `keepBuilds`. Runs after the swap and never throws: a build that is
+ * already published must not be reported as failed (and then deleted) because an old one resisted
+ * removal; the leftover is logged and retried after the next build.
+ */
+function pruneBuilds() {
   const builds = listBuilds();
   for (const obsolete of builds.slice(0, Math.max(0, builds.length - keepBuilds))) {
-    rmSync(join(siteDir, obsolete), { recursive: true, force: true });
-    log(`removed the obsolete build ${obsolete} (keeping the last ${keepBuilds})`);
+    try {
+      rmSync(join(siteDir, obsolete), { recursive: true, force: true });
+      log(`removed the obsolete build ${obsolete} (keeping the last ${keepBuilds})`);
+    } catch (error) {
+      log(`could not remove the obsolete build ${obsolete}: ${error.message}`);
+    }
   }
 }
 

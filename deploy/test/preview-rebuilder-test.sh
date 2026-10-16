@@ -321,6 +321,19 @@ check "the failure is reported in the state" "True" \
 check "current survives the failure" "serving .site/build-3" "$(current_html)"
 
 echo
+echo "== a prune failure after the swap never takes the published build down =="
+mv "$scratch/web/node_modules/.bin/astro-gone" "$scratch/web/node_modules/.bin/astro"
+rm -f "$scratch/web/fail-flag"
+# build-2 is the next obsolete build: a read-only subdirectory makes removing it fail with EACCES.
+mkdir -p "$SITE/build-2/locked" && touch "$SITE/build-2/locked/file" && chmod 555 "$SITE/build-2/locked"
+post "$scratch/post7.json" > /dev/null
+wait_idle prune || exit 1
+chmod 755 "$SITE/build-2/locked"
+check "the build is published even though pruning failed" "build-4" "$(current_build)"
+check "current serves the new build" "serving .site/build-4" "$(current_html)"
+check "the run is reported ok" "True" "$(json_last "$scratch/state-prune.json" ok)"
+
+echo
 echo "== unknown route =="
 check "GET /nope answers 404" "404" "$(curl -sS -o "$scratch/notfound.json" -w '%{http_code}' "http://127.0.0.1:$port/nope")"
 
