@@ -20,7 +20,21 @@ class IngestionSchedulerConfiguration {
 	@Bean
 	IngestionScheduler ingestionScheduler(IngestionService ingestionService, IngestionProperties properties,
 			ObjectProvider<Clock> clock) {
-		Clock resolved = clock.getIfAvailable(() -> Clock.system(properties.zoneId()));
-		return new IngestionScheduler(ingestionService, resolved);
+		return new IngestionScheduler(ingestionService, resolveClock(properties, clock));
+	}
+
+	/**
+	 * T14a (S20): with {@code rindetuplata.ingest.run-on-startup=true} the application runs today's LIVE ingestion
+	 * once, in the background, as soon as it is ready. It stays off by default; the scheduler's own clock and zone
+	 * decide which day "today" is.
+	 */
+	@Bean
+	@ConditionalOnProperty(name = "rindetuplata.ingest.run-on-startup", havingValue = "true")
+	StartupIngestionListener startupIngestionListener(IngestionScheduler scheduler) {
+		return new StartupIngestionListener(scheduler::runToday);
+	}
+
+	private static Clock resolveClock(IngestionProperties properties, ObjectProvider<Clock> clock) {
+		return clock.getIfAvailable(() -> Clock.system(properties.zoneId()));
 	}
 }
