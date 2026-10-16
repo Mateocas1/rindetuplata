@@ -218,6 +218,8 @@ docker compose -f compose.yaml -f deploy/compose.vps.yaml \
 - The daily ingestion runs in LIVE mode and needs nothing extra. To replay a day of the T9 archive
   (REPLAY mode) mount a checkout of the `data` branch at `/app/archive`: uncomment the `volumes:` line
   of the `api` service in `deploy/compose.vps.yaml`.
+- `RINDETUPLATA_INGEST_RUNONSTARTUP=true` makes the API ingest today's data once when it starts, in the
+  background (T14a): a stack that boots fresh shows a real ranking instead of waiting for the 19:30 cron.
 
 ## CDN: the site
 
