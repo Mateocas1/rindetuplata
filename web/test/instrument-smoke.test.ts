@@ -200,6 +200,37 @@ describe('instrument pages', () => {
     }
   });
 
+  it('pins the y-axis outside the chart scroll region (T13e item 8)', () => {
+    const page = instrumentHtml(samplePerKind[0].slug);
+    const [before, ...rest] = page.split(/<div class="[^"]*" role="region" aria-label="Gráfico:/);
+    const region = rest.join('');
+    const axis = /<svg[^>]*chart-axis[^>]*>[\s\S]*?<\/svg>/.exec(page)?.[0];
+
+    // The tick labels live in an aria-hidden strip pinned outside the scroller, so
+    // a 320px screen keeps the scale while the plot scrolls under it.
+    expect(axis, 'the pinned axis').toBeDefined();
+    expect(axis).toContain('aria-hidden="true"');
+    expect(axis).toContain('text-anchor="end"');
+    expect(axis).toContain('fill-muted type-data');
+    expect(before, 'the axis is not inside the scroller').toContain('chart-axis');
+    expect(region, 'no y tick label scrolls away').not.toContain('text-anchor="end"');
+  });
+
+  it('keeps the hero rail as the only cobalt decoration, and Simular a peer action (T13e item 4)', () => {
+    const page = instrumentHtml(samplePerKind[0].slug);
+    const tokens = [...page.matchAll(/class="([^"]*)"/g)].flatMap((match) =>
+      match[1].split(/\s+/),
+    );
+
+    // The hero rail is the page's cobalt moment; the chart's series colour is
+    // data, not decoration.
+    expect(tokens.filter((token) => token === 'border-s-accent')).toHaveLength(1);
+    expect(tokens.filter((token) => /^bg-accent/.test(token))).toEqual([]);
+    // The simulator's submit is a peer action, never the filled accent button.
+    expect(tokens).toContain('btn-secondary');
+    expect(tokens).not.toContain('btn-primary');
+  });
+
   it('repeats the chart data in a secondary table', () => {
     for (const { slug } of samplePerKind) {
       const page = instrumentHtml(slug);

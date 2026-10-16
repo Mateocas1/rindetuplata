@@ -195,7 +195,7 @@ export default function SimulatorIsland({
             )}
           </div>
         </div>
-        <button type="submit" className="btn-primary self-start aria-disabled:opacity-60" aria-disabled={loading}>
+        <button type="submit" className="btn-secondary self-start aria-disabled:opacity-60" aria-disabled={loading}>
           {loading ? 'Simulando…' : 'Simular'}
         </button>
       </form>

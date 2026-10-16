@@ -36,7 +36,19 @@ const rows = dates.map((date) => ({
 
 const ratePointCount = rateSeries?.points.length ?? 0;
 const rateColor = 'text-accent';
-const inflationColor = 'text-muted';const description =
+const inflationColor = 'text-muted';
+/**
+ * The date labels are anchored inside the plot box (T13e): centred on the tick,
+ * the first one runs under the pinned y-axis and the last one past the right
+ * padding, and a label half out of the frame is a clipped label.
+ */
+const X_LABEL_HALF_WIDTH = 24;
+const xLabelAnchor = (position: number): 'start' | 'middle' | 'end' => {
+  if (position - X_LABEL_HALF_WIDTH < (chart?.plot.x0 ?? 0)) return 'start';
+  if (position + X_LABEL_HALF_WIDTH > (chart?.plot.x1 ?? 0)) return 'end';
+  return 'middle';
+};
+const description =
   history === null || rateSeries === undefined || inflationSeries === undefined
     ? ''
     : `${rateSeries.label} y ${inflationSeries.label} de ${history.displayName} ` +
@@ -57,26 +69,50 @@ const inflationColor = 'text-muted';const description =
           legible 13px (`type-data`) down to single digits on a phone. Fixed
           pixels plus a labelled scroll region keeps every label at its token
           size on every screen.
-        */}
-        <div
-          class="card flex w-fit max-w-full flex-row-reverse overflow-x-auto p-block focus-visible:-outline-offset-2"
-          role="region"
-          aria-label={`Gráfico: ${rateSeries.label} contra ${inflationSeries.label}`}
-          tabindex="0"
-        >
-          <svg
-            width={chart.width}
-            height={chart.height}
-            viewBox={`0 0 ${chart.width} ${chart.height}`}
-            class="block shrink-0"
-            role="img"
-            aria-labelledby={`${titleId} ${descId}`}
-          >
-            <title id={titleId}>{`${rateSeries.label} contra ${inflationSeries.label}`}</title>
-            <desc id={descId}>{description}</desc>
 
+          The y-axis is a separate strip pinned outside the scroller (T13e):
+          the region starts on the latest data, so at 320px the scale used to
+          scroll away with it. The strip is `aria-hidden` — the chart's `<desc>`
+          and the table below repeat every number — and it paints the card's own
+          surface, so the plot slides under it instead of showing through.
+        */}
+        <div class="card relative flex w-fit max-w-full p-block">
+          <svg
+            width={chart.plot.x0 - 8}
+            height={chart.height}
+            viewBox={`0 0 ${chart.plot.x0 - 8} ${chart.height}`}
+            class="chart-axis pointer-events-none absolute start-4 top-4 z-10 block bg-surface-raised"
+            aria-hidden="true"
+          >
             {chart.yTicks.map((tick) => (
-              <g>
+              <text
+                x={chart.plot.x0 - 8}
+                y={tick.position + 3}
+                text-anchor="end"
+                class="fill-muted type-data"
+              >
+                {tick.label}
+              </text>
+            ))}
+          </svg>
+          <div
+            class="flex min-w-0 flex-row-reverse overflow-x-auto focus-visible:-outline-offset-2"
+            role="region"
+            aria-label={`Gráfico: ${rateSeries.label} contra ${inflationSeries.label}`}
+            tabindex="0"
+          >
+            <svg
+              width={chart.width}
+              height={chart.height}
+              viewBox={`0 0 ${chart.width} ${chart.height}`}
+              class="block shrink-0"
+              role="img"
+              aria-labelledby={`${titleId} ${descId}`}
+            >
+              <title id={titleId}>{`${rateSeries.label} contra ${inflationSeries.label}`}</title>
+              <desc id={descId}>{description}</desc>
+
+              {chart.yTicks.map((tick) => (
                 <line
                   x1={chart.plot.x0}
                   x2={chart.plot.x1}
@@ -85,66 +121,58 @@ const inflationColor = 'text-muted';const description =
                   class="stroke-border"
                   stroke-width="1"
                 />
+              ))}
+
+              {chart.xTicks.map((tick) => (
                 <text
-                  x={chart.plot.x0 - 8}
-                  y={tick.position + 3}
-                  text-anchor="end"
+                  x={tick.position}
+                  y={chart.plot.y1 + 18}
+                  text-anchor={xLabelAnchor(tick.position)}
                   class="fill-muted type-data"
                 >
                   {tick.label}
                 </text>
-              </g>
-            ))}
+              ))}
 
-            {chart.xTicks.map((tick) => (
-              <text
-                x={tick.position}
-                y={chart.plot.y1 + 18}
-                text-anchor="middle"
-                class="fill-muted type-data"
-              >
-                {tick.label}
-              </text>
-            ))}
+              <line
+                x1={chart.plot.x0}
+                x2={chart.plot.x1}
+                y1={chart.plot.y1}
+                y2={chart.plot.y1}
+                class="stroke-border-strong"
+                stroke-width="1"
+              />
 
-            <line
-              x1={chart.plot.x0}
-              x2={chart.plot.x1}
-              y1={chart.plot.y1}
-              y2={chart.plot.y1}
-              class="stroke-border-strong"
-              stroke-width="1"
-            />
-
-            {chart.series.map((entry, index) => (
-              <g class={index === 0 ? rateColor : inflationColor}>
-                {entry.path !== '' && (
-                  <path
-                    d={entry.path}
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linejoin="round"
-                    stroke-linecap="round"
-                    stroke-dasharray={entry.dashed ? '6 5' : undefined}
-                  />
-                )}
-                {entry.points.map((point) =>
-                  entry.marker === 'square' ? (
-                    <rect
-                      x={point.x - 3}
-                      y={point.y - 3}
-                      width="6"
-                      height="6"
-                      fill="currentColor"
+              {chart.series.map((entry, index) => (
+                <g class={index === 0 ? rateColor : inflationColor}>
+                  {entry.path !== '' && (
+                    <path
+                      d={entry.path}
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linejoin="round"
+                      stroke-linecap="round"
+                      stroke-dasharray={entry.dashed ? '6 5' : undefined}
                     />
-                  ) : (
-                    <circle cx={point.x} cy={point.y} r="3.5" fill="currentColor" />
-                  ),
-                )}
-              </g>
-            ))}
-          </svg>
+                  )}
+                  {entry.points.map((point) =>
+                    entry.marker === 'square' ? (
+                      <rect
+                        x={point.x - 3}
+                        y={point.y - 3}
+                        width="6"
+                        height="6"
+                        fill="currentColor"
+                      />
+                    ) : (
+                      <circle cx={point.x} cy={point.y} r="3.5" fill="currentColor" />
+                    ),
+                  )}
+                </g>
+              ))}
+            </svg>
+          </div>
         </div>
 
         <ul class="flex flex-wrap gap-x-6 gap-y-2">

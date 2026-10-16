@@ -322,12 +322,50 @@ describe('design tokens', () => {
     }
   });
 
+  it('retires the T12 text steps, so only the seven roles carry a size (T13e item 2)', () => {
+    for (const step of ['caption', 'body-sm', 'h1', 'h2', 'h3']) {
+      expect(tokens.has(`--text-${step}`), `--text-${step} must be gone`).toBe(false);
+    }
+  });
+
+  it('never uses a retired text step in a recipe or a component (T13e item 2)', () => {
+    const retired = /\btext-(caption|body-sm|h1|h2|h3)\b/;
+    const offenders = sourceFiles(join(webRoot, 'src'))
+      .filter((file) => retired.test(readFileSync(file, 'utf8')))
+      .map((file) => relative(webRoot, file));
+    expect(offenders).toEqual([]);
+  });
+
   it('makes the glass opaque without backdrop-filter or under reduced transparency', () => {
     const recipes = readFileSync(recipesPath, 'utf8');
     expect(recipes).toMatch(/@utility glass\b/);
     expect(recipes).toMatch(/@utility glass-field\b/);
     expect(recipes).toMatch(/@supports not \(\(backdrop-filter/);
     expect(recipes).toMatch(/prefers-reduced-transparency: reduce/);
+  });
+
+  it('carries links with ink and the underline, never with the one accent (T13e item 4)', () => {
+    const recipes = readFileSync(recipesPath, 'utf8');
+    const link = /@utility link \{([\s\S]*?)\n\}/.exec(recipes)?.[1] ?? '';
+    expect(link).toContain('text-text');
+    expect(link).toContain('underline');
+    expect(link).not.toContain('text-accent');
+  });
+
+  it('names the wordmark as the one documented exception to the roles (T13e item 6)', () => {
+    const recipes = readFileSync(recipesPath, 'utf8');
+    const body = /@utility wordmark \{([\s\S]*?)\n\}/.exec(recipes)?.[1] ?? '';
+    // It takes the display family at the body step from the tokens, so it is a
+    // recipe and not a hand-rolled pair of utilities.
+    expect(body).toContain('var(--font-display)');
+    expect(body).toContain('var(--text-body)');
+    expect(recipes).toMatch(/wordmark[\s\S]{0,600}?exception/i);
+    // Nothing else re-derives display type: the exception lives in one place.
+    const offenders = sourceFiles(join(webRoot, 'src'))
+      .filter((file) => !file.endsWith('recipes.css'))
+      .filter((file) => /font-display/.test(readFileSync(file, 'utf8')))
+      .map((file) => relative(webRoot, file));
+    expect(offenders).toEqual([]);
   });
 
   const primitiveName = /^--color-(graphite|cobalt|green|red|amber)-\d+$/;

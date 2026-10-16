@@ -13,21 +13,28 @@ import { tryParseAmount, tryParseDays, type RankingQueryState } from '../../lib/
 export interface Preset {
   /** The value the control carries; the same string the free input would hold. */
   value: string;
+  /** The full value, and the accessible name of the option. */
   label: string;
+  /**
+   * What the segment shows (T13e): the full value is too wide for a third of the
+   * capsule at 320/390, where it touched the thumb's edges, so the visible text
+   * is abbreviated and `label` stays the name a screen reader reads.
+   */
+  shortLabel: string;
 }
 
 /** The prototype's proposals (L80): frequent amounts, in pesos. */
 export const AMOUNT_PRESETS: Preset[] = [
-  { value: '500000', label: '$ 500.000' },
-  { value: '1000000', label: '$ 1.000.000' },
-  { value: '5000000', label: '$ 5.000.000' },
+  { value: '500000', label: '$ 500.000', shortLabel: '$ 500k' },
+  { value: '1000000', label: '$ 1.000.000', shortLabel: '$ 1M' },
+  { value: '5000000', label: '$ 5.000.000', shortLabel: '$ 5M' },
 ];
 
 /** The prototype's proposals (L80): the terms a plazo fijo is usually quoted at. */
 export const DAYS_PRESETS: Preset[] = [
-  { value: '30', label: '30 días' },
-  { value: '60', label: '60 días' },
-  { value: '90', label: '90 días' },
+  { value: '30', label: '30 días', shortLabel: '30 días' },
+  { value: '60', label: '60 días', shortLabel: '60 días' },
+  { value: '90', label: '90 días', shortLabel: '90 días' },
 ];
 
 /** The same query with the preset's amount, or the same query when it is unusable. */

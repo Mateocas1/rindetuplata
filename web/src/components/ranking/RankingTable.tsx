@@ -10,9 +10,13 @@
  *
  * Narrow screens: the table keeps its semantics inside a labelled, focusable
  * scroll region with a sticky first column and a visible cue, rather than
- * dropping columns (S11 requires source and date on every row). Row 01 carries
- * the cobalt rail and the "Mejor" chip: the one accent, doing the one job it
- * shares with the headline and the glass card.
+ * dropping columns (S11 requires source and date on every row). Below `md` the
+ * pesos earned is repeated inside that sticky cell, under the name, and the
+ * wide copy is hidden there: the protagonist figure of the row is on screen
+ * from 320 up without a sideways drag, and is never announced twice (T13e).
+ * Row 01 carries the cobalt rail and the "Mejor" chip: the rail is the one
+ * accent, doing the one job it shares with the headline and the glass card
+ * (T13e: the chip itself is ink).
  *
  * The sticky cells stay at `z-0`: they must cover their own scrolled siblings,
  * but never the sticky site header above them (z-10), or a scrolled row would
@@ -20,12 +24,11 @@
  */
 import { formatDate, formatDays, formatInteger, formatMoney, formatPercent } from '../../lib/format';
 import {
-  confidenceLabel,
   flagLabel,
   inflationIndexLabel,
   inflationIndexShortLabel,
   kindLabel,
-  rateKindLabel,
+  rateKindShortLabel,
 } from '../../lib/labels';
 import { instrumentPageHref } from '../../lib/slug';
 import type { RankedEntry, Ranking } from '../../lib/types';
@@ -44,16 +47,17 @@ function isStale(entry: RankedEntry): boolean {
   return entry.warnings.some((warning) => warning.code === 'STALE');
 }
 
-/** Source, data date and confidence in one line (S11, S12). */
+/**
+ * The one quiet provenance line of a row (S11, T13e): where the rate comes from
+ * and the date of the data, on one line at 1280. The confidence level and the
+ * verification date live on the instrument page and in the methodology, so the
+ * row never becomes a wall of small grey prose (L77).
+ */
 function provenance(entry: RankedEntry): string {
   const source = entry.source.official
     ? `${entry.source.displayName} · oficial`
     : entry.source.displayName;
-  const verified =
-    entry.verifiedAt === null ? '' : ` · verificada el ${formatDate(entry.verifiedAt)}`;
-  return `${source} · Dato del ${formatDate(entry.dataDate)} · ${confidenceLabel(
-    entry.confidence,
-  )}${verified}`;
+  return `${source} · ${formatDate(entry.dataDate)}`;
 }
 
 export interface RankingTableProps {
@@ -100,14 +104,15 @@ export default function RankingTable({
         >
           <table className="w-full min-w-[48rem] table-fixed border-separate border-spacing-0">
             {/* Fixed proportions: the option (with its index gutter) keeps the
-                widest column, so a long fund class never wraps one word a line
-                and the pesos earned stays readable when the table scrolls. */}
+                widest column, so a long fund class never wraps one word a line,
+                the TNA kind fits in two or three words and the provenance line
+                holds its source and date together (T13e). */}
             <colgroup>
-              <col className="w-[34%]" />
+              <col className="w-[30%]" />
               <col className="w-[18%]" />
-              <col className="w-[15%]" />
               <col className="w-[13%]" />
-              <col className="w-[20%]" />
+              <col className="w-[15%]" />
+              <col className="w-[24%]" />
             </colgroup>
             <caption className="sr-only">
               Las {formatInteger(rows.length)} mejores opciones para {formatMoney(amount)} a{' '}
@@ -169,14 +174,22 @@ export default function RankingTable({
                               </a>
                             )}
                             {leader && (
-                              <span className="chip ms-2 bg-subtle-surface type-label">
-                                <span className="text-accent">Mejor</span>
+                              <span className="chip ms-2 bg-subtle-surface">
+                                <span className="text-text">Mejor</span>
                               </span>
                             )}
                           </span>
                           <span className="mt-1 block type-data text-muted">
                             {kindLabel(entry.kind)}
                             {entity === null ? '' : ` · ${entity}`}
+                          </span>
+                          {/* The first column is the only one on screen below md
+                              (T13e): the row's protagonist figure lives here too. */}
+                          <span className="mt-2 flex flex-wrap items-baseline gap-x-2 md:hidden">
+                            <span className="type-label">Ganás en {formatDays(days)}</span>
+                            <span className="type-figure text-figure-row">
+                              {formatMoney(entry.earned)}
+                            </span>
                           </span>
                           {isStale(entry) && (
                             <span className="block type-data text-warning">
@@ -187,7 +200,7 @@ export default function RankingTable({
                       </span>
                     </th>
                     <td className={`${cell} text-end`}>
-                      <span className="block type-figure text-figure-row">
+                      <span className="hidden type-figure text-figure-row md:block">
                         {formatMoney(entry.earned)}
                       </span>
                       <span className="block type-data text-muted">
@@ -207,7 +220,7 @@ export default function RankingTable({
                         {formatPercent(entry.rateUsed.fraction)}
                       </span>
                       <span className="block type-data text-muted">
-                        {rateKindLabel(entry.rateUsed.kind)}
+                        {rateKindShortLabel(entry.rateUsed.kind)}
                       </span>
                     </td>
                     <td className={`${cell} type-data text-muted`}>{provenance(entry)}</td>

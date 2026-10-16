@@ -7,7 +7,10 @@
  *
  * Long-form reading (T13c): section titles take the `type-section` role and the
  * prose the `type-body` role at the page's 40rem measure, so nothing collapses
- * into one small grey register (L77); the worked examples stay collapsed.
+ * into one small grey register (L77); the worked examples stay collapsed. Inline
+ * emphasis and links carry an explicit `{' '}` where the source line breaks
+ * before them: the build's HTML compression drops that newline and the words
+ * would otherwise run together (T13e).
  *
  * Page that must stay script-free: it ships no island and no JSON-LD (checked
  * by the build smoke test).
@@ -86,8 +89,8 @@ const sources = [
     <section class="flex flex-col gap-block" aria-labelledby="que-comparamos">
       <h2 id="que-comparamos" class="type-section">Qué comparamos</h2>
       <p class="type-body">
-        Cuatro familias de opciones en pesos: <strong>plazos fijos</strong> por banco,
-        <strong>billeteras remuneradas</strong>, <strong>fondos money market</strong> y
+        Cuatro familias de opciones en pesos: <strong>plazos fijos</strong> por banco,{' '}
+        <strong>billeteras remuneradas</strong>, <strong>fondos money market</strong> y{' '}
         <strong>rendimientos en cripto y fintech</strong>. Las tres primeras son las que usa la
         mayoría de los ahorristas; la cuarta queda como comparación porque también paga interés
         diario en pesos.
@@ -137,10 +140,10 @@ const sources = [
         rendimiento nominal contra inflación del mismo plazo.
       </p>
       <p class="type-body">
-        Para el ranking de hoy y para el simulador usamos la
+        Para el ranking de hoy y para el simulador usamos la{' '}
         <strong>inflación esperada del REM</strong> (el Relevamiento de Expectativas de Mercado del
         BCRA, variable 29), porque la inflación del mes pasado ya pasó y no dice nada sobre los
-        próximos 30 días. Para el histórico usamos el <strong>IPC mensual del INDEC</strong>
+        próximos 30 días. Para el histórico usamos el <strong>IPC mensual del INDEC</strong>{' '}
         (variable 27), que es el dato consumado.
       </p>
       <p class="type-body">
@@ -272,7 +275,7 @@ const sources = [
         Cualquier decisión de inversión es tuya.
       </p>
       <p class="type-body text-muted">
-        ¿Algo no cierra? El código y las capturas diarias están en
+        ¿Algo no cierra? El código y las capturas diarias están en{' '}
         <a class="link" href="https://github.com/Mateocas1/rindetuplata" rel="noopener"
           >github.com/Mateocas1/rindetuplata</a
         >.

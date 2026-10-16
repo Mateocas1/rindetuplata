@@ -173,10 +173,57 @@ describe('prerendered home page', () => {
     expect(headers[8]).toMatch(/^09\s/);
   });
 
+  it('keeps the pesos earned whole inside the sticky row header below md (T13e item 1)', () => {
+    const page = html('index.html');
+    const headers = [...page.matchAll(/<th[^>]*scope="row"[^>]*>([\s\S]*?)<\/th>/g)].map(
+      (match) => match[1],
+    );
+
+    for (const [index, entry] of fixture.ranked.slice(0, 3).entries()) {
+      // Below md the first column is the only one on screen: the row's
+      // protagonist figure has to be in it, and the wide copy is hidden so the
+      // amount is never announced twice.
+      expect(headers[index], `row ${index + 1} earned`).toContain(formatMoney(entry.earned));
+      expect(headers[index], `row ${index + 1} narrow copy`).toContain('md:hidden');
+    }
+    // The wide copy of the same figure steps aside below md, so the amount is
+    // never announced twice.
+    const wideCopy = [...page.matchAll(/<span class="([^"]*)"/g)]
+      .map((match) => match[1].split(/\s+/))
+      .filter((tokens) => tokens.includes('hidden') && tokens.includes('md:block'));
+    expect(wideCopy.length).toBeGreaterThan(0);
+    for (const tokens of wideCopy) expect(tokens).toContain('type-figure');
+  });
+
   it('states where the data comes from (S11)', () => {
     const page = html('index.html');
+    expect(page).toContain('Fuente y fecha');
     expect(page).toContain('ArgentinaDatos');
-    expect(page).toContain('Dato del');
+    expect(renderedText(page)).toMatch(/\d{2}\/\d{2}\/\d{4}/);
+  });
+
+  it('spends cobalt on the two leader rails only (T13e item 4)', () => {
+    const page = html('index.html');
+    const tokens = [...page.matchAll(/class="([^"]*)"/g)]
+      .flatMap((match) => match[1].split(/\s+/))
+      .filter((token) => /^(bg-accent(-solid)?|border(-s)?-accent|text-accent(-solid)?)$/.test(token));
+
+    // The plate's rail, and row 01's rail. The "Mejor" chip is ink now, and no
+    // inline link wears the accent: the underline carries it.
+    expect(tokens.sort()).toEqual(['bg-accent', 'border-s-accent']);
+  });
+
+  it('shortens the row provenance: short kind label, source and date on one line (T13e item 5)', () => {
+    const page = html('index.html');
+    // The TNA cell names its kind in two words, never a four-line sentence.
+    expect(page).toContain('TNA no clientes');
+    expect(page).toContain('TNA fondo');
+    expect(page).not.toContain('tasa para no clientes');
+    expect(page).not.toContain('TNA equivalente del fondo');
+    // The row carries one quiet provenance line: its source and its date. The
+    // confidence lives on the instrument page and in the methodology.
+    expect(page).not.toContain('Agregador automático');
+    expect(page).toContain('ArgentinaDatos · 14/10/2026');
   });
 
   it('carries the canonical link, the social tags and the WebSite JSON-LD', () => {
@@ -195,6 +242,16 @@ describe('prerendered home page', () => {
 });
 
 describe('rendered copy', () => {
+  it('never glues a word or a comma to the inline emphasis or link that follows (T13e item 3)', () => {
+    const offenders = htmlFiles(dist).flatMap((file) => {
+      const page = readFileSync(file, 'utf8');
+      return [...page.matchAll(/[\w,;:.%]<(?:strong|a)\b/g)].map(
+        (match) => `${relative(dist, file)}: ${match[0]}`,
+      );
+    });
+    expect(offenders).toEqual([]);
+  });
+
   it('never shows an internal spec id to the reader', () => {
     const offenders = htmlFiles(dist).flatMap((file) => {
       const match = /\(S\d+\)/.exec(renderedText(readFileSync(file, 'utf8')));
@@ -255,6 +312,7 @@ describe('stylesheet', () => {
       '.type-figure',
       '.type-index',
       '.serif-accent',
+      '.wordmark',
       '.glass-field',
       '.bg-thumb',
       '.text-on-thumb',

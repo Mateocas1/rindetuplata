@@ -12,6 +12,11 @@
  * The thumb is one absolutely positioned element that slides with `transform`;
  * the movement is gated by `motion-safe`. React never animates a number the
  * reader has to read, and the selected value itself is text in the thumb.
+ *
+ * The segment shows the preset's short form (T13e: at 320/390 the full amount
+ * touched the thumb's edges) and adds the full value as screen-reader-only label
+ * text, so the accessible name starts with what is visible ("$ 1M ($ 1.000.000)",
+ * WCAG 2.5.3 label in name) and still states the exact amount.
  */
 import type { Preset } from '../ranking/presets';
 
@@ -57,7 +62,8 @@ export default function Segmented({ name, legend, options, selected, onSelect }:
               onChange={() => onSelect(option.value)}
               className="absolute size-px opacity-0"
             />
-            {option.label}
+            {option.shortLabel}
+            {option.shortLabel !== option.label && <span className="sr-only"> ({option.label})</span>}
           </label>
         ))}
       </div>
