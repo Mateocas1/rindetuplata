@@ -21,16 +21,20 @@
 #     keeps the users, their alert rules and the queued alert events.
 #   - Every service carries `restart: unless-stopped`: this stack is expected to be up for days.
 #   - Mailpit is off (`profiles: !override ["mailpit"]`): real magic links and alert emails go out
-#     through the SMTP account in `deploy/preview.env`.
+#     through the SMTP account in `deploy/preview.env`. A local run can add the `mailpit` profile and
+#     point `SPRING_MAIL_HOST`/`SPRING_MAIL_PORT` at it (see docs/deploy.md).
 #   - The API is production-shaped: STARTTLS SMTP, `secure-cookie=true`, magic link, alert page and
 #     allowed browser origin all derived from one `PREVIEW_URL` (one origin, so the `SameSite=Lax`
 #     session cookie and the CSRF token travel), an ingestion on startup (T14a: no data on a fresh
 #     volume before the 19:30 cron) and the T4d rebuild hook pointing at the `rebuilder` sidecar.
 #   - `web` (Caddy) is published on `127.0.0.1:${WEB_PORT:-4321}` **only**: the Funnel process connects
 #     to the loopback address, so nothing else on the LAN can reach it. It serves
-#     `deploy/Caddyfile.preview` (the local Caddyfile plus `noindex`).
+#     `deploy/Caddyfile.preview` (the local Caddyfile plus `noindex` and the Funnel's forwarded headers)
+#     from `web/.site`, the build root the sidecar publishes into: `root /srv/current`, so a rebuild is
+#     never visible as a half-written site.
 #   - `rebuilder`: a small Node sidecar that answers the ingest rebuild hook by running the real site
-#     build into `web/dist`. It publishes no port; only the API reaches it, over the Compose network.
+#     build (`astro build --outDir .site/build-<n>`) and publishing it by swapping the `current` symlink.
+#     It publishes no port; only the API reaches it, over the Compose network.
 
 services:
   postgres:
@@ -91,16 +95,24 @@ services:
     ports: !override
       - "127.0.0.1:${WEB_PORT:-4321}:80"
     # `volumes` is not merged by target: `!override` states the whole list, so the local Caddyfile is
-    # really replaced by the preview one (which adds `X-Robots-Tag: noindex, nofollow`).
+    # really replaced by the preview one (which adds `X-Robots-Tag: noindex, nofollow` and trusts the
+    # Funnel's `X-Forwarded-*` headers).
+    #
+    # `/srv` is `web/.site`, not `web/dist`: the sidecar publishes every build there as
+    # `build-<n>` + a `current` symlink, and the Caddyfile serves `/srv/current`. `preview.sh up`
+    # creates the directory before Compose binds it (otherwise Docker would create it owned by root).
     volumes: !override
-      - ./web/dist:/srv:ro
+      - ./web/.site:/srv:ro
       - ./deploy/Caddyfile.preview:/etc/caddy/Caddyfile:ro
 
   # The T4d rebuild hook target. It answers `POST /` immediately and runs the site build
-  # (`npm run build:api`) asynchronously into `web/dist`, one build at a time with one queued rerun.
-  # The host's `web/` is mounted, so the build reuses `web/node_modules` and the built files land in
-  # the very directory Caddy serves. It runs as the host user (PREVIEW_UID/PREVIEW_GID, exported by
-  # `deploy/preview.sh`) so the files it writes stay writable for the next host-side build.
+  # (`astro build --outDir .site/build-<n>`, one build at a time with one queued rerun) in the
+  # background. A build that exits 0 is published by swapping `web/.site/current` with one `rename`;
+  # a build that fails leaves the previous one serving, and only the last two builds are kept. The
+  # host's `web/` is mounted, so the build reuses `web/node_modules` and the built files land in the
+  # build root Caddy serves. It runs as the host user (PREVIEW_UID/PREVIEW_GID, exported by
+  # `deploy/preview.sh`) so the build directories it writes under `web/.site` stay readable and writable
+  # for this user on the host (they are never root-owned).
   # It publishes no port: only `api` talks to it, at `http://rebuilder:8787`.
   #
   # `node:24` is Debian (glibc, x86_64), which is why the host's `web/node_modules` can be mounted
@@ -117,6 +129,9 @@ services:
     environment:
       REBUILDER_PORT: "8787"
       WEB_DIR: /app/web
+      # How many finished builds stay on disk; the current one plus the previous one is enough to roll
+      # back to the site that served before a bad build.
+      REBUILDER_KEEP_BUILDS: "2"
       # Inside the network: `web` is Caddy, so the build talks to the same one origin the browser does
       # and the generated pages get the same API responses the site serves.
       API_URL: "http://web"

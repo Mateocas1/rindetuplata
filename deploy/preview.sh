@@ -2,7 +2,7 @@
 #
 # Private preview (T14b, S20): the whole product on this machine, published through Tailscale Funnel.
 #
-#   deploy/preview.sh up          # build the API image, start the stack, build the site
+#   deploy/preview.sh up          # build the API image, start the stack, build the site via the sidecar
 #   deploy/preview.sh funnel-on   # serve it on the public Funnel URL (prints the URL)
 #   deploy/preview.sh status      # containers, Funnel state, last site rebuild
 #   deploy/preview.sh logs [svc]  # follow the stack's logs (all services by default)
@@ -24,6 +24,8 @@
 # Environments (all optional; the defaults are the intended ones):
 #   PREVIEW_PROJECT    Compose project name                rindetuplata-preview
 #   PREVIEW_ENV_FILE   env file with the secrets           deploy/preview.env
+#   PREVIEW_PROFILES   extra Compose profile(s) to enable (comma separated), e.g. `mailpit`
+#   PREVIEW_BUILD_TIMEOUT  seconds `up` waits for the first sidecar build                    600
 set -Eeuo pipefail
 
 cd "$(dirname "$0")/.."
@@ -31,6 +33,8 @@ cd "$(dirname "$0")/.."
 PREVIEW_PROJECT="${PREVIEW_PROJECT:-rindetuplata-preview}"
 PREVIEW_ENV_FILE="${PREVIEW_ENV_FILE:-deploy/preview.env}"
 PREVIEW_ENV_EXAMPLE="deploy/preview.env.example"
+PREVIEW_PROFILES="${PREVIEW_PROFILES:-}"
+BUILD_TIMEOUT_SECONDS="${PREVIEW_BUILD_TIMEOUT:-600}"
 
 # The keys `deploy/compose.preview.yaml` asks for with `${VAR:?}`; `WEB_PORT` and `SPRING_MAIL_PORT`
 # are optional (they have defaults).
@@ -49,7 +53,7 @@ usage() {
   cat <<'EOF'
 deploy/preview.sh <command>
 
-  up           build the API image, start the preview stack and build the site against it
+  up           build the API image, start the preview stack and build the site through the sidecar
   down         stop the stack and stop sharing; the named volumes keep the data
   status       containers of the preview project, Funnel state and the last site rebuild
   logs [svc]   follow the logs (all services, or the named ones)
@@ -58,19 +62,25 @@ deploy/preview.sh <command>
   funnel-off   stop sharing (the stack keeps running on this machine; needs no env file)
 
 Secrets and settings come from deploy/preview.env (see deploy/preview.env.example).
+PREVIEW_PROFILES=mailpit tests the preview with the local mail catcher instead of the real SMTP account.
 EOF
 }
 
 # The Compose invocation the whole preview shares: its own project, the base file and the preview
-# overlay, the env file, and the `stack` profile (which starts postgres, rabbitmq, api, web and the
-# rebuild sidecar; mailpit stays off).
+# overlay, the env file, and the profiles. `stack` starts postgres, rabbitmq, api, web and the rebuild
+# sidecar (mailpit stays off); `PREVIEW_PROFILES` adds whatever else is wanted, for example `mailpit` to
+# test the preview with the local mail catcher instead of the real SMTP account.
 compose() {
+  local profiles=(--profile stack)
+  if [ -n "$PREVIEW_PROFILES" ]; then
+    profiles+=(--profile "$PREVIEW_PROFILES")
+  fi
   docker compose \
     --project-name "$PREVIEW_PROJECT" \
     --env-file "$PREVIEW_ENV_FILE" \
     --file compose.yaml \
     --file deploy/compose.preview.yaml \
-    --profile stack \
+    "${profiles[@]}" \
     "$@"
 }
 
@@ -115,8 +125,8 @@ EOF
 }
 
 # The exported values Compose interpolates and the script itself needs. `PREVIEW_UID`/`PREVIEW_GID`
-# make the rebuild sidecar run as this user, so the files it writes into web/dist stay writable for
-# the next `up` on the host.
+# make the rebuild sidecar run as this user, so the files it writes into web/.site stay writable for
+# the next host-side build.
 load_settings() {
   export PREVIEW_UID="$(id -u)"
   export PREVIEW_GID="$(id -g)"
@@ -126,7 +136,44 @@ load_settings() {
     export WEB_PORT
   fi
   PREVIEW_URL_VALUE="$(env_value PREVIEW_URL)"
-  PREVIEW_URL_VALUE="${PREVIEW_URL_VALUE%/}"
+  require_valid_preview_url
+}
+
+# Refuses a `PREVIEW_URL` that would silently break the one origin, naming the key. Compose
+# interpolates the raw value into the magic link, the alert page and the allowed browser origin, so a
+# trailing slash turns the link into `...//ingresar` and makes the allowed origin disagree with the
+# page's, and a non-https value means the session and CSRF cookies are not `Secure` (fix D of the
+# T14c review).
+require_valid_preview_url() {
+  case "$PREVIEW_URL_VALUE" in
+    '') return 0 ;;                             # an absent key is `require_env_file`'s job
+    https://*) ;;
+    *)
+      cat >&2 <<EOF
+$PREVIEW_ENV_FILE has a PREVIEW_URL that is not an https:// URL:
+  PREVIEW_URL=$PREVIEW_URL_VALUE
+
+Tailscale Funnel serves the preview over HTTPS, and PREVIEW_URL is the single origin the browser,
+the magic link, the alert page, the allowed CORS origin and the Secure cookies all use. Set it to
+the URL 'deploy/preview.sh funnel-on' prints, for example https://node.tailnet.ts.net
+EOF
+      exit 2
+      ;;
+  esac
+
+  case "$PREVIEW_URL_VALUE" in
+    */)
+      cat >&2 <<EOF
+$PREVIEW_ENV_FILE has a trailing slash in PREVIEW_URL:
+  PREVIEW_URL=$PREVIEW_URL_VALUE
+  PREVIEW_URL=${PREVIEW_URL_VALUE%/}
+
+Compose appends the routes to PREVIEW_URL, so a trailing slash turns the magic link into
+...//ingresar and makes the allowed browser origin disagree with the page's origin (CORS).
+EOF
+      exit 2
+      ;;
+  esac
 }
 
 funnel_is_on() {
@@ -144,18 +191,53 @@ rebuilder_state() {
     "fetch('http://127.0.0.1:8787/').then((r) => r.text()).then((t) => process.stdout.write(t)).catch((e) => { process.stderr.write(e.message + '\n'); process.exit(1); })"
 }
 
+# Asks the sidecar for one build and waits for *that* build to finish, printing the final state. The
+# loop runs inside the sidecar container (nothing else on this host can reach it) and exits non-zero when
+# the wait times out or the build failed. Waiting for the run this POST started (and not for every later
+# rebuild, e.g. the one the startup ingestion triggers) keeps `up` from blocking for minutes, and `up`
+# never runs the site build itself: one builder, one output directory, no race over the published site.
+rebuilder_build_and_wait() { # timeout-seconds
+  compose exec -T rebuilder node -e '
+const timeoutSeconds = Number(process.argv[1]);
+const deadline = Date.now() + timeoutSeconds * 1000;
+const url = "http://127.0.0.1:8787/";
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+(async () => {
+  const posted = await (await fetch(url, { method: "POST" })).json();
+  // A POST that arrived while another build was running is covered by that queued rerun, the next run.
+  const target = posted.status === "queued" ? posted.runs + 1 : posted.runs;
+  let state = posted;
+  while ((!state.last || state.last.run < target) && Date.now() < deadline) {
+    await sleep(1000);
+    state = await (await fetch(url)).json();
+  }
+  process.stdout.write(JSON.stringify(state) + "\n");
+  if (!state.last || state.last.run < target) {
+    process.stderr.write("the site build did not finish within " + timeoutSeconds + "s\n");
+    process.exit(1);
+  }
+  if (!state.last.ok) {
+    process.stderr.write("the site build failed" + (state.last.failure ? ": " + state.last.failure : "") + "\n");
+    process.exit(1);
+  }
+  process.stderr.write("published " + state.last.build + "\n");
+})();
+' "$1"
+}
+
 cmd_up() {
   require_env_file
   load_settings
 
   if [ ! -d web/node_modules ]; then
-    echo "web/node_modules is missing, and the site build needs it: run 'cd web && npm ci' first." >&2
+    echo "web/node_modules is missing, and the rebuild sidecar's site build needs it: run 'cd web && npm ci' first." >&2
     exit 2
   fi
 
-  # Caddy serves web/dist from the host and the sidecar builds into it: the directory has to exist and
-  # belong to this user before Compose binds it (Docker would create it owned by root).
-  mkdir -p web/dist
+  # Caddy mounts web/.site read-only on /srv and serves /srv/current, and the sidecar publishes the
+  # builds inside it: the directory has to exist before Compose binds it (Docker would create it owned
+  # by root). Nothing is published in it yet, so Caddy answers 404 until the first build is published.
+  mkdir -p web/.site
 
   echo "== building the API image (project '$PREVIEW_PROJECT') =="
   compose build api
@@ -163,11 +245,17 @@ cmd_up() {
   echo "== starting the preview stack =="
   compose up -d --wait
 
-  # The site is prerendered, so it does not exist until a build runs. Building it now, against the
-  # stack that is already up, means the Funnel never serves an empty directory — even before the
-  # startup ingestion of T14a finishes and triggers the sidecar's first rebuild.
-  echo "== building the site against the stack (SITE_URL=$PREVIEW_URL_VALUE) =="
-  (cd web && API_URL="http://127.0.0.1:$WEB_PORT" SITE_URL="$PREVIEW_URL_VALUE" npm run build:api)
+  # The site is prerendered, so it does not exist until a build runs. The sidecar is the only builder:
+  # `up` asks it for the first build and waits, so the Funnel never serves a half-written directory, and
+  # the startup ingestion of T14a can trigger its own rebuild without racing this one.
+  echo "== building the site through the rebuild sidecar (SITE_URL=$PREVIEW_URL_VALUE) =="
+  if ! rebuilder_build_and_wait "$BUILD_TIMEOUT_SECONDS"; then
+    echo >&2
+    echo "the first site build did not succeed, so the preview would serve nothing yet." >&2
+    echo "The stack is up: read the build log with 'deploy/preview.sh logs rebuilder', and ask for a new" >&2
+    echo "build with 'deploy/preview.sh rebuild' once the cause is fixed." >&2
+    exit 1
+  fi
 
   echo
   echo "preview stack is up. Next:"
@@ -176,13 +264,15 @@ cmd_up() {
 }
 
 cmd_down() {
+  # Stop sharing first and *before* the env file is read: a stack that is stopped under a live Funnel
+  # answers errors to the internet, and an unreachable or broken secrets file must never be able to
+  # keep this machine exposed (fix C of the T14c review).
+  if ! cmd_funnel_off; then
+    echo "warning: could not turn the Funnel off; check 'tailscale funnel status'." >&2
+  fi
+
   require_env_file
   load_settings
-
-  # Stop sharing first: a stack that is stopped under a live Funnel answers errors to the internet.
-  if funnel_is_on; then
-    cmd_funnel_off || echo "warning: could not turn the Funnel off; check 'tailscale funnel status'." >&2
-  fi
 
   compose down
   echo
@@ -228,7 +318,8 @@ cmd_rebuild() {
   echo "== asking the sidecar for a site rebuild =="
   compose exec -T rebuilder node -e \
     "fetch('http://127.0.0.1:8787/', { method: 'POST' }).then((r) => r.text()).then((t) => process.stdout.write(t)).catch((e) => { process.stderr.write(e.message + '\n'); process.exit(1); })"
-  echo "the build runs in the background; watch it with 'deploy/preview.sh logs rebuilder'."
+  echo "the build runs in the background and the published site only changes when it exits 0;"
+  echo "watch it with 'deploy/preview.sh logs rebuilder'."
 }
 
 cmd_funnel_on() {
@@ -263,13 +354,10 @@ cmd_funnel_off() {
     return 0
   fi
 
-  if ! funnel_is_on; then
-    echo "funnel is already off."
-    return 0
-  fi
-
   # `tailscale funnel reset` drops the Funnel configuration (the docs pair it with `serve reset` for
-  # tailnet-only sharing, which the preview never uses).
+  # tailnet-only sharing, which the preview never uses). It runs unconditionally: `funnel status` is
+  # not a reliable gate, and resetting what is already off is harmless, while failing to reset a live
+  # Funnel leaves the machine exposed (fix C of the T14c review).
   tailscale funnel reset
   echo "funnel off: the public URL no longer reaches this machine."
 }

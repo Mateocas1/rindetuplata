@@ -16,7 +16,12 @@
 #     declares, `PGDATA=/var/lib/postgresql/18/docker`) and RabbitMQ its own at `/var/lib/rabbitmq`
 #     with a fixed hostname, so `down` keeps the data;
 #   - `web` publishes exactly one port, on 127.0.0.1;
-#   - the preview Caddyfile (noindex) is the one mounted;
+#   - the preview Caddyfile (noindex) is the one mounted, and it serves `/srv/current`, the build the
+#     sidecar published, so a rebuild is never visible as a half-written site (fix B of the T14c
+#     review);
+#   - the preview Caddyfile trusts the Funnel's `X-Forwarded-*` headers from the private ranges and
+#     tells the API the request was HTTPS, so every visitor is not one magic-link bucket and the API
+#     does not see a plain-http request (fix A of the T14c review);
 #   - the API gets the SMTP account, `secure-cookie=true`, the Funnel-derived URLs, the admin emails,
 #     the startup ingestion and the sidecar rebuild hook;
 #   - the rebuild sidecar publishes no port and mounts the repository's `web/`;
@@ -143,7 +148,12 @@ check(
 )
 
 web_volumes = volume_targets("web")
-check("web serves web/dist read-only", web_volumes.get("/srv", {}).get("read_only") is True)
+check(
+    "web serves the published build root (web/.site) read-only",
+    web_volumes.get("/srv", {}).get("read_only") is True
+    and web_volumes.get("/srv", {}).get("source", "").endswith("web/.site"),
+    repr(web_volumes.get("/srv")),
+)
 caddyfile = web_volumes.get("/etc/caddy/Caddyfile", {}).get("source", "")
 check(
     "web mounts exactly the preview Caddyfile",
@@ -224,11 +234,82 @@ if [ "$assert_rc" -ne 0 ]; then
 fi
 
 echo
-echo "== the preview Caddyfile answers with noindex =="
+echo "== the preview Caddyfile: noindex, the real client IP and https to the API =="
 if grep -q 'X-Robots-Tag "noindex, nofollow"' deploy/Caddyfile.preview; then
   echo "ok   - deploy/Caddyfile.preview sets X-Robots-Tag: noindex, nofollow"
 else
   echo "FAIL - deploy/Caddyfile.preview does not set X-Robots-Tag" >&2
+  exit 1
+fi
+
+python3 - deploy/Caddyfile.preview <<'PY'
+import re
+import sys
+
+raw = open(sys.argv[1]).read().splitlines()
+failures = []
+
+
+def check(description, condition, detail=""):
+    if condition:
+        print(f"ok   - {description}")
+    else:
+        print(f"FAIL - {description}{': ' + detail if detail else ''}", file=sys.stderr)
+        failures.append(description)
+
+
+def block_after(start):
+    """Lines of the `{ ... }` block that opens at `start`, or [] when it is a one-liner."""
+    if not raw[start].rstrip().endswith("{"):
+        return []
+    depth = 0
+    for index in range(start, len(raw)):
+        depth += raw[index].count("{") - raw[index].count("}")
+        if depth == 0:
+            return raw[start + 1:index]
+    return raw[start + 1:]
+
+
+# Global options block: a lone `{` before any site block.
+global_start = next((i for i, line in enumerate(raw) if line.strip() == "{"), None)
+check("the Caddyfile opens with a global options block", global_start is not None)
+if global_start is not None:
+    global_block = "\n".join(block_after(global_start))
+    check(
+        "the global options configure `servers`",
+        re.search(r"^\s*servers\s*\{", global_block, re.M) is not None,
+        global_block,
+    )
+    check(
+        "the servers trust the Funnel's X-Forwarded-* headers (trusted_proxies static private_ranges)",
+        re.search(r"trusted_proxies\s+static\s+private_ranges", global_block) is not None,
+        global_block,
+    )
+
+# The API proxy: `reverse_proxy api:8080` with `header_up X-Forwarded-Proto https`.
+proxy_start = next((i for i, line in enumerate(raw) if "reverse_proxy api:8080" in line), None)
+check("the API is reverse-proxied to api:8080", proxy_start is not None)
+if proxy_start is not None:
+    proxy_block = "\n".join(block_after(proxy_start))
+    check(
+        "the API proxy sets `header_up X-Forwarded-Proto https`",
+        re.search(r"^\s*header_up\s+X-Forwarded-Proto\s+https\s*$", proxy_block, re.M) is not None,
+        proxy_block or raw[proxy_start],
+    )
+
+# The static root: the published build, never the raw build directory Astro writes into.
+check(
+    "Caddy serves /srv/current (the published build), not the build root itself",
+    any(re.match(r"^\s*root\s+\*\s+/srv/current\s*$", line) for line in raw),
+    "\n".join(line for line in raw if line.strip().startswith("root")),
+)
+
+if failures:
+    print(f"\n{len(failures)} Caddyfile assertion(s) failed", file=sys.stderr)
+    sys.exit(1)
+PY
+caddyfile_rc=$?
+if [ "$caddyfile_rc" -ne 0 ]; then
   exit 1
 fi
 
