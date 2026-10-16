@@ -10,8 +10,10 @@
 # starts a container, a Funnel or a build, and no `docker` or `tailscale` process may ever run: both
 # are replaced by a fake on PATH that fails loudly if the script reaches them.
 #
-# Also checked: the scripts parse (`bash -n`), the sidecar's JavaScript parses (`node --check`), the
-# committed template carries every required key, and `deploy/preview.env` is gitignored.
+# Also checked: `funnel-off` resets the Funnel configuration whether or not a `Funnel on` line is
+# reported, `down` stops sharing *before* it validates the env file, a `PREVIEW_URL` that would break
+# the one origin (trailing slash, plain http) is refused naming the key, and the scripts parse
+# (`bash -n`).
 set -Eeuo pipefail
 
 cd "$(dirname "$0")/../.."
@@ -89,10 +91,33 @@ EOF
 chmod +x "$scratch/bin/tailscale"
 cat > "$scratch/bin/docker" <<'EOF'
 #!/usr/bin/env bash
-echo "FAIL: preview.sh reached the real docker ($*)" >&2
-exit 99
+# Fake Docker. With FAKE_DOCKER=compose it answers the handful of subcommands `preview.sh` uses and
+# records every call; anything else, and every call when the mode is unset, fails loudly.
+echo "docker $*" >> "${FAKE_DOCKER_LOG:-/dev/null}"
+if [ "${FAKE_DOCKER:-refuse}" != "compose" ]; then
+  echo "FAIL: preview.sh reached the real docker ($*)" >&2
+  exit 99
+fi
+case "$*" in
+  *"exec -T rebuilder"*)
+    # The sidecar's POST/GET helper answers with the idle, successful state of one finished build.
+    printf '%s\n' '{"building":false,"queued":false,"runs":1,"current":"build-1","last":{"run":1,"exitCode":0,"ok":true}}'
+    ;;
+  *"build api"* | *"up -d --wait"* | *"down"* | *"ps"* | *"logs"*) ;;
+  *)
+    echo "FAIL: unexpected docker call ($*)" >&2
+    exit 99
+    ;;
+  esac
 EOF
 chmod +x "$scratch/bin/docker"
+# The site build must never run on the host: `up` asks the sidecar instead (fix B of the T14c review).
+cat > "$scratch/bin/npm" <<'EOF'
+#!/usr/bin/env bash
+echo "FAIL: preview.sh built the site on the host (npm $*)" >&2
+exit 99
+EOF
+chmod +x "$scratch/bin/npm"
 
 # Runs preview.sh with the fake tools first on PATH.
 run_preview() { # env-file command...
@@ -103,6 +128,21 @@ run_preview() { # env-file command...
     > "$scratch/out.txt" 2> "$scratch/err.txt"
   last_rc=$?
   set -e
+}
+
+# A complete env file for the checks that need the script to get past the validation.
+write_env() { # file preview-url
+  cat > "$1" <<EOF
+PREVIEW_URL=$2
+POSTGRES_PASSWORD=scratch-postgres-password
+RABBITMQ_DEFAULT_PASS=scratch-rabbit-password
+SPRING_MAIL_HOST=smtp.example.com
+SPRING_MAIL_PORT=587
+SPRING_MAIL_USERNAME=preview@example.com
+SPRING_MAIL_PASSWORD=scratch-smtp-password
+RINDETUPLATA_MAIL_FROM="rindetuplata <preview@example.com>"
+RINDETUPLATA_AUTH_ADMINEMAILS=preview@example.com
+EOF
 }
 
 echo
@@ -118,15 +158,86 @@ for command in up down status logs rebuild funnel-on; do
 done
 
 echo
-echo "== funnel-off needs no env file, so sharing can always be stopped =="
+echo "== funnel-off needs no env file and always resets, so sharing can always be stopped =="
+: > "$scratch/tailscale.log"
 run_preview "$scratch/absent.env" funnel-off
 check "funnel-off without the env file exits 0" "0" "$last_rc"
-check_contains "funnel-off says it is already off" "$scratch/out.txt" "funnel is already off"
+check_contains "funnel-off resets even when no Funnel line is reported" "$scratch/tailscale.log" "tailscale funnel reset"
 : > "$scratch/tailscale.log"
 FAKE_FUNNEL_ON=1 run_preview "$scratch/absent.env" funnel-off
 check "funnel-off with a running Funnel exits 0" "0" "$last_rc"
 check_contains "funnel-off resets the Funnel configuration" "$scratch/tailscale.log" "tailscale funnel reset"
 check_contains "funnel-off reports that the public URL is gone" "$scratch/out.txt" "the public URL no longer reaches this machine"
+
+echo
+echo "== down stops sharing before it needs the env file =="
+: > "$scratch/tailscale.log"
+run_preview "$scratch/absent.env" down
+check "down without the env file still exits 2" "2" "$last_rc"
+check_contains "down still names the missing file" "$scratch/err.txt" "$scratch/absent.env"
+check_contains "down turned the Funnel off first" "$scratch/tailscale.log" "tailscale funnel reset"
+
+echo
+echo "== a PREVIEW_URL that would break the one origin is refused, naming the key =="
+write_env "$scratch/trailing-slash.env" "https://preview.example.ts.net/"
+run_preview "$scratch/trailing-slash.env" up
+check "a trailing slash in PREVIEW_URL exits 2" "2" "$last_rc"
+check_contains "it names the key PREVIEW_URL" "$scratch/err.txt" "PREVIEW_URL"
+check_contains "it says the trailing slash is the problem" "$scratch/err.txt" "trailing slash"
+check_contains "it shows the value without the slash" "$scratch/err.txt" "https://preview.example.ts.net"
+
+write_env "$scratch/http.env" "http://preview.example.ts.net"
+run_preview "$scratch/http.env" status
+check "a non-https PREVIEW_URL exits 2" "2" "$last_rc"
+check_contains "it names the key PREVIEW_URL" "$scratch/err.txt" "PREVIEW_URL"
+check_contains "it requires https" "$scratch/err.txt" "https://"
+if grep -qE 'reached the real|unexpected docker' "$scratch/err.txt" "$scratch/out.txt"; then
+  echo "FAIL - a bad PREVIEW_URL reached Docker or Tailscale" >&2
+  failed=$((failed + 1))
+else
+  echo "ok   - a bad PREVIEW_URL stops before Docker and Tailscale"
+  passed=$((passed + 1))
+fi
+
+write_env "$scratch/good.env" "https://preview.example.ts.net"
+FAKE_DOCKER=compose FAKE_DOCKER_LOG="$scratch/docker-status.log" run_preview "$scratch/good.env" status
+check "a valid PREVIEW_URL is not refused" "0" "$last_rc"
+
+echo
+echo "== up builds the site through the sidecar, never on the host =="
+write_env "$scratch/up.env" "https://preview.example.ts.net"
+: > "$scratch/docker-up.log"
+FAKE_DOCKER=compose FAKE_DOCKER_LOG="$scratch/docker-up.log" run_preview "$scratch/up.env" up
+check "up exits 0" "0" "$last_rc"
+check_contains "up builds the API image" "$scratch/docker-up.log" "build api"
+check_contains "up starts the stack with --wait" "$scratch/docker-up.log" "up -d --wait"
+check_contains "up asks the sidecar for the first build and waits for it" "$scratch/docker-up.log" "exec -T rebuilder"
+if grep -q 'built the site on the host' "$scratch/err.txt" "$scratch/out.txt"; then
+  echo "FAIL - up built the site on the host" >&2
+  failed=$((failed + 1))
+else
+  echo "ok   - up never runs the site build on the host"
+  passed=$((passed + 1))
+fi
+check_contains "up points at funnel-on as the next step" "$scratch/out.txt" "funnel-on"
+
+echo
+echo "== PREVIEW_PROFILES adds a Compose profile (the mailpit escape hatch) =="
+: > "$scratch/docker-profiles.log"
+FAKE_DOCKER=compose FAKE_DOCKER_LOG="$scratch/docker-profiles.log" PREVIEW_PROFILES=mailpit \
+  run_preview "$scratch/up.env" up
+check "up with PREVIEW_PROFILES exits 0" "0" "$last_rc"
+check_contains "the Compose call enables that profile" "$scratch/docker-profiles.log" "--profile mailpit"
+check_contains "the stack profile is still enabled" "$scratch/docker-profiles.log" "--profile stack"
+: > "$scratch/docker-noprofiles.log"
+FAKE_DOCKER=compose FAKE_DOCKER_LOG="$scratch/docker-noprofiles.log" run_preview "$scratch/up.env" status
+if grep -q -- '--profile mailpit' "$scratch/docker-noprofiles.log"; then
+  echo "FAIL - mailpit is enabled without PREVIEW_PROFILES" >&2
+  failed=$((failed + 1))
+else
+  echo "ok   - no extra profile without PREVIEW_PROFILES"
+  passed=$((passed + 1))
+fi
 
 echo
 echo "== an incomplete env file names exactly the missing keys =="

@@ -63,20 +63,35 @@ links and alert emails go to real inboxes through a real SMTP account.
   path the `postgres:18` image really declares, and `rabbitmq_data` at `/var/lib/rabbitmq` with a fixed
   hostname — so `down` keeps the accounts, the alert rules and the queued events.
 - `web` (Caddy) publishes **only** `127.0.0.1:${WEB_PORT}`: the Funnel process connects to the loopback
-  address, so nothing else on the LAN can reach the site. It serves `deploy/Caddyfile.preview`, which is
-  the local Caddyfile plus the `noindex` header.
+  address, so nothing else on the LAN can reach the site. It serves `deploy/Caddyfile.preview` — the
+  local Caddyfile plus the `noindex` header — from `web/.site`, the build root the sidecar publishes
+  into, with `root /srv/current`: a rebuild is never visible as a half-written site.
+- The preview Caddyfile also configures `servers { trusted_proxies static private_ranges }` and sets
+  `header_up X-Forwarded-Proto https` on the API proxy. Funnel terminates TLS and connects from the
+  loopback address with the visitor in `X-Forwarded-For`; without a trusted-proxy list Caddy overwrites
+  both headers with its own peer and its own `http` view of the request, so every visitor would share one
+  magic-link rate-limit bucket and the API would distrust its own `Secure` cookies.
 - The API is production-shaped: STARTTLS SMTP from the env file, `secure-cookie=true`, and magic link,
   alert page and allowed browser origin all derived from one `PREVIEW_URL` — one origin, so the
   `SameSite=Lax` session cookie and the CSRF token travel exactly as in production.
 - `mailpit` is dropped (`profiles: !override`), and every service carries `restart: unless-stopped`.
 - `rebuilder`: a small Node sidecar (`deploy/rebuilder/server.mjs`, dependency-free) that answers the
-  T4d rebuild hook by running the real `npm run build:api` into `web/dist`. It publishes no port; only the
-  API reaches it. It mounts the host's `web/`, so the build reuses `web/node_modules` and the files land
-  in the directory Caddy serves, and it runs as the host user so those files stay writable.
+  T4d rebuild hook. It publishes no port; only the API reaches it. It mounts the host's `web/`, so the
+  build reuses `web/node_modules`, and it runs as the host user so the files it writes stay writable.
+  Every build goes to its own directory `web/.site/build-<n>` (`node_modules/.bin/astro build --outDir
+  .site/<build>`), and only a build that exited 0 is published, by swapping the `web/.site/current`
+  symlink with a single `rename`. The last two builds are kept; a failed build is deleted and the
+  previous build keeps serving. The sidecar drives Astro directly because the project's `npm run
+  build:api` always builds into `dist`; the guards of that script (`API_URL` and `SITE_URL` mandatory,
+  `WEB_FIXTURES` stripped) are replicated by the sidecar, which refuses to start without either.
 
 The env file is `deploy/preview.env` (gitignored, template `deploy/preview.env.example`): the database
 and broker passwords, the SMTP account, `PREVIEW_URL` and the admin emails. `up` refuses to start
-without it, naming the file and every key that is missing or empty.
+without it, naming the file and every key that is missing or empty, and every command that reads it
+refuses a `PREVIEW_URL` that would silently break the one origin: one that does not start with
+`https://` (the session and CSRF cookies are `Secure`) or that ends in `/` (Compose appends the routes to
+it, so `.../` turns the magic link into `...//ingresar` and makes the allowed browser origin disagree
+with the page's). The refusal names the key and prints the corrected value.
 
 ### Once, in the Tailscale and Google consoles (owner)
 
@@ -97,7 +112,7 @@ cp deploy/preview.env.example deploy/preview.env
 chmod 600 deploy/preview.env
 $EDITOR deploy/preview.env         # PREVIEW_URL, the SMTP app password, the admin email
 
-deploy/preview.sh up               # API image, stack up --wait, first site build against it
+deploy/preview.sh up               # API image, stack up --wait, first site build through the sidecar
 deploy/preview.sh funnel-on        # serve 127.0.0.1:${WEB_PORT} on the Funnel URL
 deploy/preview.sh status           # containers, Funnel state, last site rebuild
 deploy/preview.sh logs [service]   # follow the logs (all services by default)
@@ -106,12 +121,21 @@ deploy/preview.sh funnel-off       # stop sharing; the stack keeps running on th
 deploy/preview.sh down             # stop the stack and stop sharing; the volumes keep the data
 ```
 
-`up` builds the API image, brings the stack up with `--wait`, and then builds the site against the
-running API (the same first build `deploy/e2e.sh` does), so the Funnel never serves an empty directory
-while the startup ingestion is still running. `funnel-off` is the one command that reads no env file: an
-unreachable or broken secrets file must never be able to keep the machine exposed. `down` never passes
-`--volumes`, so the data survives stopping the preview; only
-`docker compose --project-name rindetuplata-preview down --volumes` would delete it.
+`up` builds the API image, brings the stack up with `--wait`, and then asks the rebuild sidecar for the
+first site build and waits for it (up to `PREVIEW_BUILD_TIMEOUT` seconds, 600 by default). The host never
+runs the site build: one builder, one output directory, so the Funnel never serves a half-written
+directory and a startup ingestion (T14a) can trigger its own rebuild without racing anything. `funnel-off`
+is the one command that reads no env file, and it always runs `tailscale funnel reset`: an unreachable or
+broken secrets file must never be able to keep the machine exposed. `down` turns the Funnel off first,
+before it validates the env file, and never passes `--volumes`, so the data survives stopping the
+preview; only `docker compose --project-name rindetuplata-preview down --volumes` would delete it.
+
+Trying it without the real SMTP account: the overlay drops Mailpit, but the `mailpit` profile is still
+there. Add it with `PREVIEW_PROFILES=mailpit deploy/preview.sh up` (or `--profile mailpit` on a manual
+`docker compose` call — a `--profile` flag makes Compose ignore `COMPOSE_PROFILES`) and point the env
+file at it with `SPRING_MAIL_HOST=mailpit` and `SPRING_MAIL_PORT=1025`; magic links then land in
+Mailpit's UI on `127.0.0.1:8025` instead of real inboxes. That is how the T14c fix round dry-ran these
+commands, on a scratch project name and a scratch env file, never on `rindetuplata-preview`.
 
 `/actuator/health` reports the database, the broker **and the mail server**, and `up -d --wait` waits
 for it: if `up` ends with `dependency failed to start: container … is unhealthy` and the API log shows an
@@ -125,15 +149,20 @@ and `deploy/test/preview-script-test.sh`.
 ### What happens every day
 
 - **19:30 Argentina** (`rindetuplata.ingest.cron`): the daily ingestion runs in the API container. When
-  the job COMPLETES, the T4d hook POSTs `http://rebuilder:8787/` and the sidecar rebuilds the site into
-  `web/dist`, so the published ranking is today's a minute or two later. The sidecar runs one build at a
-  time and collapses every request that arrives during a build into exactly one rerun; each run and its
-  exit code is in `deploy/preview.sh logs rebuilder`, and `deploy/preview.sh status` reads the last one.
+  the job COMPLETES, the T4d hook POSTs `http://rebuilder:8787/` and the sidecar rebuilds the site, so the
+  published ranking is today's a minute or two later. The sidecar runs one build at a time and collapses
+  every request that arrives during a build into exactly one rerun; visitors keep getting the current
+  build until the new one exits 0, so a slow or failed build costs nothing but a delay. Each run, its
+  exit code and what it published are in `deploy/preview.sh logs rebuilder`, and `deploy/preview.sh
+  status` reads the sidecar state (current build, kept builds, last run).
 - **After every restart** of the API, `RINDETUPLATA_INGEST_RUNONSTARTUP=true` (T14a) ingests today once
   if it has not been ingested yet and triggers the same rebuild: a fresh volume has data before the
   evening, and a restart never leaves the site a day behind.
 - **Banking the data**: the ingestion is idempotent per data date, so a restart, a re-run or a rebuild
   never duplicates a day.
+- **What a rebuild publishes**: nothing changes until a build exits 0 (the atomic `current` swap); a
+  failed build is discarded and the previous one keeps serving. `web/.site` holds the current build and
+  the previous one, so there is always a site to roll back to by hand if needed.
 
 ### Limits
 
@@ -162,8 +191,10 @@ deploy/preview.sh down
 
 `tailscale funnel status` shows whether anything is still served (its output names the public URL while
 `deploy/preview.sh status` reports `on` only when it sees a `Funnel on` line), and `tailscale funnel
-reset` is what `funnel-off` runs: it removes the Funnel configuration, so the `*.ts.net` name stops
-answering until `funnel-on` is run again.
+reset` is what `funnel-off` runs — unconditionally, whether or not a `Funnel on` line is reported, since
+resetting a Funnel that is already off is harmless and failing to reset a live one leaves this machine
+exposed. It removes the Funnel configuration, so the `*.ts.net` name stops answering until `funnel-on` is
+run again.
 
 ## VPS: the API
 
