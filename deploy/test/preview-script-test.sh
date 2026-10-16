@@ -82,7 +82,7 @@ if [ "\${1:-}" = funnel ]; then
       fi
       exit 0
       ;;
-    reset) exit 0 ;;
+    reset) [ -n "\${FAKE_RESET_FAILS:-}" ] && { echo "reset denied" >&2; exit 1; }; exit 0 ;;
   esac
 fi
 echo "FAIL: preview.sh reached the real tailscale (\$*)" >&2
@@ -176,6 +176,27 @@ run_preview "$scratch/absent.env" down
 check "down without the env file still exits 2" "2" "$last_rc"
 check_contains "down still names the missing file" "$scratch/err.txt" "$scratch/absent.env"
 check_contains "down turned the Funnel off first" "$scratch/tailscale.log" "tailscale funnel reset"
+
+echo
+echo "== a failed reset is never reported as a Funnel that is off =="
+FAKE_RESET_FAILS=1 run_preview "$scratch/absent.env" funnel-off
+check "funnel-off exits non-zero when the reset fails" "1" "$last_rc"
+if grep -q 'the public URL no longer reaches this machine' "$scratch/out.txt"; then
+  echo "FAIL - funnel-off claimed the Funnel is off after a failed reset" >&2
+  failed=$((failed + 1))
+else
+  echo "ok   - funnel-off does not claim success after a failed reset"
+  passed=$((passed + 1))
+fi
+FAKE_RESET_FAILS=1 run_preview "$scratch/absent.env" down
+check_contains "down warns when the Funnel could not be turned off" "$scratch/err.txt" "could not turn the Funnel off"
+if grep -q 'the public URL no longer reaches this machine' "$scratch/out.txt"; then
+  echo "FAIL - down claimed the Funnel is off after a failed reset" >&2
+  failed=$((failed + 1))
+else
+  echo "ok   - down does not claim the Funnel is off after a failed reset"
+  passed=$((passed + 1))
+fi
 
 echo
 echo "== a PREVIEW_URL that would break the one origin is refused, naming the key =="
