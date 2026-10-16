@@ -1,0 +1,315 @@
+#!/usr/bin/env bash
+#
+# Private preview (T14b, S20): the whole product on this machine, published through Tailscale Funnel.
+#
+#   deploy/preview.sh up          # build the API image, start the stack, build the site
+#   deploy/preview.sh funnel-on   # serve it on the public Funnel URL (prints the URL)
+#   deploy/preview.sh status      # containers, Funnel state, last site rebuild
+#   deploy/preview.sh logs [svc]  # follow the stack's logs (all services by default)
+#   deploy/preview.sh rebuild     # ask the sidecar for a site rebuild right now
+#   deploy/preview.sh funnel-off  # stop sharing; the stack keeps serving 127.0.0.1
+#   deploy/preview.sh down        # stop the stack (the data volumes survive)
+#
+# `funnel-off` is the one command that never reads the env file: stopping the exposure of this machine
+# must not depend on a secrets file that may be missing or broken.
+#
+# Everything runs in its own Compose project (`PREVIEW_PROJECT`, default `rindetuplata-preview`) with
+# `compose.yaml` + `deploy/compose.preview.yaml`, so this preview never touches the developer's local
+# `stack` profile project or its `deploy/e2e.sh` runs, and `down` can only remove what `up` started.
+#
+# Secrets live in `deploy/preview.env` (gitignored; template `deploy/preview.env.example`). `up` and
+# every Compose command refuse to run without a filled-in env file, naming the file and, when it
+# exists but is incomplete, the exact keys that are missing.
+#
+# Environments (all optional; the defaults are the intended ones):
+#   PREVIEW_PROJECT    Compose project name                rindetuplata-preview
+#   PREVIEW_ENV_FILE   env file with the secrets           deploy/preview.env
+set -Eeuo pipefail
+
+cd "$(dirname "$0")/.."
+
+PREVIEW_PROJECT="${PREVIEW_PROJECT:-rindetuplata-preview}"
+PREVIEW_ENV_FILE="${PREVIEW_ENV_FILE:-deploy/preview.env}"
+PREVIEW_ENV_EXAMPLE="deploy/preview.env.example"
+
+# The keys `deploy/compose.preview.yaml` asks for with `${VAR:?}`; `WEB_PORT` and `SPRING_MAIL_PORT`
+# are optional (they have defaults).
+REQUIRED_KEYS=(
+  PREVIEW_URL
+  POSTGRES_PASSWORD
+  RABBITMQ_DEFAULT_PASS
+  SPRING_MAIL_HOST
+  SPRING_MAIL_USERNAME
+  SPRING_MAIL_PASSWORD
+  RINDETUPLATA_MAIL_FROM
+  RINDETUPLATA_AUTH_ADMINEMAILS
+)
+
+usage() {
+  cat <<'EOF'
+deploy/preview.sh <command>
+
+  up           build the API image, start the preview stack and build the site against it
+  down         stop the stack and stop sharing; the named volumes keep the data
+  status       containers of the preview project, Funnel state and the last site rebuild
+  logs [svc]   follow the logs (all services, or the named ones)
+  rebuild      ask the rebuild sidecar for a site build right now
+  funnel-on    serve 127.0.0.1:${WEB_PORT} on the public Tailscale Funnel URL
+  funnel-off   stop sharing (the stack keeps running on this machine; needs no env file)
+
+Secrets and settings come from deploy/preview.env (see deploy/preview.env.example).
+EOF
+}
+
+# The Compose invocation the whole preview shares: its own project, the base file and the preview
+# overlay, the env file, and the `stack` profile (which starts postgres, rabbitmq, api, web and the
+# rebuild sidecar; mailpit stays off).
+compose() {
+  docker compose \
+    --project-name "$PREVIEW_PROJECT" \
+    --env-file "$PREVIEW_ENV_FILE" \
+    --file compose.yaml \
+    --file deploy/compose.preview.yaml \
+    --profile stack \
+    "$@"
+}
+
+# Value of a key in the env file, with surrounding quotes stripped (an empty line means "not set").
+env_value() {
+  sed -n "s/^[[:space:]]*\(export[[:space:]]\+\)\?$1=//p" "$PREVIEW_ENV_FILE" | tail -n 1 | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"
+}
+
+# Keys that are absent or empty in the env file, one per line.
+missing_keys() {
+  local key
+  for key in "${REQUIRED_KEYS[@]}"; do
+    if ! grep -qE "^[[:space:]]*(export[[:space:]]+)?${key}=.+" "$PREVIEW_ENV_FILE"; then
+      echo "$key"
+    fi
+  done
+}
+
+# Refuses to continue without a complete env file, naming exactly what is missing. Nothing runs before
+# this: no Docker command, no Tailscale command, no build.
+require_env_file() {
+  if [ ! -f "$PREVIEW_ENV_FILE" ]; then
+    cat >&2 <<EOF
+missing $PREVIEW_ENV_FILE: there is nothing to start without the preview's secrets.
+
+  cp $PREVIEW_ENV_EXAMPLE $PREVIEW_ENV_FILE
+  chmod 600 $PREVIEW_ENV_FILE
+  \$EDITOR $PREVIEW_ENV_FILE        # set at least: ${REQUIRED_KEYS[*]}
+
+This file is gitignored on purpose: it holds the SMTP app password and the database password.
+EOF
+    exit 2
+  fi
+
+  local missing
+  missing="$(missing_keys)"
+  if [ -n "$missing" ]; then
+    echo "$PREVIEW_ENV_FILE is incomplete; set these keys (see $PREVIEW_ENV_EXAMPLE):" >&2
+    echo "$missing" | sed 's/^/  - /' >&2
+    exit 2
+  fi
+}
+
+# The exported values Compose interpolates and the script itself needs. `PREVIEW_UID`/`PREVIEW_GID`
+# make the rebuild sidecar run as this user, so the files it writes into web/dist stay writable for
+# the next `up` on the host.
+load_settings() {
+  export PREVIEW_UID="$(id -u)"
+  export PREVIEW_GID="$(id -g)"
+  export WEB_PORT="$(env_value WEB_PORT)"
+  if [ -z "$WEB_PORT" ]; then
+    WEB_PORT=4321
+    export WEB_PORT
+  fi
+  PREVIEW_URL_VALUE="$(env_value PREVIEW_URL)"
+  PREVIEW_URL_VALUE="${PREVIEW_URL_VALUE%/}"
+}
+
+funnel_is_on() {
+  command -v tailscale >/dev/null 2>&1 && tailscale funnel status 2>/dev/null | grep -q 'Funnel on'
+}
+
+# The public URL of the running Funnel, when Tailscale reports one.
+funnel_url() {
+  tailscale funnel status 2>/dev/null | grep -oE 'https://[A-Za-z0-9._-]+\.ts\.net' | head -n 1
+}
+
+# The sidecar's state (`GET /`), through the container that runs it.
+rebuilder_state() {
+  compose exec -T rebuilder node -e \
+    "fetch('http://127.0.0.1:8787/').then((r) => r.text()).then((t) => process.stdout.write(t)).catch((e) => { process.stderr.write(e.message + '\n'); process.exit(1); })"
+}
+
+cmd_up() {
+  require_env_file
+  load_settings
+
+  if [ ! -d web/node_modules ]; then
+    echo "web/node_modules is missing, and the site build needs it: run 'cd web && npm ci' first." >&2
+    exit 2
+  fi
+
+  # Caddy serves web/dist from the host and the sidecar builds into it: the directory has to exist and
+  # belong to this user before Compose binds it (Docker would create it owned by root).
+  mkdir -p web/dist
+
+  echo "== building the API image (project '$PREVIEW_PROJECT') =="
+  compose build api
+
+  echo "== starting the preview stack =="
+  compose up -d --wait
+
+  # The site is prerendered, so it does not exist until a build runs. Building it now, against the
+  # stack that is already up, means the Funnel never serves an empty directory — even before the
+  # startup ingestion of T14a finishes and triggers the sidecar's first rebuild.
+  echo "== building the site against the stack (SITE_URL=$PREVIEW_URL_VALUE) =="
+  (cd web && API_URL="http://127.0.0.1:$WEB_PORT" SITE_URL="$PREVIEW_URL_VALUE" npm run build:api)
+
+  echo
+  echo "preview stack is up. Next:"
+  echo "  deploy/preview.sh funnel-on     # publish it on the Funnel URL"
+  echo "  deploy/preview.sh status        # containers, Funnel state, last rebuild"
+}
+
+cmd_down() {
+  require_env_file
+  load_settings
+
+  # Stop sharing first: a stack that is stopped under a live Funnel answers errors to the internet.
+  if funnel_is_on; then
+    cmd_funnel_off || echo "warning: could not turn the Funnel off; check 'tailscale funnel status'." >&2
+  fi
+
+  compose down
+  echo
+  echo "preview stack stopped. The volumes ${PREVIEW_PROJECT}_pgdata and ${PREVIEW_PROJECT}_rabbitmq_data keep"
+  echo "the accounts, the alert rules and the queued events; 'deploy/preview.sh up' resumes with them."
+  echo "Only 'docker compose --project-name $PREVIEW_PROJECT down --volumes' would delete them."
+}
+
+cmd_status() {
+  require_env_file
+  load_settings
+
+  echo "== containers (project '$PREVIEW_PROJECT') =="
+  compose ps
+
+  echo
+  echo "== funnel =="
+  if funnel_is_on; then
+    echo "on: $(funnel_url)"
+    tailscale funnel status 2>/dev/null | sed 's/^/    /'
+  else
+    echo "off (nothing on this machine is published; 'deploy/preview.sh funnel-on' turns it on)"
+  fi
+
+  echo
+  echo "== last site rebuild (sidecar) =="
+  if rebuilder_state; then
+    :
+  else
+    echo "the rebuild sidecar is not answering; is the stack up? ('deploy/preview.sh up')" >&2
+  fi
+}
+
+cmd_logs() {
+  require_env_file
+  load_settings
+  compose logs --follow --tail 100 "$@"
+}
+
+cmd_rebuild() {
+  require_env_file
+  load_settings
+  echo "== asking the sidecar for a site rebuild =="
+  compose exec -T rebuilder node -e \
+    "fetch('http://127.0.0.1:8787/', { method: 'POST' }).then((r) => r.text()).then((t) => process.stdout.write(t)).catch((e) => { process.stderr.write(e.message + '\n'); process.exit(1); })"
+  echo "the build runs in the background; watch it with 'deploy/preview.sh logs rebuilder'."
+}
+
+cmd_funnel_on() {
+  require_env_file
+  load_settings
+
+  if ! command -v tailscale >/dev/null 2>&1; then
+    echo "tailscale is not installed (S20 assumes it is logged in on this machine)." >&2
+    exit 2
+  fi
+
+  # Funnel proxies 127.0.0.1:${WEB_PORT} on this machine to the tailnet HTTPS URL. It needs two things
+  # in the Tailscale admin console, done once by the owner: HTTPS certificates enabled, and the
+  # Funnel node attribute allowed (docs/deploy.md).
+  tailscale funnel --bg "$WEB_PORT"
+
+  local url
+  url="$(funnel_url)"
+  echo
+  if [ -n "$url" ]; then
+    echo "public URL: $url"
+    echo "PREVIEW_URL in $PREVIEW_ENV_FILE must be exactly that URL (no trailing slash)."
+  else
+    echo "funnel started on port $WEB_PORT; run 'tailscale funnel status' for the public URL."
+  fi
+  echo "the stack keeps the noindex header and is unlisted: share the URL only with the people testing it."
+}
+
+cmd_funnel_off() {
+  if ! command -v tailscale >/dev/null 2>&1; then
+    echo "tailscale is not installed: nothing to turn off." >&2
+    return 0
+  fi
+
+  if ! funnel_is_on; then
+    echo "funnel is already off."
+    return 0
+  fi
+
+  # `tailscale funnel reset` drops the Funnel configuration (the docs pair it with `serve reset` for
+  # tailnet-only sharing, which the preview never uses).
+  tailscale funnel reset
+  echo "funnel off: the public URL no longer reaches this machine."
+}
+
+case "${1:-}" in
+  up)
+    shift
+    cmd_up "$@"
+    ;;
+  down)
+    shift
+    cmd_down "$@"
+    ;;
+  status)
+    shift
+    cmd_status "$@"
+    ;;
+  logs)
+    shift
+    cmd_logs "$@"
+    ;;
+  rebuild)
+    shift
+    cmd_rebuild "$@"
+    ;;
+  funnel-on)
+    shift
+    cmd_funnel_on "$@"
+    ;;
+  funnel-off)
+    shift
+    cmd_funnel_off "$@"
+    ;;
+  '' | help | -h | --help)
+    usage
+    ;;
+  *)
+    echo "unknown command: $1" >&2
+    echo >&2
+    usage >&2
+    exit 2
+    ;;
+esac

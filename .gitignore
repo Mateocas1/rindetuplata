@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Private preview (T14b, S20) ###
+# Real secrets: the SMTP app password, the database and broker passwords. Only the committed
+# `deploy/preview.env.example` template belongs in the repository.
+deploy/preview.env
