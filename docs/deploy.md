@@ -157,7 +157,9 @@ and `deploy/test/preview-script-test.sh`.
   status` reads the sidecar state (current build, kept builds, last run).
 - **After every restart** of the API, `RINDETUPLATA_INGEST_RUNONSTARTUP=true` (T14a) ingests today once
   if it has not been ingested yet and triggers the same rebuild: a fresh volume has data before the
-  evening, and a restart never leaves the site a day behind.
+  evening, and a restart never leaves the site a day behind. The API does not retry its hook, and its
+  startup ingestion can finish before the rebuilder listens, so the rebuilder also builds once when it
+  starts (`REBUILDER_BUILD_ON_START=true`); a hook that arrives during that build queues one more.
 - **Banking the data**: the ingestion is idempotent per data date, so a restart, a re-run or a rebuild
   never duplicates a day.
 - **What a rebuild publishes**: nothing changes until a build exits 0 (the atomic `current` swap); a

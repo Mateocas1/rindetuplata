@@ -132,6 +132,8 @@ services:
       # How many finished builds stay on disk; the current one plus the previous one is enough to roll
       # back to the site that served before a bad build.
       REBUILDER_KEEP_BUILDS: "2"
+      # A hook the API sent before this sidecar listened is lost; one build at start covers it (T14c).
+      REBUILDER_BUILD_ON_START: "true"
       # Inside the network: `web` is Caddy, so the build talks to the same one origin the browser does
       # and the generated pages get the same API responses the site serves.
       API_URL: "http://web"
