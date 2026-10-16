@@ -86,6 +86,7 @@ Pane prompt checklist (learned in T4 with DeepSeek v4 flash; each item cost an a
 - **Parallel Maven panes** need separate worktrees under `.worktrees/` (excluded in `.git/info/exclude`) so they never
   share `target/`.
 - **Exit codes and `.astro` syntax (T12).** Never pipe a check through `tail` to judge it: `cmd > file 2>&1; rc=$?`. In `.astro` files write HTML attributes (`tabindex`, `class`), not JSX props. Name the e2e selector contract (`web/e2e/account.spec.ts`: roles, exact button names) in any prompt that restyles the account pages.
+- **Permission prompts and accessible names (T13).** Panes still run `rm -rf /tmp/<shots>` and block on the data-loss prompt; say "screenshots go to a new `mktemp -d` each run" in the prompt. A visible short label (`$ 1M`) with an `aria-label` for the full value breaks WCAG 2.5.3 label in name: put the extra text in an `sr-only` span inside the label instead.
 - **What works well:** allowed edit surfaces are respected; asking for "deviations from the notes" gets honest,
   useful reports.
 

@@ -74,12 +74,12 @@ Order of work: T9 first (history clock), then T2 onward.
 | T12c | S14 | Account surfaces reskin: ingresar, alertas, admin/tasas islands | DeepSeek pane (worktree, parallel to T12b) | done | 085bf13 (merge 9436343) |
 | T12d | S14 | Motion: press feedback, disclosures, ranking re-render, theme-switch suppression, all gated by reduced motion (`animate` skill) | parent or pane | done | 87af043 |
 | T12e | S14 | Audit: interface-review + better-accessibility over light/dark × desktop/mobile screenshots, fix round | verify subagent + parent | done | 27cefcf |
-| T13 | S14, S10, S15 | Premium visual direction (L75): stronger text hierarchy, a distinctive identity beyond default Tailwind + Inter, less information per screen; research getdesign.md, Land-book, Seesaw, 21st.dev; prototype directions, owner picks, roll out, audit | parent + panes | in progress | |
+| T13 | S14, S10, S15 | Premium visual direction (L75): stronger text hierarchy, a distinctive identity beyond default Tailwind + Inter, less information per screen; research getdesign.md, Land-book, Seesaw, 21st.dev; prototype directions, owner picks, roll out, audit | parent + panes | done | 84fc223 |
 | T13a | S14 | Foundations in Cobalto Cristal: graphite + cobalt role tokens (light/dark, measured), fonts (Space Grotesk, Archivo, Geist Mono, Instrument Serif italic), text roles (max 7), glass/surface-ladder recipes | parent | done | b2aad72 |
 | T13b | S14, S10, S15 | Home + ranking + category landings in the new direction (hero instrument card, segmented controls wired to the explorer, mono index gutter) | DeepSeek pane | done | 0d4913d |
 | T13c | S14 | Instrument page, metodología, 404 | DeepSeek pane | done | 9781c4b |
 | T13d | S14 | Account pages (ingresar, alertas, admin/tasas) | DeepSeek pane (L83) | done | c9ffbf4 |
-| T13e | S14 | Audit (light/dark × 320/390/1280, contrast on glass, reduced transparency/motion) + fix round; account e2e | verify subagent + parent | pending | |
+| T13e | S14 | Audit (light/dark × 320/390/1280, contrast on glass, reduced transparency/motion) + fix round; account e2e | verify subagent + DeepSeek pane + parent | done | 84fc223 |
 
 ### T2 design notes (orchestrator defaults; the owner may override)
 
@@ -358,3 +358,4 @@ ArgentinaDatos is a community aggregator: keep one adapter per source so a prima
   7. (minor) Segmented amount labels touch the thumb edges at 320/390: short labels ("$ 500k", "$ 1M", "$ 5M") with the full value as the accessible name.
   8. (minor, pre-existing L73) Instrument chart at 320 shows only the latest point; y-axis off-screen. Pin the y-axis outside the scroll region.
   Not verified: account tables in fixture mode, account e2e (needs Compose), forced-colors.
+- **L88** (evidence, T13e close): fix round in a DeepSeek pane (~18 min, worktree `.worktrees/t13e`), all eight L87 items fixed test-first (14 new tests; RED pasted per item), render-checked at 320/390/1280 light/dark. Parent correction to item 7 (the parent's own spec broke WCAG 2.5.3 label in name with `aria-label="$ 1.000.000"` over a visible "$ 1M"): the label text is now the short form plus a screen-reader-only " ($ 1.000.000)", test-first (RED 1 → GREEN). Deviation accepted: ranking rows show `fuente · fecha` only; confidence and verification date stay on the instrument page and metodología. Parent checks on 84fc223: `astro check` 0/0/0, vitest 398/398, fixture build rc=0, `deploy/e2e.sh` rc=0 (2 passed on the Compose stack). Not verified: forced-colors; the STALE chip by screenshot (no stale fixture row). T13 done.
