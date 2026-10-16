@@ -1,0 +1,35 @@
+# Private preview (T14b, S20): `deploy/Caddyfile.local` plus "do not index this".
+#
+# Caddy serves the built Astro site (web/dist, mounted read-only on /srv) and reverse-proxies /api*
+# to the API container, so the preview is one origin behind the Tailscale Funnel URL — exactly the
+# browser contract of production (see docs/deploy.md).
+#
+# It is a copy of `deploy/Caddyfile.local` and not an overlay: Caddy has no include, and the preview
+# needs the one thing the local file does not, an `X-Robots-Tag` on every response. The preview is
+# unlisted but the URL is public, so a crawler that finds it must not index it; the header is the
+# server-side half of `noindex` (the pages already carry the meta tag on the account routes).
+
+:80 {
+	encode zstd gzip
+	root * /srv
+
+	# Every response of this stack, including the 404 page and the proxied API answers.
+	header X-Robots-Tag "noindex, nofollow"
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy api:8080
+	}
+
+	# Static pages: directory or file, no extension. Unknown paths fall through to the error handler
+	# instead of a catch-all index, so a missing page is a real 404 for crawlers.
+	handle {
+		try_files {path} {path}/ {path}/index.html {path}.html
+		file_server
+	}
+
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+}
