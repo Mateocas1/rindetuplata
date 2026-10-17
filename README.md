@@ -152,12 +152,22 @@ with the entity before you invest. Taxes are not modeled.
 The ranking is neutral: no entity pays to appear, there are no affiliate links, and every row shows its source
 and data date so the order can be checked.
 
-## Portfolio
+## Highlights
 
+Each line reads as what was achieved, how it is measured, and how it was built:
+
+- **Ranks 398 savings options by real return for any amount and term**, by simulating every instrument
+  with its caps, tiers and minimums in a pure-Java domain layer (`BigDecimal`, explicit rounding) tested
+  against hand-computed values.
+- **Re-running a day never duplicates data and one failing source never blocks the rest**, measured over
+  9 external sources, by giving each date its own Spring Batch job instance and each source its own adapter
+  behind a port.
+- **No email alert is lost or sent twice**, by writing alert matches to a transactional outbox in the
+  same transaction and relaying them to RabbitMQ with publisher confirms, an idempotent consumer and a
+  dead-letter queue.
+- **848 automated tests guard it** (450 JUnit 5 against real PostgreSQL and RabbitMQ in Testcontainers,
+  398 Vitest, plus a Playwright end-to-end over the full Compose stack), run in GitHub Actions.
+
+Case study: [mateocas1.github.io/portfolio/rindetuplata.html](https://mateocas1.github.io/portfolio/rindetuplata.html).
 Built by Mateo with AI under Organic Driven Development: the specs, decisions and per-task evidence live in
 [`odd/tasks/rindetuplata-mvp.md`](odd/tasks/rindetuplata-mvp.md).
-
-> rindetuplata: an Argentine yield comparator in Java 21 / Spring Boot 4 that ranks nearly 400 savings instruments by
-> real return against inflation, with idempotent Spring Batch ingestion from official sources, `BigDecimal`
-> financial math, a transactional outbox to RabbitMQ for alerts, magic-link security, and an SEO-first
-> Astro site.
