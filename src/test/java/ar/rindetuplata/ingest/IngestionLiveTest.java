@@ -42,6 +42,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
@@ -55,7 +56,8 @@ import org.springframework.web.client.RestClient;
  * T4c live rules: a LIVE run writes every kind and records one {@code source_run} row per source; a failing port
  * never blocks the other kinds; re-running a COMPLETED date is a no-op; a FAILED instance restarts only its
  * unfinished steps; the scheduler ingests today in Buenos Aires; every wallet source bean is used. T4d adds the
- * rebuild hook: the listener registered on {@code dailyIngestionJob} POSTs once after a COMPLETED run.
+ * rebuild hook: the listener registered on {@code dailyIngestionJob} POSTs once after a COMPLETED run. T14a keeps
+ * the startup ingestion off unless {@code rindetuplata.ingest.run-on-startup=true}.
  */
 @Import({ StoreTestConfiguration.class, StubSourcesConfiguration.class, IngestionLiveTest.FixedClock.class,
 		IngestionLiveTest.RebuildHookHttp.class })
@@ -98,6 +100,12 @@ class IngestionLiveTest {
 
 	@Autowired
 	JobRepository jobRepository;
+
+	@Autowired
+	IngestionProperties properties;
+
+	@Autowired
+	ApplicationContext context;
 
 	@Autowired
 	List<WalletRateSource> walletSources;
@@ -243,6 +251,12 @@ class IngestionLiveTest {
 		assertThat(dollar.mode()).isEqualTo("LIVE");
 		assertThat(dollar.status()).isEqualTo("OK");
 		assertThat(reader.sourceRunCount(LocalDate.parse("2026-12-01"))).isZero();
+	}
+
+	@Test
+	void theStartupIngestionIsOffByDefault() {
+		assertThat(properties.runOnStartup()).as("rindetuplata.ingest.run-on-startup defaults to false").isFalse();
+		assertThat(context.getBeanNamesForType(StartupIngestionListener.class)).as("nothing runs at startup").isEmpty();
 	}
 
 	@Test

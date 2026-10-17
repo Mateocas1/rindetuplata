@@ -1,0 +1,162 @@
+# Private preview overlay (T14b, S20): the local stack, on the internet through Tailscale Funnel.
+#
+#   docker compose --project-name rindetuplata-preview --env-file deploy/preview.env \
+#     -f compose.yaml -f deploy/compose.preview.yaml --profile stack up -d --wait
+#
+# `deploy/preview.sh` runs exactly that (plus the site build and the Funnel commands) and refuses to
+# start without a filled-in `deploy/preview.env`.
+#
+# Why an overlay: `--env-file` only feeds `${VAR}` substitution in the Compose files, it does not put
+# anything into a container, and the base file is a *development* file (its passwords are in this
+# repository). Every preview value is therefore named here, with `:?` so a missing key fails the
+# command instead of quietly starting with the local default (Mailpit on 1025, the committed password,
+# an insecure cookie, magic links pointing at localhost).
+#
+# What it changes with respect to `compose.yaml`:
+#   - Postgres and RabbitMQ are **not published on the host at all**. A Funnel exposes this machine,
+#     and a published database or broker would be reachable from the LAN with a password that is in
+#     this repository.
+#   - Postgres and RabbitMQ get named volumes (`pgdata` at the path the postgres:18 image really
+#     declares, `rabbitmq_data` at `/var/lib/rabbitmq` with a fixed hostname), so `preview.sh down`
+#     keeps the users, their alert rules and the queued alert events.
+#   - Every service carries `restart: unless-stopped`: this stack is expected to be up for days.
+#   - Mailpit is off (`profiles: !override ["mailpit"]`): real magic links and alert emails go out
+#     through the SMTP account in `deploy/preview.env`. A local run can add the `mailpit` profile and
+#     point `SPRING_MAIL_HOST`/`SPRING_MAIL_PORT` at it (see docs/deploy.md).
+#   - The API is production-shaped: STARTTLS SMTP, `secure-cookie=true`, magic link, alert page and
+#     allowed browser origin all derived from one `PREVIEW_URL` (one origin, so the `SameSite=Lax`
+#     session cookie and the CSRF token travel), an ingestion on startup (T14a: no data on a fresh
+#     volume before the 19:30 cron) and the T4d rebuild hook pointing at the `rebuilder` sidecar.
+#   - `web` (Caddy) is published on `127.0.0.1:${WEB_PORT:-4321}` **only**: the Funnel process connects
+#     to the loopback address, so nothing else on the LAN can reach it. It serves
+#     `deploy/Caddyfile.preview` (the local Caddyfile plus `noindex` and the Funnel's forwarded headers)
+#     from `web/.site`, the build root the sidecar publishes into: `root /srv/current`, so a rebuild is
+#     never visible as a half-written site.
+#   - `rebuilder`: a small Node sidecar that answers the ingest rebuild hook by running the real site
+#     build (`astro build --outDir .site/build-<n>`) and publishing it by swapping the `current` symlink.
+#     It publishes no port; only the API reaches it, over the Compose network.
+
+services:
+  postgres:
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/preview.env}"
+    ports: !override []
+    # Postgres 18 keeps its data in `PGDATA=/var/lib/postgresql/18/docker` and declares
+    # `/var/lib/postgresql` as its volume, so that is what gets mounted (see deploy/compose.vps.yaml).
+    volumes:
+      - pgdata:/var/lib/postgresql
+
+  rabbitmq:
+    restart: unless-stopped
+    # RabbitMQ derives its node name, and therefore its data directory, from the container hostname.
+    hostname: rindetuplata-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER:-rindetuplata}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS:?set RABBITMQ_DEFAULT_PASS in deploy/preview.env}"
+    ports: !override []
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # Local SMTP catcher only, and the preview sends real mail: off unless asked for explicitly.
+  mailpit:
+    profiles: !override ["mailpit"]
+
+  api:
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/preview.env}"
+      SPRING_RABBITMQ_USERNAME: "${RABBITMQ_DEFAULT_USER:-rindetuplata}"
+      SPRING_RABBITMQ_PASSWORD: "${RABBITMQ_DEFAULT_PASS:?set RABBITMQ_DEFAULT_PASS in deploy/preview.env}"
+      SPRING_MAIL_HOST: "${SPRING_MAIL_HOST:?set SPRING_MAIL_HOST in deploy/preview.env}"
+      SPRING_MAIL_PORT: "${SPRING_MAIL_PORT:-587}"
+      SPRING_MAIL_USERNAME: "${SPRING_MAIL_USERNAME:?set SPRING_MAIL_USERNAME in deploy/preview.env}"
+      SPRING_MAIL_PASSWORD: "${SPRING_MAIL_PASSWORD:?set SPRING_MAIL_PASSWORD in deploy/preview.env}"
+      # Port 587 speaks STARTTLS; a provider on 465 wants SSL (`..._SMTP_SSL_ENABLE=true`) instead.
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+      RINDETUPLATA_MAIL_FROM: "${RINDETUPLATA_MAIL_FROM:?set RINDETUPLATA_MAIL_FROM in deploy/preview.env}"
+      # One origin (S20): the Funnel URL is the only URL the reader ever visits.
+      RINDETUPLATA_AUTH_MAGICLINKURL: "${PREVIEW_URL:?set PREVIEW_URL in deploy/preview.env}/ingresar"
+      RINDETUPLATA_ALERT_MANAGEURL: "${PREVIEW_URL:?set PREVIEW_URL in deploy/preview.env}/alertas"
+      RINDETUPLATA_WEB_ALLOWEDORIGINS: "${PREVIEW_URL:?set PREVIEW_URL in deploy/preview.env}"
+      # TLS terminates in front of this stack (Tailscale Funnel serves HTTPS), so the session and the
+      # CSRF cookies must be Secure; the false default of the base file is a development value.
+      RINDETUPLATA_AUTH_SECURECOOKIE: "true"
+      RINDETUPLATA_AUTH_ADMINEMAILS: "${RINDETUPLATA_AUTH_ADMINEMAILS:?set RINDETUPLATA_AUTH_ADMINEMAILS in deploy/preview.env}"
+      # T14a: a fresh volume has no data before the 19:30 cron, and the site is rendered from the API.
+      RINDETUPLATA_INGEST_RUNONSTARTUP: "true"
+      # T4d: after a COMPLETED ingestion the site is rebuilt by the sidecar below.
+      RINDETUPLATA_INGEST_REBUILDHOOKURL: "http://rebuilder:8787/"
+
+  web:
+    restart: unless-stopped
+    # Funnel proxies to 127.0.0.1:${WEB_PORT} on this machine, so the loopback bind is what makes the
+    # site reachable from the internet and from nowhere else.
+    ports: !override
+      - "127.0.0.1:${WEB_PORT:-4321}:80"
+    # `volumes` is not merged by target: `!override` states the whole list, so the local Caddyfile is
+    # really replaced by the preview one (which adds `X-Robots-Tag: noindex, nofollow` and trusts the
+    # Funnel's `X-Forwarded-*` headers).
+    #
+    # `/srv` is `web/.site`, not `web/dist`: the sidecar publishes every build there as
+    # `build-<n>` + a `current` symlink, and the Caddyfile serves `/srv/current`. `preview.sh up`
+    # creates the directory before Compose binds it (otherwise Docker would create it owned by root).
+    volumes: !override
+      - ./web/.site:/srv:ro
+      - ./deploy/Caddyfile.preview:/etc/caddy/Caddyfile:ro
+
+  # The T4d rebuild hook target. It answers `POST /` immediately and runs the site build
+  # (`astro build --outDir .site/build-<n>`, one build at a time with one queued rerun) in the
+  # background. A build that exits 0 is published by swapping `web/.site/current` with one `rename`;
+  # a build that fails leaves the previous one serving, and only the last two builds are kept. The
+  # host's `web/` is mounted, so the build reuses `web/node_modules` and the built files land in the
+  # build root Caddy serves. It runs as the host user (PREVIEW_UID/PREVIEW_GID, exported by
+  # `deploy/preview.sh`) so the build directories it writes under `web/.site` stay readable and writable
+  # for this user on the host (they are never root-owned).
+  # It publishes no port: only `api` talks to it, at `http://rebuilder:8787`.
+  #
+  # `node:24` is Debian (glibc, x86_64), which is why the host's `web/node_modules` can be mounted
+  # as-is: it carries the prebuilt `linux-x64-gnu` native binaries Astro's toolchain needs
+  # (rolldown, lightningcss, @tailwindcss/oxide, @astrojs/compiler). On a musl host, a different
+  # architecture or a `node:24-alpine` image those binaries would not load, and the build needs its
+  # own `npm ci` inside the image (or a bind-mounted per-platform `node_modules`) instead.
+  rebuilder:
+    image: node:24
+    restart: unless-stopped
+    user: "${PREVIEW_UID:-1000}:${PREVIEW_GID:-1000}"
+    working_dir: /app/web
+    command: ["node", "/app/deploy/rebuilder/server.mjs"]
+    environment:
+      REBUILDER_PORT: "8787"
+      WEB_DIR: /app/web
+      # How many finished builds stay on disk; the current one plus the previous one is enough to roll
+      # back to the site that served before a bad build.
+      REBUILDER_KEEP_BUILDS: "2"
+      # A hook the API sent before this sidecar listened is lost; one build at start covers it (T14c).
+      REBUILDER_BUILD_ON_START: "true"
+      # Inside the network: `web` is Caddy, so the build talks to the same one origin the browser does
+      # and the generated pages get the same API responses the site serves.
+      API_URL: "http://web"
+      # Canonicals, sitemap and robots.txt must name the public Funnel URL, never localhost.
+      SITE_URL: "${PREVIEW_URL:?set PREVIEW_URL in deploy/preview.env}"
+      # npm writes its logs under $HOME; /tmp is the only directory an unprivileged user is sure of.
+      HOME: "/tmp"
+    volumes:
+      - ./web:/app/web
+      - ./deploy/rebuilder:/app/deploy/rebuilder:ro
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8787/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  pgdata:
+  rabbitmq_data:

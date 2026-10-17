@@ -13,7 +13,9 @@ With monthly inflation near 2%, a headline rate means little on its own. A 19% T
 plazo fijo look close on paper; one of them loses to expected inflation over 30 days. The product makes that
 visible, row by row, with the source and the date of every number.
 
-> Status: MVP feature-complete (ingestion, ranking API, alerts, static site, deploy recipe); not deployed yet.
+> Status: MVP complete. Ingestion, ranking API, magic-link alerts, the "Cobalto Cristal" static site and the
+> deploy recipe all work end to end, and a private, unlisted preview runs on the owner's machine behind
+> Tailscale Funnel for a few testers. A public launch and a UI/UX polish pass are future work.
 > Scope and progress: [`odd/tasks/rindetuplata-mvp.md`](odd/tasks/rindetuplata-mvp.md).
 
 ## Numbers from a real run
@@ -46,8 +48,8 @@ saver persona). Of the top 200, **79 lose to expected inflation** over the 30 da
 |---|---|
 | External sources behind adapters | 9 (BCRA transparency and statistics, ArgentinaDatos, dolarapi, Ualá, curated rates) |
 | Sources archived daily from day one | 4 (those whose history cannot be recovered later) |
-| Backend tests (JUnit 5 + Testcontainers) | 415 |
-| Frontend tests (Vitest) | 275, plus a Playwright end-to-end smoke over the full Compose stack |
+| Backend tests (JUnit 5 + Testcontainers) | 450 |
+| Frontend tests (Vitest) | 398, plus a Playwright end-to-end smoke over the full Compose stack |
 
 ## What it does
 
@@ -137,8 +139,9 @@ Requires Java 21 and Docker (the Maven wrapper downloads Maven).
 capture/test/capture_test.sh        # raw capture tests (bash + jq + python3, no network)
 ```
 
-The full local stack (API, site, PostgreSQL, RabbitMQ, Mailpit) and the VPS + CDN recipe are in
-[`docs/deploy.md`](docs/deploy.md).
+The full local stack (API, site, PostgreSQL, RabbitMQ, Mailpit), the private preview
+(`deploy/preview.sh`: Compose overlay, Caddy with `noindex`, a sidecar that rebuilds the site after each ingestion,
+Tailscale Funnel on/off) and the VPS + CDN recipe are in [`docs/deploy.md`](docs/deploy.md).
 
 ## Disclaimer
 

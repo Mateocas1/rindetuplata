@@ -1,0 +1,55 @@
+# Private preview (T14b, S20): `deploy/Caddyfile.local` plus "do not index this" and the Funnel's
+# forwarded headers.
+#
+# Caddy serves the built Astro site (web/.site/current, mounted read-only on /srv) and reverse-proxies
+# /api* to the API container, so the preview is one origin behind the Tailscale Funnel URL — exactly the
+# browser contract of production (see docs/deploy.md).
+#
+# It is a copy of `deploy/Caddyfile.local` and not an overlay: Caddy has no include, and the preview
+# needs two things the local file does not:
+#   - an `X-Robots-Tag` on every response (the preview is unlisted but the URL is public, so a crawler
+#     that finds it must not index it; the header is the server-side half of `noindex`, whose meta tag
+#     only the account routes carry);
+#   - `trusted_proxies` plus `header_up X-Forwarded-Proto https` (fix A of the T14c review): Tailscale
+#     Funnel terminates TLS and connects from the loopback address with the real visitor in
+#     `X-Forwarded-For`. Without a trusted-proxy list Caddy ignores both incoming headers and forwards
+#     its own peer (the Funnel) as `http`, so the API rate-limits every visitor under one address and
+#     believes its own HTTPS cookies are plain-http ones.
+#
+# `private_ranges` covers the loopback Funnel and the Compose network, and nothing else: this Caddy
+# never listens for anything but the Funnel and the loopback preview.
+{
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+:80 {
+	encode zstd gzip
+	root * /srv/current
+
+	# Every response of this stack, including the 404 page and the proxied API answers.
+	header X-Robots-Tag "noindex, nofollow"
+
+	@api path /api/*
+	handle @api {
+		# Funnel terminates TLS in front of this container, so the API is the last place that can still
+		# know the visitor's real scheme; without this the magic link, the alert link and CORS would be
+		# built from the container's `http` view of the request.
+		reverse_proxy api:8080 {
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	# Static pages: directory or file, no extension. Unknown paths fall through to the error handler
+	# instead of a catch-all index, so a missing page is a real 404 for crawlers.
+	handle {
+		try_files {path} {path}/ {path}/index.html {path}.html
+		file_server
+	}
+
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+}
