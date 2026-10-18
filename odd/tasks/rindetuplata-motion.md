@@ -24,7 +24,7 @@ brand's own "Cobalto Cristal" identity. Read every section until `## Log` before
 | M3 | S2, S4 | Continuous camera: one spline through every beat, no cuts, handheld micro-motion, velocity-continuous easing | inline | done | — |
 | M4 | S1, S5, S6 | The six beats in es-AR: hook, thesis, benefits, features, positioning, outro | inline | done | — |
 | M5 | S8 | ElevenLabs SFX only (no music, no voice), placed and ducked in the mix | inline | done | — |
-| M6 | S1, S2, S3 | Master: 1920×1080 H.264 60 fps, audio mix, QA pass over extracted frames | inline | done | — |
+| M6 | S1, S2, S3 | Master: 1920×1080 H.264 60 fps, audio mix, QA pass over extracted frames | inline | done | 87ffef2 |
 
 ## Log
 
@@ -57,3 +57,11 @@ brand's own "Cobalto Cristal" identity. Read every section until `## Log` before
 - **L11** (evidence, M6): objective QA rather than eyeballing. `select='gt(scene,0.06)'` finds no cut in the
   master (one whip scores 0.067, which is the move, not an edit); per-frame mean absolute difference averaged
   in 0.5 s windows found the dead-air windows, which are now all above 0.6 except the deliberate final settle.
+- **L12** (decision, delivery): one commit (`87ffef2`) for the whole feature, past the 400-line slice guidance on
+  purpose. The change adds one new, isolated `video/` project and its task document; it modifies no existing
+  behaviour, so there is no partial state a reviewer could usefully take alone. Splitting a self-contained
+  directory into artificial slices would add review overhead without adding review value.
+- **L13** (evidence, M6): the master is 1920×1080, 60/1 fps, 900 video frames, 15.000 s, H.264 + AAC 48 kHz
+  stereo, 51 MB. `node qa.mjs out/rindetuplata.mp4` reports no scene change above 0.12 (i.e. no cut) and no
+  quiet window below 0.5 before 13.5 s. Visual check at 100%: the counting figure carries real motion blur while
+  it rolls and resolves perfectly sharp, static type is untouched, grain is present but not visible as noise.
