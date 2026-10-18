@@ -1,0 +1,22 @@
+{
+  "name": "rindetuplata-motion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The rindetuplata 15-second motion piece: one continuous camera take, rendered with Remotion.",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "still": "node still.mjs",
+    "preview": "node preview.mjs",
+    "mix": "node mix.mjs",
+    "master": "node master.mjs",
+    "qa": "node qa.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.536",
+    "@remotion/fonts": "4.0.536",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.536"
+  }
+}
