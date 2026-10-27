@@ -1,0 +1,402 @@
+[
+  {
+    "entidad": "nexo",
+    "rendimientos": [
+      {
+        "moneda": "BTC",
+        "apy": 6,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "ETH",
+        "apy": 6,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USDC",
+        "apy": 10.5,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USDT",
+        "apy": 11.5,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "BNB",
+        "apy": 6.75,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "DOT",
+        "apy": 15,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "SOL",
+        "apy": 8,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "AVAX",
+        "apy": 8,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "POL",
+        "apy": 6.75,
+        "fecha": "2026-10-27"
+      }
+    ]
+  },
+  {
+    "entidad": "fiwind",
+    "rendimientos": [
+      {
+        "moneda": "ARS",
+        "apy": 17.2,
+        "fecha": "2026-10-27",
+        "bonusValue": 23,
+        "bonusThreshold": 750000
+      },
+      {
+        "moneda": "BTC",
+        "apy": 0.5,
+        "fecha": "2023-09-25",
+        "bonusValue": 0,
+        "bonusThreshold": null
+      },
+      {
+        "moneda": "ETH",
+        "apy": 0.5,
+        "fecha": "2023-09-25",
+        "bonusValue": 0,
+        "bonusThreshold": null
+      },
+      {
+        "moneda": "USDT",
+        "apy": 4,
+        "fecha": "2026-08-05",
+        "bonusValue": 0,
+        "bonusThreshold": null
+      },
+      {
+        "moneda": "USDC",
+        "apy": 4,
+        "fecha": "2026-08-05",
+        "bonusValue": 0,
+        "bonusThreshold": null
+      },
+      {
+        "moneda": "ADA",
+        "apy": 1,
+        "fecha": "2023-01-24",
+        "bonusValue": 0,
+        "bonusThreshold": null
+      },
+      {
+        "moneda": "DOT",
+        "apy": 2,
+        "fecha": "2023-09-25",
+        "bonusValue": 0,
+        "bonusThreshold": null
+      },
+      {
+        "moneda": "POL",
+        "apy": 2,
+        "fecha": "2023-09-25",
+        "bonusValue": 0,
+        "bonusThreshold": null
+      }
+    ]
+  },
+  {
+    "entidad": "letsbit",
+    "rendimientos": [
+      {
+        "moneda": "ARS",
+        "apy": 20.74,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USD",
+        "apy": 1.26,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USDT",
+        "apy": 1.26,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USDC",
+        "apy": 1.26,
+        "fecha": "2026-10-27"
+      }
+    ]
+  },
+  {
+    "entidad": "belo",
+    "rendimientos": [
+      {
+        "moneda": "USDC",
+        "apy": 2.3624871493696604,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "ARGT",
+        "apy": 19.007249906718606,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "BOLT",
+        "apy": 2.500315975212181,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "PERT",
+        "apy": 2.5005770615605543,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "MEXT",
+        "apy": 4.500387532061443,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "ETH",
+        "apy": 2.259042182145239,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "CHLT",
+        "apy": 2.500416705642027,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USDT",
+        "apy": 10,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "COLT",
+        "apy": 15.045223740908645,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "BRAT",
+        "apy": 17.73265801154438,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "SOL",
+        "apy": 3.6760942329192683,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "BTC",
+        "apy": 0.1,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USD",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "BRL",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USD_AR",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "BOB",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "PEN",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "MXN",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "CLP",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "COP",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "XAUT",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "EUR",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "GBP",
+        "apy": 0,
+        "fecha": "2026-10-27"
+      }
+    ]
+  },
+  {
+    "entidad": "lemoncash",
+    "rendimientos": [
+      {
+        "moneda": "USDT",
+        "apy": 5.62,
+        "fecha": "2026-10-27"
+      }
+    ]
+  },
+  {
+    "entidad": "ripio",
+    "rendimientos": [
+      {
+        "moneda": "USDT",
+        "apy": 2.97,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "DAI",
+        "apy": 3.14,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USDC",
+        "apy": 3.27,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "ETH",
+        "apy": 1.63,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "BTC",
+        "apy": 0.01,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "WBRL",
+        "apy": 12.52,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "WARS",
+        "apy": 24.5,
+        "fecha": "2026-10-27"
+      }
+    ]
+  },
+  {
+    "entidad": "satoshitango",
+    "rendimientos": [
+      {
+        "moneda": "USDC",
+        "apy": 5,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "ETH",
+        "apy": 1,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USDT",
+        "apy": 0.5,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "SOL",
+        "apy": 4.2,
+        "fecha": "2026-10-27"
+      }
+    ]
+  },
+  {
+    "entidad": "lucamoney",
+    "rendimientos": [
+      {
+        "moneda": "USDC",
+        "apy": 5.18,
+        "fecha": "2026-10-27"
+      }
+    ]
+  },
+  {
+    "entidad": "decrypto",
+    "rendimientos": []
+  },
+  {
+    "entidad": "vesseo",
+    "rendimientos": [
+      {
+        "moneda": "USDC",
+        "apy": 5.902996252831461,
+        "fecha": "2026-10-27"
+      }
+    ]
+  },
+  {
+    "entidad": "astropay",
+    "rendimientos": [
+      {
+        "moneda": "USD",
+        "apy": 6,
+        "fecha": "2026-10-27"
+      }
+    ]
+  },
+  {
+    "entidad": "lunefi",
+    "rendimientos": [
+      {
+        "moneda": "USDT",
+        "apy": 18,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "USDC",
+        "apy": 18,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "ETH",
+        "apy": 14,
+        "fecha": "2026-10-27"
+      },
+      {
+        "moneda": "BTC",
+        "apy": 14,
+        "fecha": "2026-10-27"
+      }
+    ]
+  },
+  {
+    "entidad": "berry",
+    "rendimientos": [
+      {
+        "moneda": "USDC",
+        "apy": 7,
+        "fecha": "2026-10-27"
+      }
+    ]
+  }
+]
