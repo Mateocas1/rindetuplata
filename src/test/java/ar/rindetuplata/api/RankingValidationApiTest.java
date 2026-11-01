@@ -52,8 +52,58 @@ class RankingValidationApiTest extends RankingApiIntegrationTest {
 	}
 
 	@Test
+	void daysAboveTheCapAreABadRequestNamingDaysOnBothEndpoints() throws Exception {
+		expectBadRequest(mockMvc.perform(get("/api/v1/ranking").param("days", "1826")), "days",
+				"Parameter 'days' must be between 1 and 1825: 1826");
+		expectBadRequest(mockMvc.perform(get("/api/v1/ranking").param("days", "2000000000")), "days",
+				"Parameter 'days' must be between 1 and 1825: 2000000000");
+		expectBadRequest(mockMvc.perform(get("/api/v1/simulations").param("instrumentId", "1").param("days", "1826")),
+				"days", "Parameter 'days' must be between 1 and 1825: 1826");
+	}
+
+	@Test
+	void theDaysCapItselfIsAccepted() throws Exception {
+		long id = seedBank("Banco Tope Dias", "0.21", null);
+
+		mockMvc.perform(get("/api/v1/ranking").param("days", "1825")).andExpect(status().isOk());
+		mockMvc.perform(get("/api/v1/simulations").param("instrumentId", String.valueOf(id)).param("days", "1825"))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	void anAmountAboveTheCapIsABadRequestNamingAmountOnBothEndpoints() throws Exception {
+		expectBadRequest(mockMvc.perform(get("/api/v1/ranking").param("amount", "1000000000000.01")), "amount",
+				"Parameter 'amount' must be at most 1000000000000: 1000000000000.01");
+		expectBadRequest(mockMvc.perform(get("/api/v1/ranking").param("amount", "1e30")), "amount",
+				"Parameter 'amount' must be at most 1000000000000: 1000000000000000000000000000000");
+		expectBadRequest(mockMvc.perform(
+				get("/api/v1/simulations").param("instrumentId", "1").param("amount", "1000000000001")), "amount",
+				"Parameter 'amount' must be at most 1000000000000: 1000000000001");
+	}
+
+	@Test
+	void theAmountCapItselfIsAccepted() throws Exception {
+		long id = seedBank("Banco Tope Monto", "0.21", null);
+
+		mockMvc.perform(get("/api/v1/ranking").param("amount", "1000000000000")).andExpect(status().isOk());
+		mockMvc.perform(get("/api/v1/simulations").param("instrumentId", String.valueOf(id)).param("amount",
+				"1000000000000")).andExpect(status().isOk());
+	}
+
+	@Test
+	void theDefaultsWithoutDaysOrAmountStillAnswer200() throws Exception {
+		mockMvc.perform(get("/api/v1/ranking")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.request.days").value(30));
+	}
+
+	@Test
 	void aMissingInstrumentIdIsABadRequestNamingInstrumentId() throws Exception {
 		expectBadRequest(mockMvc.perform(get("/api/v1/simulations")), "instrumentId");
+	}
+
+	private void expectBadRequest(ResultActions actions, String parameter, String detail) throws Exception {
+		expectBadRequest(actions, parameter);
+		actions.andExpect(jsonPath("$.detail").value(detail));
 	}
 
 	private void expectBadRequest(ResultActions actions, String parameter) throws Exception {

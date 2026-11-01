@@ -1,5 +1,8 @@
 package ar.rindetuplata.account;
 
+import ar.rindetuplata.api.ratelimit.ApiRateLimitFilter;
+import ar.rindetuplata.api.ratelimit.ApiRateLimitProperties;
+import ar.rindetuplata.api.ratelimit.ApiRateLimiter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Clock;
 import java.time.Duration;
@@ -32,11 +35,12 @@ import org.springframework.session.web.http.DefaultCookieSerializer;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 /**
  * T6a security (S4, S13): one chain for the API, magic-link login over Spring Security's JDBC one-time-token
  * service, JDBC sessions, SPA CSRF, CORS with credentials, and JSON {@code ProblemDetail} for 401/403. Public
- * reads stay open; the authorities of a session are recomputed on every request ({@link RolesRefreshFilter});
+ * reads stay open, behind a per-address rate limit (T1a); the authorities of a session are recomputed on every request ({@link RolesRefreshFilter});
  * {@code /api/v1/me} and {@code /api/v1/alerts/**} need a login; {@code /api/v1/admin/**} needs
  * {@code ROLE_ADMIN}; everything else is denied.
  */
@@ -49,8 +53,11 @@ public class SecurityConfiguration {
 	SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource,
 			SecurityContextRepository securityContextRepository, CsrfTokenRepository csrfTokenRepository,
 			AuthenticationEntryPoint authenticationEntryPoint, AccessDeniedHandler accessDeniedHandler,
-			AccountRoles accountRoles) throws Exception {
+			AccountRoles accountRoles, ApiRateLimiter apiRateLimiter, ApiRateLimitProperties rateLimitProperties)
+			throws Exception {
 		http
+				.addFilterAfter(new ApiRateLimitFilter(apiRateLimiter, rateLimitProperties.bypassToken()),
+						CorsFilter.class)
 				.addFilterAfter(new RolesRefreshFilter(accountRoles), SecurityContextHolderFilter.class)
 				.cors(cors -> cors.configurationSource(corsConfigurationSource))
 				.csrf(csrf -> csrf.spa().csrfTokenRepository(csrfTokenRepository))
