@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatDate,
+  formatDayMonth,
   formatDays,
   formatInteger,
   formatMoney,
@@ -92,5 +93,17 @@ describe('formatShortDate', () => {
     expect(formatShortDate('2026-07-31')).toBe('31/07/26');
     expect(formatShortDate('2026-01-05')).toBe('05/01/26');
     expect(formatShortDate('2026-10-14')).toBe('14/10/26');
+  });
+});
+
+describe('formatDayMonth', () => {
+  it('formats a plain date as dd/mm', () => {
+    expect(formatDayMonth('2026-10-31')).toBe('31/10');
+  });
+
+  it('formats an instant in the Buenos Aires day, not the UTC one', () => {
+    expect(formatDayMonth('2026-10-13T20:57:00Z')).toBe('13/10');
+    expect(formatDayMonth('2026-10-14T01:30:00Z')).toBe('13/10');
+    expect(formatDayMonth('2026-10-14T03:00:00Z')).toBe('14/10');
   });
 });

@@ -8,7 +8,8 @@ import java.util.Objects;
 /** The outcome of simulating one instrument by id: a ranked entry, an ineligible reason or an exclusion. */
 public sealed interface SimulationResult {
 
-	record Simulated(RankedEntry entry) implements SimulationResult {
+	/** {@code dollarMep} is the quote {@code entry.breakEvenMep()} used, null when none is stored. */
+	record Simulated(RankedEntry entry, MepQuote dollarMep) implements SimulationResult {
 
 		public Simulated {
 			Objects.requireNonNull(entry, "entry");

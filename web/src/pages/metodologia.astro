@@ -175,6 +175,38 @@ const sources = [
       </details>
     </section>
 
+    <section class="flex flex-col gap-block" aria-labelledby="dolar-mep">
+      <h2 id="dolar-mep" class="type-section">Contra el dólar MEP</h2>
+      <p class="type-body">
+        Cada opción trae también una comparación con el <strong>dólar MEP</strong>: hasta cuánto
+        puede subir el dólar para que la opción te siga rindiendo más. No es un pronóstico de
+        hacia dónde va el dólar: es el punto de equilibrio de la cuenta.
+      </p>
+      <p class="type-body">
+        La cuenta incluye el <strong>spread</strong>. Para pasarte a dólares comprás dólares al
+        precio de <strong>venta</strong> de hoy, y para volver a pesos los vendés al precio de{' '}
+        <strong>compra</strong> del día en que termina el plazo. Por eso la opción te gana
+        mientras el MEP de compra suba menos de (1 + rendimiento) × venta ÷ compra − 1, que es el
+        porcentaje que mostramos. El precio de equilibrio es (1 + rendimiento) × venta. Como la
+        venta es más alta que la compra, el porcentaje queda por encima del rendimiento.
+      </p>
+      <details class={detailsClass}>
+        <summary class={summaryClass}>Ver el ejemplo completo</summary>
+        <p class="type-body mt-2">
+          Con un MEP de $&nbsp;1.534,20 de compra y $&nbsp;1.539,40 de venta, un plazo fijo al
+          30% de TNA rinde 2,47% en 30 días (2,4658% sin redondear). La cuenta da (1 + 0,024658) ×
+          1.539,40 ÷ 1.534,20 − 1 = 2,81%: si el MEP de compra sube menos que eso, el plazo fijo
+          gana. En precio, el equilibrio es $&nbsp;1.577,36; si al vencimiento el MEP de compra
+          está por encima, el dólar rindió más.
+        </p>
+      </details>
+      <p class="type-body">
+        Usamos la última cotización MEP guardada hasta la fecha del ranking (DolarApi, una fuente
+        no oficial) y mostramos su fecha. Si no hay una cotización guardada, no mostramos esta
+        comparación. La cuenta no incluye impuestos ni comisiones por comprar o vender dólares.
+      </p>
+    </section>
+
     <section class="flex flex-col gap-block" aria-labelledby="orden">
       <h2 id="orden" class="type-section">Cómo se ordena</h2>
       <ul class="type-body flex list-disc flex-col gap-2 ps-5">

@@ -31,6 +31,18 @@ const axisDate = new Intl.DateTimeFormat('es-AR', {
   timeZone: 'UTC',
 });
 
+const dayMonth = new Intl.DateTimeFormat('es-AR', {
+  day: '2-digit',
+  month: '2-digit',
+  timeZone: 'UTC',
+});
+
+const dayMonthBuenosAires = new Intl.DateTimeFormat('es-AR', {
+  day: '2-digit',
+  month: '2-digit',
+  timeZone: 'America/Argentina/Buenos_Aires',
+});
+
 const plural = new Intl.PluralRules('es-AR');
 
 const MINUS = '\u2212';
@@ -69,6 +81,16 @@ export function formatDate(isoDate: string): string {
 /** ISO date to dd/mm/yy, for chart axis labels where space is tight. */
 export function formatShortDate(isoDate: string): string {
   return axisDate.format(new Date(`${isoDate}T00:00:00Z`));
+}
+
+/**
+ * dd/mm of a plain date (the source's own day) or of an instant ("T" in it), which is read in Buenos Aires: a
+ * quote reported at 22:30 local time belongs to that day, not to the next day in UTC.
+ */
+export function formatDayMonth(value: string): string {
+  return value.includes('T')
+    ? dayMonthBuenosAires.format(new Date(value))
+    : dayMonth.format(new Date(`${value}T00:00:00Z`));
 }
 
 /** Grouped integer without decimals: 1234 → "1.234" */
