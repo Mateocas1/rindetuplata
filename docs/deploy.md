@@ -260,6 +260,17 @@ docker compose -f compose.yaml -f deploy/compose.vps.yaml \
   first drops the buckets that have refilled completely and, if it is still full, answers the same 429 to
   any client it does not know yet, while the ones it already tracks keep being served. That fail-closed choice is a trade-off: a sustained flood from many addresses can keep new visitors out for as long as it lasts (each refused visitor gets a `Retry-After` of up to 60 s), while visitors already being served are unaffected. `days` is capped at 1825 and
   `amount` at 1000000000000 (a 400 naming the parameter), because the simulation cost grows with `days`.
+- **Ranking cache and conditional requests (T3a).** `GET /api/v1/ranking` keeps up to
+  `RINDETUPLATA_RANKING_CACHEMAXENTRIES` results in the API's memory (default 64, least recently used out
+  first; one entry is a whole ranking, so the cap is a memory bound). An entry is reused only for the same data
+  version and the same resolved query. The data version is read from Postgres on every request (one aggregate
+  over `source_run`, the curated wallet rates with their audit and the newest instrument id), so a new
+  ingestion run, a backfill or a curation save is visible on the next request, across restarts, with no
+  invalidation call; a process that writes ranking data without recording a `source_run` row or a curation
+  audit entry would not be noticed. Both read endpoints answer `ETag: W/"…"` and
+  `Cache-Control: public, no-cache`: a CDN or browser may store the answer and must revalidate it, and an
+  `If-None-Match` carrying the current tag gets a `304` with no body for the cost of that one query. The cache
+  lives in one JVM, which matches the single API instance of the rate limit above.
 - **Build token (optional).** The site build calls the API hundreds of times from one machine and would
   trip that limit. Put the same random string in `API_BUILD_TOKEN` in `api.env` (the overlay hands it to
   the API as `RINDETUPLATA_API_RATELIMIT_BYPASSTOKEN`) and as a build-time env var `API_BUILD_TOKEN` of
