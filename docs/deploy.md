@@ -258,7 +258,7 @@ docker compose -f compose.yaml -f deploy/compose.vps.yaml \
   IPv4 clients are counted per address. The API tracks at most
   `RINDETUPLATA_API_RATELIMIT_MAXTRACKEDADDRESSES` clients (default 100000): when the table is full it
   first drops the buckets that have refilled completely and, if it is still full, answers the same 429 to
-  any client it does not know yet, while the ones it already tracks keep being served. `days` is capped at 1825 and
+  any client it does not know yet, while the ones it already tracks keep being served. That fail-closed choice is a trade-off: a sustained flood from many addresses can keep new visitors out for as long as it lasts (each refused visitor gets a `Retry-After` of up to 60 s), while visitors already being served are unaffected. `days` is capped at 1825 and
   `amount` at 1000000000000 (a 400 naming the parameter), because the simulation cost grows with `days`.
 - **Build token (optional).** The site build calls the API hundreds of times from one machine and would
   trip that limit. Put the same random string in `API_BUILD_TOKEN` in `api.env` (the overlay hands it to
