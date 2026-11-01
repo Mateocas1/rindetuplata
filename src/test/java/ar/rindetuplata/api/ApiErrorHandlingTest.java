@@ -60,6 +60,32 @@ class ApiErrorHandlingTest extends ApiIntegrationTest {
 				.param("from", "2025-10-19").param("to", "2026-10-20")), 400, "Bad Request", "to", "366", null);
 	}
 
+	@Test
+	void aDateOutsideYear1To9999IsABadRequestNamingTheParameterBeforeAnyWork() throws Exception {
+		seedAll();
+		long id = bankInstrumentId();
+
+		for (String parameter : new String[] { "from", "to" }) {
+			for (String extreme : new String[] { "+999999999-12-31", "-999999999-01-01" }) {
+				expectProblem(mockMvc.perform(get("/api/v1/instruments/{id}/history", id).param(parameter, extreme)),
+						400, "Bad Request", parameter,
+						"Parameter '" + parameter + "' must be a date between 0001-01-01 and 9999-12-31: " + extreme,
+						null);
+			}
+		}
+	}
+
+	@Test
+	void theFirstAndLastSupportedDatesAreStillAccepted() throws Exception {
+		seedAll();
+		long id = bankInstrumentId();
+
+		mockMvc.perform(get("/api/v1/instruments/{id}/history", id).param("from", "0001-01-01").param("to",
+				"0001-01-10")).andExpect(status().isOk());
+		mockMvc.perform(get("/api/v1/instruments/{id}/history", id).param("from", "9999-12-01").param("to",
+				"9999-12-31")).andExpect(status().isOk());
+	}
+
 	private void expectProblem(ResultActions actions, int httpStatus, String title, String parameter,
 			String detailFragment, String instance) throws Exception {
 		actions.andExpect(status().is(httpStatus))

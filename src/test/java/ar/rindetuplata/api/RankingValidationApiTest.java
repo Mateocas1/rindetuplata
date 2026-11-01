@@ -54,6 +54,20 @@ class RankingValidationApiTest extends RankingApiIntegrationTest {
 	}
 
 	@Test
+	void anAsOfOutsideYear1To9999IsABadRequestNamingAsOfBeforeAnyWork() throws Exception {
+		for (String extreme : new String[] { "+999999999-12-31", "-999999999-01-01", "+10000-01-01", "0000-12-31" }) {
+			expectBadRequest(mockMvc.perform(get("/api/v1/ranking").param("asOf", extreme)), "asOf",
+					"Parameter 'asOf' must be a date between 0001-01-01 and 9999-12-31: " + extreme);
+		}
+	}
+
+	@Test
+	void theFirstAndLastSupportedAsOfAreStillAccepted() throws Exception {
+		mockMvc.perform(get("/api/v1/ranking").param("asOf", "0001-01-01")).andExpect(status().isOk());
+		mockMvc.perform(get("/api/v1/ranking").param("asOf", "9999-12-31")).andExpect(status().isOk());
+	}
+
+	@Test
 	void daysAboveTheCapAreABadRequestNamingDaysOnBothEndpoints() throws Exception {
 		expectBadRequest(mockMvc.perform(get("/api/v1/ranking").param("days", "1826")), "days",
 				"Parameter 'days' must be between 1 and 1825: 1826");
