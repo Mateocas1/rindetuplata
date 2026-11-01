@@ -133,7 +133,9 @@ class RankingServiceTest {
 		RankedEntry baseEntry = base.ranked().get(0);
 		assertThat(baseEntry.rateUsed().kind()).isEqualTo(RateKind.CLIENT);
 		assertThat(baseEntry.rateUsed().fraction()).isEqualByComparingTo("0.25");
-		assertThat(baseEntry.finalAmount().presented()).isEqualByComparingTo("1061643.84");
+		// 90 days = 3 terms of 30: 1000000 * (1 + 0.25 * 30 / 365)^3 = 1000000 * (372.5 / 365)^3 = 1062919.17
+		// (simple interest over 90 days was 1061643.84)
+		assertThat(baseEntry.finalAmount().presented()).isEqualByComparingTo("1062919.17");
 	}
 
 	@Test
