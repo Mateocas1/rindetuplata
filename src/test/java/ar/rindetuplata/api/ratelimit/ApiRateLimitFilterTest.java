@@ -77,6 +77,31 @@ class ApiRateLimitFilterTest {
 	}
 
 	@Test
+	void thePostToTheMcpEndpointIsLimitedLikeTheReadApiAndNoOtherMethodOrPathIs() throws Exception {
+		// T6e (L32 c): the MCP endpoint is public like the read API, so it spends the same per-address bucket.
+		ApiRateLimitFilter filter = filter("");
+		assertThat(call(filter, "POST", "/mcp", "1.1.1.1", null).getStatus()).isEqualTo(200);
+		MockHttpServletResponse limited = call(filter, "POST", "/mcp", "1.1.1.1", null);
+		assertThat(limited.getStatus()).isEqualTo(429);
+		assertThat(limited.getHeader("Retry-After")).isEqualTo("2");
+		assertThat(new JsonMapper().readTree(limited.getContentAsString()).get("instance").asString())
+				.isEqualTo("/mcp");
+		assertThat(call(filter, "GET", "/api/v1/ranking", "1.1.1.1", null).getStatus())
+				.as("one bucket per address across the MCP and REST paths").isEqualTo(429);
+
+		ApiRateLimitFilter other = filter("");
+		for (int i = 0; i < 3; i++) {
+			assertThat(call(other, "GET", "/mcp", "1.1.1.1", null).getStatus()).as("GET /mcp").isEqualTo(200);
+			assertThat(call(other, "POST", "/mcp/other", "1.1.1.1", null).getStatus()).as("POST /mcp/other")
+					.isEqualTo(200);
+			assertThat(call(other, "POST", "/api/v1/auth/magic-link", "1.1.1.1", null).getStatus())
+					.as("POST magic-link").isEqualTo(200);
+		}
+		assertThat(call(other, "POST", "/mcp", "1.1.1.1", null).getStatus())
+				.as("the uncounted requests left the bucket full").isEqualTo(200);
+	}
+
+	@Test
 	void theMatchingBuildTokenSkipsTheLimitAndAWrongOneDoesNot() throws Exception {
 		ApiRateLimitFilter filter = filter("s3cret");
 		for (int i = 0; i < 5; i++) {
@@ -87,6 +112,17 @@ class ApiRateLimitFilterTest {
 		assertThat(call(filter, "GET", "/api/v1/ranking", "2.2.2.2", "wrong").getStatus()).isEqualTo(429);
 		assertThat(call(filter, "GET", "/api/v1/ranking", "3.3.3.3", null).getStatus()).isEqualTo(200);
 		assertThat(call(filter, "GET", "/api/v1/ranking", "3.3.3.3", null).getStatus()).isEqualTo(429);
+	}
+
+	@Test
+	void theBuildTokenSkipsTheLimitOfTheMcpEndpointToo() throws Exception {
+		ApiRateLimitFilter filter = filter("s3cret");
+		for (int i = 0; i < 5; i++) {
+			assertThat(call(filter, "POST", "/mcp", "1.1.1.1", "s3cret").getStatus()).isEqualTo(200);
+		}
+
+		assertThat(call(filter, "POST", "/mcp", "2.2.2.2", "wrong").getStatus()).isEqualTo(200);
+		assertThat(call(filter, "POST", "/mcp", "2.2.2.2", "wrong").getStatus()).isEqualTo(429);
 	}
 
 	@Test
