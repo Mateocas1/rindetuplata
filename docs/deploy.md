@@ -71,6 +71,10 @@ Two GitHub Actions workflows and Dependabot watch what the Java and web test wor
   action in the workflows is pinned by commit SHA with a version comment, and Dependabot bumps both together.
   The images Compose runs as published (`postgres`, `rabbitmq`, `caddy`, the preview's `node:24` rebuilder) are not
   watched: bump their tags by hand.
+- Three major updates are ignored on purpose, each with its reason next to the rule: `eclipse-temurin` (a Java major
+  moves the build image, the runtime image and `java.version` together, on an LTS release), `@types/node` (the
+  typings follow the Node 24 runtime) and `typescript` (`@astrojs/check` does not accept TypeScript 7 yet; lift the
+  rule when it does). Every other major still arrives as its own PR.
 
 ## Private preview (Tailscale Funnel)
 
