@@ -26,6 +26,7 @@ const current = normalizedPath(Astro.url.pathname);
 const links = [
   { href: '/', label: 'Ranking' },
   ...CATEGORIES.map((category) => ({ href: category.path, label: category.navLabel })),
+  { href: '/bancos/', label: 'Bancos' },
   { href: '/metodologia/', label: 'Cómo se calcula' },
 ];
 ---

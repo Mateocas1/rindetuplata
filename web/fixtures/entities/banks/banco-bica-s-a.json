@@ -1,0 +1,28 @@
+{
+  "slug": "banco-bica-s-a",
+  "name": "BANCO BICA S.A.",
+  "instrumentId": "11",
+  "sourceId": "argentinadatos-plazo-fijo",
+  "nonClientTna": 0.23,
+  "clientTna": 0.21,
+  "captureDate": "2026-10-14",
+  "dataDate": "2026-10-14",
+  "from": "2026-07-17",
+  "to": "2026-10-14",
+  "series": [
+    {
+      "captureDate": "2026-10-12",
+      "nonClientTna": 0.23
+    },
+    {
+      "captureDate": "2026-10-13",
+      "nonClientTna": 0.23
+    },
+    {
+      "captureDate": "2026-10-14",
+      "nonClientTna": 0.23
+    }
+  ],
+  "bestDays": 0,
+  "observedDays": 3
+}

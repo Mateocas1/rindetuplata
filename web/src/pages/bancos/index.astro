@@ -1,0 +1,130 @@
+---
+/**
+ * Bank index (T6b, S6): every bank with a plazo fijo rate today, highest non-client TNA first, each linking its
+ * entity page. A static table with no island; the numbers are the API's own and the source and date are stated.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { loadBankList, sortBanksForListing, sourceName } from '../../lib/entities';
+import { formatDate, formatPercent } from '../../lib/format';
+import { breadcrumbJsonLd } from '../../lib/seo';
+
+const banks = sortBanksForListing(await loadBankList());
+const latest = banks.reduce((date, bank) => (bank.dataDate > date ? bank.dataDate : date), '');
+const sources = [...new Set(banks.map((bank) => sourceName(bank.sourceId)))].join(', ');
+
+const site = Astro.site ?? new URL('http://localhost:4321');
+const canonical = new URL(Astro.url.pathname, site);
+const title = 'Plazo fijo por banco: la tasa de hoy de cada uno | rindetuplata';
+const description =
+  `Cuánto paga hoy cada banco por un plazo fijo, para no clientes y para clientes, con la fuente y la fecha de cada dato. Entrá a un banco para ver sus últimos 90 días${latest === '' ? '' : ` (datos del ${formatDate(latest)})`}.`;
+const jsonLd = breadcrumbJsonLd([
+  { name: 'Inicio', url: new URL('/', site).href },
+  { name: 'Bancos', url: canonical.href },
+]);
+
+const linkClass =
+  'text-text underline decoration-border-strong underline-offset-2 hover:decoration-text';
+const cell = 'type-data border-b border-border px-3 py-2';
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <div class="flex flex-col gap-section py-section">
+    <header class="flex max-w-prose flex-col gap-block">
+      <nav aria-label="Ubicación" class="type-label">
+        <ol class="flex flex-wrap items-center gap-x-2">
+          <li>
+            <a class={linkClass} href="/">Inicio</a>
+          </li>
+          <li aria-current="page"><span aria-hidden="true">/</span> Bancos</li>
+        </ol>
+      </nav>
+      <h1 class="type-display">Cada banco y su plazo fijo de hoy</h1>
+      <p class="type-body text-lead text-muted">
+        Lo que paga hoy cada banco por un plazo fijo a quien no es cliente, de mayor a menor. Entrá
+        a un banco para ver cómo viene su tasa en los últimos 90 días y cuántos de esos días fue la
+        mejor.
+      </p>
+      {
+        latest !== '' && (
+          <p class="type-data text-muted">
+            {sources} · dato del {formatDate(latest)}
+          </p>
+        )
+      }
+    </header>
+
+    <section class="flex flex-col gap-block" aria-labelledby="bancos-de-hoy">
+      <h2 id="bancos-de-hoy" class="type-section">Las tasas de hoy</h2>
+      {
+        banks.length === 0 ? (
+          <div class="card max-w-prose p-6">
+            <p class="type-label">Todavía no hay tasas por banco</p>
+            <p class="type-body mt-2">
+              Los datos se capturan una vez por día; apenas haya una captura, los bancos aparecen
+              acá.
+            </p>
+          </div>
+        ) : (
+          <div
+            class="card relative overflow-x-auto focus-visible:-outline-offset-2"
+            role="region"
+            aria-label="Tasas de plazo fijo por banco"
+            tabindex="0"
+          >
+            <table class="w-full min-w-[32rem] border-separate border-spacing-0">
+              <caption class="sr-only">
+                Tasa nominal anual (TNA) de plazo fijo de cada banco para no clientes y para clientes.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col" class="type-label border-b border-border px-3 py-2 text-start">
+                    Banco
+                  </th>
+                  <th scope="col" class="type-label border-b border-border px-3 py-2 text-end">
+                    TNA no clientes
+                  </th>
+                  <th scope="col" class="type-label border-b border-border px-3 py-2 text-end">
+                    TNA clientes
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {banks.map((bank) => (
+                  <tr>
+                    <th scope="row" class={`${cell} text-start font-normal`}>
+                      <a class={linkClass} href={`/bancos/${bank.slug}/`}>
+                        {bank.name}
+                      </a>
+                    </th>
+                    <td class={`${cell} text-end`}>
+                      {bank.nonClientTna === null ? (
+                        <span class="text-muted">No ofrece a no clientes</span>
+                      ) : (
+                        formatPercent(bank.nonClientTna)
+                      )}
+                    </td>
+                    <td class={`${cell} text-end`}>
+                      {bank.clientTna === null ? '—' : formatPercent(bank.clientTna)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+    </section>
+
+    <p class="type-data text-muted">
+      Mirá{' '}
+      <a class={linkClass} href="/plazo-fijo/">
+        los plazos fijos ordenados por lo que ganás con tu monto y tu plazo
+      </a>
+      {' '}o cómo{' '}
+      <a class={linkClass} href="/metodologia/">
+        se calcula cada número
+      </a>
+      . Es información, no asesoramiento financiero.
+    </p>
+  </div>
+</BaseLayout>
