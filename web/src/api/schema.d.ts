@@ -101,9 +101,49 @@ export interface paths {
         };
         /**
          * Simulate one instrument
-         * @description Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.
+         * @description Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. The dollar MEP break-even of the instrument over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.
          */
         get: operations["simulate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/monthly": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Months with a report
+         * @description The closed months that have a report, newest first. A month is listed only when it has ended, INDEC has published its inflation and the stored history covers it; until then the list is empty. Each instrument's nominal return is what it delivered over the closed month, from the stored history. Wallets and crypto compound daily at the latest known rate of each calendar day (a day whose latest capture is more than 3 days old disqualifies the instrument); a plazo fijo locks the non-client TNA of its first capture of the month, which must be dated on or before the first business day, as one term over the month's days (TNA * days / 365); a fund is the ratio of its last quote on or before the month end to its last quote on or before the previous month end, each at most 4 days before that end, and the classes of one fund are grouped to the best one. The real return is (1 + nominal) / (1 + inflation) - 1 against the INDEC monthly inflation of the same month.
+         */
+        get: operations["months"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/monthly/{month}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Who beat inflation in a closed month
+         * @description Each instrument's nominal return is what it delivered over the closed month, from the stored history. Wallets and crypto compound daily at the latest known rate of each calendar day (a day whose latest capture is more than 3 days old disqualifies the instrument); a plazo fijo locks the non-client TNA of its first capture of the month, which must be dated on or before the first business day, as one term over the month's days (TNA * days / 365); a fund is the ratio of its last quote on or before the month end to its last quote on or before the previous month end, each at most 4 days before that end, and the classes of one fund are grouped to the best one. The real return is (1 + nominal) / (1 + inflation) - 1 against the INDEC monthly inflation of the same month. Rows are sorted by real return, best first; instruments that could not be measured are returned apart with their reason.
+         */
+        get: operations["month"];
         put?: never;
         post?: never;
         delete?: never;
@@ -121,7 +161,7 @@ export interface paths {
         };
         /**
          * Personalized ranking
-         * @description Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.
+         * @description Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. The dollar MEP break-even of the instrument over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.
          */
         get: operations["ranking"];
         put?: never;
@@ -180,6 +220,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/entities/banks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Banks with today's plazo fijo rates
+         * @description Every bank that has a valid plazo fijo snapshot at or before today, sorted by slug, with its latest non-client and client TNA (fractions, scale 6) and the capture and data dates of that snapshot. A rate is null when the bank does not publish it.
+         */
+        get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entities/banks/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One bank: rates, 90-day series and best-rate days
+         * @description The bank's latest rates, its non-client TNA per capture day over the last 90 calendar days ending today (inclusive, America/Argentina/Buenos_Aires, oldest first) and bestDays/observedDays: among the capture days of that window on which the bank had a valid non-client TNA (observedDays), the days on which it was the highest among all banks (bestDays). A tie counts for each bank tied; invalid snapshots and days the bank was not captured are left out.
+         */
+        get: operations["bank"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/csrf": {
         parameters: {
             query?: never;
@@ -207,7 +287,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -320,7 +400,7 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
-        /** @description When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored. */
+        /** @description The dollar MEP break-even of the instrument over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored. */
         BreakEvenMepView: {
             /** @description The highest rise of the MEP buy price, as a fraction at scale 6 (0.023100 is 2.31%), at which the instrument still beats the dollar over the requested days. */
             devaluation?: number;
@@ -406,6 +486,81 @@ export interface components {
             code?: string;
             severity?: string;
             message?: string;
+        };
+        MonthlyReportListResponse: {
+            months?: components["schemas"]["ReportMonthView"][];
+        };
+        ReportMonthView: {
+            month?: string;
+            monthlyInflation?: number;
+            /** Format: int32 */
+            ranked?: number;
+            /** Format: int32 */
+            beatInflation?: number;
+        };
+        MonthlyReportResponse: {
+            month?: string;
+            /** Format: date */
+            from?: string;
+            /** Format: date */
+            to?: string;
+            inflation?: components["schemas"]["ReportInflationView"];
+            rows?: components["schemas"]["ReportRowView"][];
+            leftOut?: components["schemas"]["ReportLeftOutView"][];
+            totals?: components["schemas"]["ReportTotalsView"];
+        };
+        /** @description The days of the month the nominal return was measured over, out of the days of the month. Wallets, crypto and plazo fijo cover the whole month by construction; a fund covers the days from the previous month end to its last quote (at least the month minus 4 days). */
+        ReportCoverageView: {
+            /** Format: int32 */
+            days?: number;
+            /** Format: int32 */
+            total?: number;
+        };
+        ReportInflationView: {
+            index?: string;
+            /** @description The month's inflation as a fraction (1.9% is 0.019), scale 6. */
+            value?: number;
+            /**
+             * Format: date
+             * @description The date the observation is stored under: the last day of the month it measures.
+             */
+            observationDate?: string;
+            confidence?: string;
+            source?: components["schemas"]["SourceView"];
+        };
+        ReportLeftOutView: {
+            id?: string;
+            kind?: string;
+            name?: string;
+            entity?: string;
+            source?: components["schemas"]["SourceView"];
+            /** @description NOT_CAPTURED_AT_START, GAP_IN_CAPTURES, MISSING_BASE_QUOTE, MISSING_END_QUOTE, NOT_OFFERED_TO_NON_CLIENTS, INVALID_DATA, FOREIGN_CURRENCY, RESTRICTED_CLASS or FUND_CLASS_NOT_FOUND. */
+            reason?: string;
+        };
+        ReportRowView: {
+            id?: string;
+            /** @description PLAZO_FIJO, WALLET, FUND or CRYPTO. */
+            kind?: string;
+            name?: string;
+            entity?: string;
+            source?: components["schemas"]["SourceView"];
+            /** @description The return the instrument delivered over the month, as a fraction (2% is 0.02). */
+            nominal?: number;
+            /** @description (1 + nominal) / (1 + inflation) - 1 against the INDEC rate of the month. */
+            real?: number;
+            /** @description True when the real return, as published, is above zero. */
+            beatInflation?: boolean;
+            /** Format: int32 */
+            foldedClasses?: number;
+            coverage?: components["schemas"]["ReportCoverageView"];
+        };
+        ReportTotalsView: {
+            /** Format: int32 */
+            ranked?: number;
+            /** Format: int32 */
+            beatInflation?: number;
+            /** Format: int32 */
+            leftOut?: number;
         };
         ExcludedEntryView: {
             id?: string;
@@ -531,6 +686,80 @@ export interface components {
             invalid?: boolean;
             flags?: components["schemas"]["ValidationFlagView"][];
             tea?: number;
+        };
+        /** @description A bank with the latest valid plazo fijo rates stored at or before today. */
+        BankRatesView: {
+            /** @description URL-safe identifier derived from the bank name: lowercase, accents stripped, non-alphanumerics as dashes. Stable; a name collision takes a numeric suffix in instrument id order. */
+            slug?: string;
+            name?: string;
+            /** @description Id of the bank's instrument, usable with /api/v1/instruments/{id}/history. */
+            instrumentId?: string;
+            /** @description Source of the rates. */
+            sourceId?: string;
+            /** @description Non-client TNA as a fraction, scale 6; null when the bank offers none. */
+            nonClientTna?: number;
+            /** @description Client TNA as a fraction, scale 6; null when the bank publishes none. */
+            clientTna?: number;
+            /**
+             * Format: date
+             * @description The day the rates were captured.
+             */
+            captureDate?: string;
+            /**
+             * Format: date
+             * @description The date the source says the rates are about.
+             */
+            dataDate?: string;
+        };
+        /** @description A bank's latest plazo fijo rates, its 90-day non-client TNA series and bestDays/observedDays. */
+        BankDetailView: {
+            slug?: string;
+            name?: string;
+            /** @description Id of the bank's instrument, usable with /api/v1/instruments/{id}/history. */
+            instrumentId?: string;
+            sourceId?: string;
+            /** @description Non-client TNA as a fraction, scale 6; null when the bank offers none. */
+            nonClientTna?: number;
+            /** @description Client TNA as a fraction, scale 6; null when the bank publishes none. */
+            clientTna?: number;
+            /**
+             * Format: date
+             * @description The day the latest rates were captured.
+             */
+            captureDate?: string;
+            /**
+             * Format: date
+             * @description The date the source says the latest rates are about.
+             */
+            dataDate?: string;
+            /**
+             * Format: date
+             * @description First day of the window.
+             */
+            from?: string;
+            /**
+             * Format: date
+             * @description Last day of the window (today).
+             */
+            to?: string;
+            /** @description Non-client TNA per capture day inside the window, oldest first. */
+            series?: components["schemas"]["BankSeriesPoint"][];
+            /**
+             * Format: int32
+             * @description Capture days in the window on which this bank's non-client TNA was the highest among banks; a tie counts for every bank tied.
+             */
+            bestDays?: number;
+            /**
+             * Format: int32
+             * @description Capture days in the window on which this bank had a valid non-client TNA: the denominator of bestDays.
+             */
+            observedDays?: number;
+        };
+        /** @description A capture day and the bank's non-client TNA (fraction, scale 6) captured that day. */
+        BankSeriesPoint: {
+            /** Format: date */
+            captureDate?: string;
+            nonClientTna?: number;
         };
         CsrfTokenResponse: {
             headerName?: string;
@@ -780,6 +1009,67 @@ export interface operations {
             };
         };
     };
+    months: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MonthlyReportListResponse"];
+                };
+            };
+        };
+    };
+    month: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The month as yyyy-MM, for example 2026-10. */
+                month: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The report of the month. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MonthlyReportResponse"];
+                };
+            };
+            /** @description The month is not a valid yyyy-MM. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MonthlyReportResponse"];
+                };
+            };
+            /** @description The month is not closed yet, INDEC has not published its inflation, or the stored history does not cover it. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MonthlyReportResponse"];
+                };
+            };
+        };
+    };
     ranking: {
         parameters: {
             query?: {
@@ -895,6 +1185,57 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BankRatesView"][];
+                };
+            };
+        };
+    };
+    bank: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The bank. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BankDetailView"];
+                };
+            };
+            /** @description No bank has this slug. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BankDetailView"];
+                };
+            };
+        };
+    };
     csrf: {
         parameters: {
             query?: never;
@@ -915,7 +1256,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;

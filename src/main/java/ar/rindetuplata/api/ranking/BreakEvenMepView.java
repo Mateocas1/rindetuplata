@@ -17,7 +17,7 @@ public record BreakEvenMepView(
 		@Schema(description = "The break-even MEP buy price in ARS per USD at scale 2: (1 + nominalReturn) * sell. "
 				+ "Above it at the end of the term the dollar wins; below it the instrument wins.") BigDecimal price) {
 
-	static final String DESCRIPTION = "When the instrument beats the dollar MEP over the requested days. A saver "
+	static final String DESCRIPTION = "The dollar MEP break-even of the instrument over the requested days. A saver "
 			+ "buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the "
 			+ "instrument wins when the MEP buy price rises less than devaluation = "
 			+ "(1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in "
