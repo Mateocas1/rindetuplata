@@ -17,26 +17,6 @@
       "invalid": false,
       "flags": [],
       "tea": 0.262078
-    },
-    {
-      "captureDate": "2026-10-13",
-      "dataDate": "2026-10-13",
-      "basis": "TNA",
-      "rate": 0.235,
-      "clientRate": null,
-      "invalid": false,
-      "flags": [],
-      "tea": 0.262078
-    },
-    {
-      "captureDate": "2026-10-14",
-      "dataDate": "2026-10-14",
-      "basis": "TNA",
-      "rate": 0.235,
-      "clientRate": null,
-      "invalid": false,
-      "flags": [],
-      "tea": 0.262078
     }
   ],
   "quotes": [],

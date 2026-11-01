@@ -7,7 +7,8 @@
     "nonClientTna": null,
     "clientTna": 0.3,
     "captureDate": "2026-10-14",
-    "dataDate": "2026-10-14"
+    "dataDate": "2026-10-14",
+    "current": true
   },
   {
     "slug": "banco-bica-s-a",
@@ -17,7 +18,8 @@
     "nonClientTna": 0.23,
     "clientTna": 0.21,
     "captureDate": "2026-10-14",
-    "dataDate": "2026-10-14"
+    "dataDate": "2026-10-14",
+    "current": true
   },
   {
     "slug": "banco-cmf-s-a",
@@ -27,7 +29,8 @@
     "nonClientTna": 0.235,
     "clientTna": null,
     "captureDate": "2026-10-14",
-    "dataDate": "2026-10-14"
+    "dataDate": "2026-10-14",
+    "current": true
   },
   {
     "slug": "banco-de-galicia-y-buenos-aires-s-a",
@@ -37,7 +40,8 @@
     "nonClientTna": null,
     "clientTna": 0.29,
     "captureDate": "2026-10-14",
-    "dataDate": "2026-10-14"
+    "dataDate": "2026-10-14",
+    "current": true
   },
   {
     "slug": "banco-voii-s-a",
@@ -46,8 +50,9 @@
     "sourceId": "argentinadatos-plazo-fijo",
     "nonClientTna": 0.235,
     "clientTna": null,
-    "captureDate": "2026-10-14",
-    "dataDate": "2026-10-14"
+    "captureDate": "2026-10-12",
+    "dataDate": "2026-10-12",
+    "current": false
   },
   {
     "slug": "reba-compania-financiera-s-a",
@@ -57,6 +62,7 @@
     "nonClientTna": 0.24,
     "clientTna": 0.24,
     "captureDate": "2026-10-14",
-    "dataDate": "2026-10-14"
+    "dataDate": "2026-10-14",
+    "current": true
   }
 ]

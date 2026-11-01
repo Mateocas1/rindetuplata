@@ -13,7 +13,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { loadHistory, fixturesEnabled, type BuildDataOptions, type Env } from './data';
 import { buildApiGet } from './fetchRetry';
-import { formatInteger } from './format';
+import { formatDate, formatInteger, formatPercent } from './format';
 import type { InstrumentHistory } from './types';
 
 /** One bank as `GET /api/v1/entities/banks` lists it: the latest valid plazo fijo rates (fractions). */
@@ -27,6 +27,11 @@ export interface BankRates {
   clientTna: number | null;
   captureDate: string;
   dataDate: string;
+  /**
+   * Whether these rates are from the newest capture day of the bank's source. False means the source reported a
+   * later day without this bank: the rates are its last published ones and the pages must not call them "hoy".
+   */
+  current: boolean;
 }
 
 export interface BankSeriesPoint {
@@ -69,7 +74,8 @@ function assertBank(payload: unknown, source: string): BankRates {
     typeof candidate !== 'object' ||
     typeof candidate.slug !== 'string' ||
     typeof candidate.name !== 'string' ||
-    typeof candidate.instrumentId !== 'string'
+    typeof candidate.instrumentId !== 'string' ||
+    typeof candidate.current !== 'boolean'
   ) {
     throw new Error(`Invalid bank payload from ${source}`);
   }
@@ -182,6 +188,70 @@ export function sortBanksForListing<T extends Pick<BankRates, 'name' | 'nonClien
     if (b.nonClientTna === null) return -1;
     return b.nonClientTna - a.nonClientTna || a.name.localeCompare(b.name, 'es');
   });
+}
+
+/**
+ * The list split: the banks with the source's newest rates first, sorted as the listing sorts them, and the banks
+ * whose last rate is older apart (same order), so "hoy" is only ever said of the first group.
+ */
+export function splitBanksByFreshness<T extends Pick<BankRates, 'name' | 'nonClientTna' | 'current'>>(
+  banks: readonly T[],
+): { current: T[]; previous: T[] } {
+  return {
+    current: sortBanksForListing(banks.filter((bank) => bank.current)),
+    previous: sortBanksForListing(banks.filter((bank) => !bank.current)),
+  };
+}
+
+export interface BankPageCopy {
+  title: string;
+  description: string;
+  /** The rate line of the page's card. */
+  headline: string;
+}
+
+/**
+ * The copy of a bank page that depends on freshness. A current bank is "hoy"; a bank whose last rate is older says
+ * it is the last published rate and its date instead, in the title, the description and the headline.
+ */
+export function bankPageCopy(
+  bank: Pick<BankRates, 'name' | 'sourceId' | 'nonClientTna' | 'clientTna' | 'captureDate' | 'dataDate' | 'current'>,
+): BankPageCopy {
+  const source = sourceName(bank.sourceId);
+  const nonClient = bank.nonClientTna === null ? null : formatPercent(bank.nonClientTna);
+  const client = bank.clientTna === null ? null : formatPercent(bank.clientTna);
+  const tail = ` Mirá su tasa de los últimos 90 días y cuántas veces fue la mejor, según ${source}, dato del ${formatDate(bank.dataDate)}.`;
+  const clientPart = client === null ? '' : ` y paga ${client} TNA a sus clientes`;
+  if (bank.current) {
+    return {
+      title:
+        nonClient === null
+          ? `${bank.name}: plazo fijo, tasa para clientes | rindetuplata`
+          : `${bank.name}: plazo fijo ${nonClient} TNA hoy | rindetuplata`,
+      description:
+        (nonClient === null
+          ? `${bank.name} no ofrece plazo fijo a no clientes hoy${clientPart}.`
+          : `Cuánto paga hoy ${bank.name} por un plazo fijo: ${nonClient} TNA para no clientes${client === null ? '' : ` y ${client} TNA para clientes`}.`) +
+        tail,
+      headline: nonClient === null ? 'Hoy no ofrece plazo fijo a no clientes' : `Hoy: ${nonClient} TNA para no clientes`,
+    };
+  }
+  const date = formatDate(bank.captureDate);
+  return {
+    title:
+      nonClient === null
+        ? `${bank.name}: plazo fijo, tasa para clientes | rindetuplata`
+        : `${bank.name}: plazo fijo ${nonClient} TNA, última tasa publicada | rindetuplata`,
+    description:
+      (nonClient === null
+        ? `La última tasa publicada de ${bank.name}, del ${date}, no ofrecía plazo fijo a no clientes${clientPart}.`
+        : `La última tasa de plazo fijo publicada de ${bank.name}, del ${date}: ${nonClient} TNA para no clientes${client === null ? '' : ` y ${client} TNA para clientes`}.`) +
+      tail,
+    headline:
+      nonClient === null
+        ? `Última tasa publicada (${date}): no ofrecía plazo fijo a no clientes`
+        : `Última tasa publicada (${date}): ${nonClient} TNA para no clientes`,
+  };
 }
 
 const SOURCE_NAMES: Record<string, string> = {
