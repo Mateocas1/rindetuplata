@@ -102,6 +102,7 @@ class StartupIngestionTest {
 	@Test
 	void theReadyEventIngestsTodayOnceInBuenosAires() {
 		SourceRunRow dollar = awaitSourceRun(DOLLAR, BOOT_DAY);
+		awaitCompleted(BOOT_DAY);
 
 		assertThat(dollar.mode()).isEqualTo("LIVE");
 		assertThat(dollar.status()).isEqualTo("OK");
@@ -121,6 +122,7 @@ class StartupIngestionTest {
 	@Test
 	void aSecondReadyEventOnAnAlreadyCompletedDayIsANoOp() {
 		awaitSourceRun(DOLLAR, BOOT_DAY);
+		awaitCompleted(BOOT_DAY);
 		CLOCK.set(BOOT_INSTANT);
 		int sourceRuns = reader.sourceRunCount(BOOT_DAY);
 		int executions = executions(BOOT_DAY);
@@ -183,6 +185,17 @@ class StartupIngestionTest {
 		return appender.list.subList(Math.min(from, appender.list.size()), appender.list.size())
 			.stream()
 			.anyMatch(event -> event.getFormattedMessage().contains(fragment));
+	}
+
+	/** The dollar row appears while the job may still be writing its later steps: count only once it COMPLETED. */
+	private void awaitCompleted(LocalDate date) {
+		await("the startup job of " + date + " to complete", () -> {
+			JobInstance instance = jobRepository.getJobInstance(IngestionService.JOB_NAME,
+					IngestionService.parameters(date, RunMode.LIVE));
+			return instance != null && jobRepository.getJobExecutions(instance)
+				.stream()
+				.anyMatch(execution -> execution.getStatus() == BatchStatus.COMPLETED);
+		});
 	}
 
 	private SourceRunRow awaitSourceRun(String sourceId, LocalDate date) {
