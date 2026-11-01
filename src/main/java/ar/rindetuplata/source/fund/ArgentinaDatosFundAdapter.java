@@ -6,6 +6,7 @@ import ar.rindetuplata.source.JsonSupport;
 import ar.rindetuplata.source.Severity;
 import ar.rindetuplata.source.SourceHttp;
 import ar.rindetuplata.source.SourceRef;
+import ar.rindetuplata.source.SourceRequestException;
 import ar.rindetuplata.source.ValidationFlag;
 import ar.rindetuplata.source.ValidationRules;
 import java.math.BigDecimal;
@@ -18,8 +19,11 @@ import java.util.List;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 
-/** ArgentinaDatos: {@code GET /fci/mercadoDinero/{ultimo,penultimo}}. Dates lag and dead classes are present. */
-public class ArgentinaDatosFundAdapter implements FundSource {
+/**
+ * ArgentinaDatos: {@code GET /fci/mercadoDinero/{ultimo,penultimo}} and, for the backfill (T4a),
+ * {@code GET /fci/mercadoDinero/yyyy/MM/dd}. Dates lag and dead classes are present.
+ */
+public class ArgentinaDatosFundAdapter implements FundSource, FundHistorySource {
 
     public static final SourceRef SOURCE = new SourceRef("argentinadatos-fci-mercado-dinero", "ArgentinaDatos", false);
 
@@ -43,6 +47,27 @@ public class ArgentinaDatosFundAdapter implements FundSource {
         return fetch("/fci/mercadoDinero/penultimo");
     }
 
+    /**
+     * The classes quoted on {@code day}. A day without quotes (weekend, holiday) is a 404 {@code {"error":"Not found"}}
+     * on the live API, probed 2026-11-01: that is "no data that day", an empty list, and every other error stays a
+     * failure of the source. Staleness is measured against {@code day}, never against the fetch date, because the
+     * backfill fetches the past.
+     */
+    @Override
+    public List<FundQuote> fetchDay(LocalDate day) {
+        Instant fetchedAt = clock.instant();
+        String path = "/fci/mercadoDinero/%04d/%02d/%02d".formatted(day.getYear(), day.getMonthValue(),
+                day.getDayOfMonth());
+        try {
+            return parse(SourceHttp.get(client, SOURCE, path), fetchedAt, day);
+        } catch (SourceRequestException e) {
+            if (e.status() == 404) {
+                return List.of();
+            }
+            throw e;
+        }
+    }
+
     private List<FundQuote> fetch(String path) {
         Instant fetchedAt = clock.instant();
         return parse(SourceHttp.get(client, SOURCE, path), fetchedAt);
@@ -53,12 +78,16 @@ public class ArgentinaDatosFundAdapter implements FundSource {
      * by more than {@value ValidationRules#FUND_STALE_DAYS} days is flagged {@code STALE}.
      */
     public static List<FundQuote> parse(byte[] body, Instant fetchedAt) {
+        return parse(body, fetchedAt, ValidationRules.localDate(fetchedAt));
+    }
+
+    /** As {@link #parse(byte[], Instant)}, measuring staleness against {@code fetchDate} instead of the fetch instant. */
+    static List<FundQuote> parse(byte[] body, Instant fetchedAt, LocalDate fetchDate) {
         JsonNode rows = JsonSupport.array(SOURCE, JsonSupport.readTree(SOURCE, body), null);
         List<LocalDate> dates = new ArrayList<>();
         for (JsonNode row : rows) {
             dates.add(JsonSupport.date(SOURCE, row, "fecha"));
         }
-        LocalDate fetchDate = ValidationRules.localDate(fetchedAt);
         LocalDate newest = dates.stream().filter(java.util.Objects::nonNull).max(LocalDate::compareTo).orElse(null);
         LocalDate reference = newest == null || fetchDate.isAfter(newest) ? fetchDate : newest;
 

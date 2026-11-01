@@ -3,6 +3,8 @@ package ar.rindetuplata.ingest;
 import ar.rindetuplata.source.Fixtures;
 import ar.rindetuplata.source.crypto.ArgentinaDatosCryptoAdapter;
 import ar.rindetuplata.source.crypto.CryptoYield;
+import ar.rindetuplata.source.dollar.ArgentinaDatosDollarAdapter;
+import ar.rindetuplata.source.dollar.DatedDollarQuote;
 import ar.rindetuplata.source.dollar.DolarApiAdapter;
 import ar.rindetuplata.source.dollar.DollarQuote;
 import ar.rindetuplata.source.fund.ArgentinaDatosFundAdapter;
@@ -20,6 +22,7 @@ import ar.rindetuplata.source.wallet.WalletRate;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.core.io.ClassPathResource;
 
@@ -51,6 +54,30 @@ final class IngestFixtures {
 	static List<FundQuote> fundPrevious() {
 		return ArgentinaDatosFundAdapter.parse(Fixtures.bytes("argentinadatos/fci-mercado-dinero-penultimo.json"),
 				FETCHED_AT);
+	}
+
+	/** The recorded 2026-10-01 classes of the dated FCI endpoint, re-dated to the requested day. */
+	static List<FundQuote> fundDay(LocalDate day) {
+		return ArgentinaDatosFundAdapter
+			.parse(Fixtures.bytes("argentinadatos/fci-mercado-dinero-2026-10-01-excerpt.json"), FETCHED_AT)
+			.stream()
+			.map(quote -> new FundQuote(quote.source(), quote.name(), quote.fund(), quote.shareClass(),
+					quote.horizon(), quote.segment(), day, quote.vcp(), quote.ccp(), quote.patrimonio(),
+					quote.fetchedAt(), quote.confidence(), quote.flags()))
+			.toList();
+	}
+
+	/** The recorded excerpt of the ArgentinaDatos MEP series, 2026-09-28 to 2026-10-06. */
+	static List<DatedDollarQuote> dollarSeries() {
+		return ArgentinaDatosDollarAdapter.parse(
+				Fixtures.bytes("argentinadatos/dolares-bolsa-serie-2026-09-28-2026-10-06-excerpt.json"), FETCHED_AT);
+	}
+
+	/** The recorded macro observations of the variable that fall inside the inclusive range. */
+	static List<MacroObservation> macroRange(MacroVariable variable, LocalDate from, LocalDate to) {
+		return macro(variable).stream()
+			.filter(observation -> !observation.date().isBefore(from) && !observation.date().isAfter(to))
+			.toList();
 	}
 
 	static List<CryptoYield> cryptoYields() {

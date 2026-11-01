@@ -431,6 +431,16 @@ distinct ranking and per instrument history instead of about thirty identical ra
 requests the pages read, so it adds no fetch. Errors name the URL and the status or cause, never the headers
 (`API_BUILD_TOKEN` stays out of every message).
 
+## History backfill
+
+`POST /api/v1/admin/backfill?from=&to=` (admin session, CSRF) fills up to 366 days of fund, MEP and macro history from
+the public sources, insert-only, so a fresh deploy gets a real 7-day fund yield and a monthly report without waiting
+(T4a). It starts nothing by itself, writes `source_run` rows with mode `BACKFILL`, and neither evaluates alerts nor
+calls the rebuild hook below: trigger that by hand after a large backfill. The polite delay between the per-day fund
+calls is `RINDETUPLATA_BACKFILL_DELAY` (default `500ms`); the monthly report cache holds
+`RINDETUPLATA_REPORT_CACHEMAXENTRIES` reports (default 24). Full description, probes and limits in
+[`backfill.md`](backfill.md).
+
 ## Rebuild hook
 
 The daily ingestion POSTs once to `rindetuplata.ingest.rebuild-hook-url` after a COMPLETED job (T4d),
