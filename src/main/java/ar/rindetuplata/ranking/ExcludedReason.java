@@ -15,5 +15,9 @@ public enum ExcludedReason {
 	/** A fund class whose cuotaparte fell: it has no TNA-equivalent and must not be ranked (T4 note). */
 	NEGATIVE_RETURN,
 	/** The fund class an FCI-backed wallet maps to is absent from the fund quotes (the source has no class id). */
-	FUND_CLASS_NOT_FOUND
+	FUND_CLASS_NOT_FOUND,
+	/** A fund class denominated in a foreign currency: its cuotaparte is not pesos, so peso inflation does not apply. */
+	FOREIGN_CURRENCY,
+	/** A class reserved for the tax-regularization regime (Ley 27.743), not open to the general public. */
+	RESTRICTED_CLASS
 }

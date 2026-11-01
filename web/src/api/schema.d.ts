@@ -340,6 +340,8 @@ export interface components {
             realReturn?: number;
             upTo?: components["schemas"]["UpToView"];
             warnings?: components["schemas"]["ValidationFlagView"][];
+            /** Format: int32 */
+            foldedClasses?: number;
         };
         RateUsedView: {
             fraction?: number;
@@ -718,6 +720,7 @@ export interface operations {
                 kind?: ("PLAZO_FIJO" | "WALLET" | "FUND" | "CRYPTO")[];
                 asOf?: string;
                 limit?: number;
+                groupFunds?: boolean;
             };
             header?: never;
             path?: never;

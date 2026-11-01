@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
  * The personalized ranking of the public API (S15): {@code GET /api/v1/ranking} simulates every instrument for the
  * user's amount and days, sorted by final amount, and returns the request echo, the inflation the real return was
  * measured against (S10) and every instrument it could not use with its reason. Read-only; every row states its
- * source and dates (S11).
+ * source and dates (S11). By default the fund classes of one fund are grouped into a single row (the best class for
+ * the request, with {@code foldedClasses} counting the siblings); {@code groupFunds=false} lists every class.
  */
 @RestController
 @RequestMapping("/api/v1/ranking")
@@ -38,8 +39,9 @@ public class RankingController {
 			@RequestParam(required = false) List<Long> clientOf,
 			@RequestParam(required = false) List<RankedKind> kind,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOf,
-			@RequestParam(required = false) Integer limit) {
+			@RequestParam(required = false) Integer limit,
+			@RequestParam(required = false) Boolean groupFunds) {
 		return RankingApiPresenter.ranking(
-				ranking.rank(RankingRequest.query(amount, days, clientOf, kind, asOf, limit, clock)));
+				ranking.rank(RankingRequest.query(amount, days, clientOf, kind, asOf, limit, groupFunds, clock)));
 	}
 }
