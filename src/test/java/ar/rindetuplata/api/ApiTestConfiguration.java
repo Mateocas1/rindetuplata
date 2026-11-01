@@ -1,5 +1,6 @@
 package ar.rindetuplata.api;
 
+import ar.rindetuplata.TestContainers;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -9,7 +10,6 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * Testcontainers and a frozen clock for the {@code api} tests: "today" is always 2026-10-20 in
@@ -28,7 +28,7 @@ public class ApiTestConfiguration {
 	@Bean
 	@ServiceConnection
 	PostgreSQLContainer postgresContainer() {
-		return new PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine"));
+		return TestContainers.postgres();
 	}
 
 	@Bean

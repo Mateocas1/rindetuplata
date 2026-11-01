@@ -16,6 +16,14 @@ public final class ValidationRules {
     public static final BigDecimal MAX_RATE = new BigDecimal("3");
     public static final int PLAZO_FIJO_STALE_DAYS = 45;
     public static final int FUND_STALE_DAYS = 7;
+    /** Trailing window of a fund's yield: the industry's 7-day return. */
+    public static final int FUND_YIELD_WINDOW_DAYS = 7;
+    /**
+     * How far before the query date a fund quote can still matter: the latest valid quote is at most
+     * {@value #FUND_STALE_DAYS} days old, its base is {@value #FUND_YIELD_WINDOW_DAYS} days before that, and the
+     * same again covers the weekends and holidays without a quote in front of the base.
+     */
+    public static final int FUND_QUOTE_LOOKBACK_DAYS = FUND_STALE_DAYS + FUND_YIELD_WINDOW_DAYS + FUND_YIELD_WINDOW_DAYS;
     public static final int CURATED_WALLET_STALE_DAYS = 7;
     public static final int CRYPTO_STALE_DAYS = 7;
 

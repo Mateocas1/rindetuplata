@@ -68,7 +68,8 @@ class RankingApiTest extends RankingApiIntegrationTest {
 				.andExpect(jsonPath("$.excluded[0].id").value("mercado-pago"))
 				.andExpect(jsonPath("$.excluded[0].kind").value("WALLET"))
 				.andExpect(jsonPath("$.excluded[0].name").value("Mercado Pago"))
-				.andExpect(jsonPath("$.excluded[0].reason").value("INSUFFICIENT_HISTORY"))
+				// T2d: the fixture has no Mercado Fondo class, which is now FUND_CLASS_NOT_FOUND, not a short history.
+				.andExpect(jsonPath("$.excluded[0].reason").value("FUND_CLASS_NOT_FOUND"))
 				.andExpect(jsonPath("$.totals.ranked").value(3))
 				.andExpect(jsonPath("$.totals.ineligible").value(0))
 				.andExpect(jsonPath("$.totals.excluded").value(1))
@@ -113,7 +114,8 @@ class RankingApiTest extends RankingApiIntegrationTest {
 				.andExpect(jsonPath("$.excluded[0].dataDate").value("2026-10-14"))
 				.andExpect(jsonPath("$.excluded[0].reason").value("NOT_OFFERED_TO_NON_CLIENTS"))
 				.andExpect(jsonPath("$.excluded[0].flags").value(empty()))
-				.andExpect(jsonPath("$.excluded[1].reason").value("INSUFFICIENT_HISTORY"))
+				// T2d: same missing Mercado Fondo class as above.
+				.andExpect(jsonPath("$.excluded[1].reason").value("FUND_CLASS_NOT_FOUND"))
 				.andExpect(jsonPath("$.totals.ranked").value(0))
 				.andExpect(jsonPath("$.totals.excluded").value(2));
 	}

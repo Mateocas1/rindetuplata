@@ -253,7 +253,12 @@ docker compose -f compose.yaml -f deploy/compose.vps.yaml \
   beyond that the answer is a 429 `ProblemDetail` with `Retry-After`. The address is the `X-Forwarded-For`
   that Caddy sends (`server.forward-headers-strategy=native`). The counters live in the API's memory, so
   the limit assumes the single API instance. `RINDETUPLATA_API_RATELIMIT_CAPACITY` and
-  `RINDETUPLATA_API_RATELIMIT_REFILLPERSECOND` change the two numbers. `days` is capped at 1825 and
+  `RINDETUPLATA_API_RATELIMIT_REFILLPERSECOND` change the two numbers. An IPv6 client is counted per /64
+  prefix (a subscriber controls a whole /64, so one bucket per address would let it rotate past the limit);
+  IPv4 clients are counted per address. The API tracks at most
+  `RINDETUPLATA_API_RATELIMIT_MAXTRACKEDADDRESSES` clients (default 100000): when the table is full it
+  first drops the buckets that have refilled completely and, if it is still full, answers the same 429 to
+  any client it does not know yet, while the ones it already tracks keep being served. That fail-closed choice is a trade-off: a sustained flood from many addresses can keep new visitors out for as long as it lasts (each refused visitor gets a `Retry-After` of up to 60 s), while visitors already being served are unaffected. `days` is capped at 1825 and
   `amount` at 1000000000000 (a 400 naming the parameter), because the simulation cost grows with `days`.
 - **Build token (optional).** The site build calls the API hundreds of times from one machine and would
   trip that limit. Put the same random string in `API_BUILD_TOKEN` in `api.env` (the overlay hands it to

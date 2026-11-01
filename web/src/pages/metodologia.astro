@@ -47,7 +47,8 @@ const sources = [
   {
     data: 'Fondos money market',
     source: 'ArgentinaDatos (cuotapartes diarias)',
-    detail: 'El rendimiento se calcula con la variación del valor de cuotaparte entre dos días.',
+    detail:
+      'El rendimiento se calcula con la variación del valor de cuotaparte de los últimos 7 días. Si un fondo tiene menos de 7 días de historia, usamos los días que hay y lo avisamos. Cuando un fondo tiene varias clases, el ranking muestra una sola fila por fondo, la de mayor rendimiento para tu monto y plazo, y cuántas clases quedaron agrupadas. Algunas clases piden un monto mínimo o están pensadas para inversores institucionales: antes de suscribir, confirmá con la administradora que esa clase está disponible para vos. No comparamos los fondos en dólares ni las clases exclusivas del régimen de regularización (Ley 27.743): figuran aparte, con su motivo.',
   },
   {
     data: 'Rendimientos en cripto y fintech',
@@ -120,6 +121,12 @@ const sources = [
           Un plazo fijo paga interés simple sobre el plazo: capital × TNA × días ÷ 365. Con 20% de
           TNA a 30 días: 1.000.000 × 0,20 × 30 ÷ 365 = $&nbsp;16.438,36. Al vencimiento tenés
           $&nbsp;1.016.438,36.
+        </p>
+        <p class="type-body mt-2">
+          Si el plazo es de 60 días o más, lo simulamos renovando cada 30 días a la tasa de hoy: el
+          interés de cada tramo se suma al capital del siguiente. Con 30% de TNA a 180 días, las
+          seis renovaciones rinden 15,74%, contra 14,79% de interés simple. En la realidad la tasa
+          puede cambiar en cada renovación, así que es una estimación.
         </p>
       </details>
       <details class={detailsClass}>

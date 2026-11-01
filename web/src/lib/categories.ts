@@ -51,9 +51,9 @@ export const CATEGORIES: Category[] = [
     h1: 'Fondos money market',
     title: 'Fondos money market: rendimiento por clase | rindetuplata',
     description:
-      'Fondos de dinero (FCI) ordenados por lo que rinden en pesos, con la TNA equivalente que sale de la variación del valor de cuotaparte entre dos días.',
+      'Fondos de dinero (FCI) ordenados por lo que rinden en pesos, con la TNA equivalente que sale de la variación del valor de cuotaparte en los últimos 7 días.',
     intro:
-      'Fondos de dinero (FCI) que rescatan en el día. El rendimiento sale de la variación del valor de cuotaparte entre dos ruedas, así que cada clase muestra su TNA equivalente y la fecha de sus cuotapartes.',
+      'Fondos de dinero (FCI) que rescatan en el día. El rendimiento sale de la variación del valor de cuotaparte en los últimos 7 días, así que cada clase muestra su TNA equivalente y la fecha de sus cuotapartes.',
   },
   {
     slug: 'cripto',

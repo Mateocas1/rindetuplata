@@ -1,11 +1,11 @@
 package ar.rindetuplata.alert;
 
+import ar.rindetuplata.TestContainers;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * The database and a mail server that always fails. It is {@code AccountTestConfiguration} without its recording
@@ -18,7 +18,7 @@ public class FailingMailerTestConfiguration {
 	@Bean
 	@ServiceConnection
 	PostgreSQLContainer postgresContainer() {
-		return new PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine"));
+		return TestContainers.postgres();
 	}
 
 	@Bean

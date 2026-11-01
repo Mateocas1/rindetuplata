@@ -1,10 +1,10 @@
 package ar.rindetuplata.alert;
 
+import ar.rindetuplata.TestContainers;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.testcontainers.rabbitmq.RabbitMQContainer;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * The T6d broker: a real RabbitMQ with the management plugin, so the topology, the publisher confirms and the
@@ -17,7 +17,7 @@ public class DeliveryTestConfiguration {
 	@Bean
 	@ServiceConnection
 	RabbitMQContainer rabbitMqContainer() {
-		return new RabbitMQContainer(DockerImageName.parse("rabbitmq:4-management-alpine"));
+		return TestContainers.rabbitmq();
 	}
 
 }

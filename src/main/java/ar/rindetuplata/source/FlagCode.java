@@ -14,5 +14,7 @@ public enum FlagCode {
     /** A series observation has no value. */
     MISSING_VALUE,
     /** A mapped fund class is absent from the fund response. */
-    FUND_CLASS_NOT_FOUND
+    FUND_CLASS_NOT_FOUND,
+    /** A fund yield measured over fewer than 7 days because no older valid quote exists. */
+    SHORT_YIELD_WINDOW
 }
