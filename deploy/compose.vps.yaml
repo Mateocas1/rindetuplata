@@ -16,6 +16,8 @@
 #   - every service restarts unless it was stopped by hand (before: a reboot or an OOM left the whole
 #     box down until someone ran `up` again);
 #   - Mailpit and the local-site Caddy are out: the VPS sends real mail and the site lives on a CDN;
+#   - the API runs with the `prod` profile (SPRING_PROFILES_ACTIVE=prod), whose startup guard refuses a configuration
+#     that still has a development default;
 #   - a `caddy` service terminates TLS for api.<domain> (deploy/Caddyfile.vps).
 
 services:
@@ -56,6 +58,9 @@ services:
   api:
     restart: unless-stopped
     environment:
+      # The `prod` profile (application-prod.properties): the API refuses to start, naming each property, when a
+      # value below is still a local default (HTTP or localhost URLs, Mailpit, no admin, a short build token).
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the env file}
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-rindetuplata}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?set RABBITMQ_DEFAULT_PASS in the env file}
