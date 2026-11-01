@@ -10,9 +10,13 @@
  * on amount, days, kinds, clientOf and limit: an unrecorded request fails the
  * build with the list of recordings instead of quietly shipping numbers that do
  * not match the request (S11).
+ *
+ * Against the API every GET has a deadline (`API_TIMEOUT_MS`), transient failures are retried a bounded number
+ * of times and an identical request is sent once per build; see `fetchRetry.ts` (T4d, L36a).
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { memoizedGetJson, timeoutFromEnv } from './fetchRetry';
 import { DEFAULT_AMOUNT, DEFAULT_DAYS, toApiParams, type RankingQueryState } from './rankingQuery';
 import type { BankOption, InstrumentHistory, Ranking } from './types';
 
@@ -25,6 +29,8 @@ export interface BuildDataOptions {
   limit?: number;
   /** Fixtures directory override, so a test can exercise a missing directory. */
   fixturesDir?: string;
+  /** Replaces the wait between retries, so a test never really waits (T4d). */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export const DEFAULT_RANKING_LIMIT = 50;
@@ -141,13 +147,15 @@ function apiHeaders(env: Env): Record<string, string> {
   return headers;
 }
 
-async function apiGet(url: string, doFetch: typeof fetch, env: Env): Promise<unknown> {
-  const response = await doFetch(url, { headers: apiHeaders(env) });
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`GET ${url} failed with ${response.status}: ${body.slice(0, 300)}`);
-  }
-  return response.json();
+function apiGet(url: string, options: BuildDataOptions, env: Env): Promise<unknown> {
+  // `globalThis.fetch` is one stable function, so every module asking through it shares one memo.
+  const doFetch = options.fetch ?? globalThis.fetch;
+  return memoizedGetJson(
+    doFetch,
+    url,
+    { headers: apiHeaders(env) },
+    { timeoutMs: timeoutFromEnv(env), sleep: options.sleep },
+  );
 }
 
 function assertRanking(payload: unknown, source: string): Ranking {
@@ -202,8 +210,7 @@ export async function loadRanking(
   const params = toApiParams(state);
   params.set('limit', String(limit));
   const url = `${requireApiUrl(env)}/api/v1/ranking?${params.toString()}`;
-  const doFetch = options.fetch ?? globalThis.fetch;
-  return assertRanking(await apiGet(url, doFetch, env), url);
+  return assertRanking(await apiGet(url, options, env), url);
 }
 
 /**
@@ -278,7 +285,7 @@ export async function loadHistory(
   }
 
   const url = `${requireApiUrl(env)}/api/v1/instruments/${encodeURIComponent(instrumentId)}/history`;
-  return assertHistory(await apiGet(url, options.fetch ?? globalThis.fetch, env), url);
+  return assertHistory(await apiGet(url, options, env), url);
 }
 
 /**

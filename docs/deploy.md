@@ -376,6 +376,9 @@ Cloudflare Pages (or any static host with a build pipeline), pointing at this re
 | Build-time env `API_URL` | `https://api.rindetuplata.ar` (the API the pages are built from) |
 | Build-time env `PUBLIC_API_URL` | `https://api.rindetuplata.ar` (the URL the browser island calls) |
 | Build-time env `API_BUILD_TOKEN` | optional: the API's rate-limit bypass token (see "VPS: the API"); never `PUBLIC_` |
+| Build-time env `API_TIMEOUT_MS` | optional: per-request deadline in ms (default `15000`) |
+| Build-time env `BUILD_MAX_DATA_AGE_DAYS` | optional: the freshness gate's limit (default `3`) |
+| Build-time env `BUILD_MIN_RANKED` | optional: the minimum-data gate's limit (default `20`) |
 | SPA fallback / routing | off: the site is fully prerendered, and `404.html` is the error page |
 
 `API_URL` and `PUBLIC_API_URL` are different on purpose: the first one is only read while building,
@@ -385,6 +388,33 @@ would make the browser call the CDN's own origin, where there is no API.
 Authenticated flows (`/ingresar`, `/alertas`, `/admin/tasas`) need the site and the API on the same
 registrable domain: the `SameSite=Lax` session cookie does not travel from a `*.pages.dev` preview
 domain to `api.rindetuplata.ar`. Test the login on the production domain, not on a preview URL.
+
+### Build gate and API client (T4d)
+
+The build used to publish whatever the API answered: an empty or days-old ranking became an empty or stale
+site, and Google indexed it. Now `astro build` runs a **gate** before it renders a single page
+(`web/src/lib/buildGate.ts`, wired as the `astro:build:start` hook of `web/astro.config.mjs`, so `build:api`,
+the private-preview rebuilder and a CDN that calls `astro build` all go through it). It fails the build,
+exit code non-zero, with a message that names each failed check, and the previous site keeps being served:
+
+| Check | Fails when |
+|---|---|
+| `data-age` | the newest capture date in the default ranking is more than `BUILD_MAX_DATA_AGE_DAYS` (default 3) Argentine calendar days old, or the ranking has no capture date |
+| `min-ranked` | the default ranking has fewer than `BUILD_MIN_RANKED` (default 20) ranked entries |
+| `category-rankings` | the ranking of any category page (`web/src/lib/categories.ts`) has no ranked entries; the message lists the empty categories |
+| `api-read` | the API could not be read after the retries below |
+
+With `WEB_FIXTURES=1` (CI and tests) only `data-age` is skipped: the recordings are old by nature, but a
+fixture set that is too small or has an empty category still fails. An unreadable setting (`BUILD_MIN_RANKED=many`)
+fails the build naming the variable.
+
+The build's HTTP client (`web/src/lib/fetchRetry.ts`, used by `data.ts`) gives every request a deadline
+(`API_TIMEOUT_MS`, default 15 s) and retries only network errors, timeouts, 5xx and 429: 3 attempts, waiting 1 s
+then 2 s, or the `Retry-After` the API sent (capped at 30 s). Any other 4xx fails at once. An identical request
+(same URL and headers) is sent **once per build** however many pages ask for it, so a build costs one fetch per
+distinct ranking and per instrument history instead of about thirty identical rankings. The gate reads the same
+requests the pages read, so it adds no fetch. Errors name the URL and the status or cause, never the headers
+(`API_BUILD_TOKEN` stays out of every message).
 
 ## Rebuild hook
 
