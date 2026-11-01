@@ -212,6 +212,13 @@ production-shaped (every statement below was checked with `docker compose config
   events.
 - Every service carries `restart: unless-stopped`, so a reboot or an OOM brings the API and its
   dependencies back without anyone running `up` again.
+- **Memory limits and log rotation (T4c).** The overlay splits a 2 GB box: Postgres 512m, RabbitMQ 384m, the API
+  768m and Caddy 128m (1,792m in all, the rest is for the OS and Docker). The JVM keeps
+  `-XX:MaxRAMPercentage=75` and sizes its heap from the container limit, so the API heap is about 576m and it can no
+  longer starve the database or the broker; an overrun is killed (and restarted) inside its own container. Every
+  service also logs through `json-file` rotated at 10m x 3, so container logs cannot fill the disk. Both are
+  checked per service by `deploy/test/compose-limits-test.sh` (`docker compose config` with fake values). On a
+  bigger box raise the numbers in `deploy/compose.vps.yaml`, keeping the API at 75% of its limit or less for heap.
 - Mailpit and the local site server are dropped (`profiles: !override`), and a `caddy` service
   terminates TLS for `api.<domain>` using `deploy/Caddyfile.vps`, which proxies only `/api/*` and
   answers 404 for every other path (the site itself lives on the CDN).
@@ -370,45 +377,96 @@ at its own rebuild sidecar (`http://rebuilder:8787/`, see "Private preview" abov
 
 The database holds only what cannot be rebuilt: users and their alert rules, with what the rule types remember
 between evaluations (the stored best option and rate, the digests already sent; `docs/alerts.md`). The ranking and the
-history come from the sources and can be re-ingested.
+history come from the sources and can be re-ingested (the backfill job, `POST /api/v1/admin/backfill`).
+
+Three files do the work, all tested on a throwaway `postgres:18-alpine` by `deploy/test/backup-test.sh`:
+
+- `deploy/backup.sh` runs `pg_dump -Fc` inside the Compose `postgres` service, writes it to a temporary file and
+  renames it to `rindetuplata-YYYY-MM-DD.dump` only after pg_dump succeeded and produced something. On any failure it
+  removes the temporary file, exits non-zero and prunes nothing, so a bad night never deletes the older good dumps.
+  After a good dump it deletes the dumps older than the retention window (regular `rindetuplata-*.dump` files only).
+- `deploy/restore.sh --confirm <dump>` restores one dump. It refuses (exit 2, nothing changed) without `--confirm`,
+  without a dump name, or with a dump that does not exist; the restore itself is one transaction, so a dump that
+  fails half-way leaves the database as it was.
+- `deploy/systemd/rindetuplata-backup.service` + `.timer` run the backup every day at 03:30 local time;
+  `Persistent=true` runs a missed one as soon as the box is back.
+
+### Configuration
+
+All optional; the defaults match the VPS layout above (the checkout in `/srv/rindetuplata`).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `BACKUP_DIR` | `/srv/rindetuplata/backups` | where dumps go (created `0700`, dumps `0600`) |
+| `BACKUP_RETENTION_DAYS` | `30` | dumps strictly older than this many days are deleted; a positive whole number |
+| `BACKUP_COPY_COMMAND` | unset | shell command run after a good dump, the dump's path is `"$1"` (see below) |
+| `BACKUP_COMPOSE_FILES` | `compose.yaml deploy/compose.vps.yaml` | space-separated Compose files, relative to the checkout |
+| `BACKUP_ENV_FILE` | `/srv/rindetuplata/api.env` | Compose `--env-file`; set it empty for none |
+| `BACKUP_SERVICE` | `postgres` | the Compose service running Postgres |
+| `BACKUP_DB_NAME`, `BACKUP_DB_USER` | `rindetuplata` | database and role |
+
+Under systemd put overrides in `/srv/rindetuplata/backup.env`, one `KEY=value` per line (the unit reads it if it exists).
+`BACKUP_COMPOSE_FILES`, `BACKUP_SERVICE` and the two `BACKUP_DB_*` variables are what the test points at its throwaway
+container.
+
+### Install the timer
 
 ```bash
-#!/usr/bin/env bash
-# Daily dump next to the Compose project, 30 days kept; run it from cron.
-#
-# `set -euo pipefail` is the point of the recipe, not decoration: without it a failed
-# `docker compose exec` (box down, container restarting, volume missing) left a truncated dump and the
-# `find` below still ran, deleting the older dumps that were still good. The dump now lands in a
-# temporary file and only replaces the day's dump once it is non-empty, so pruning can never run on a
-# day whose dump failed (finding R4 of `review-d018a62efca39d30`).
-set -euo pipefail
+sudo install -m 0644 /srv/rindetuplata/deploy/systemd/rindetuplata-backup.service \
+                     /srv/rindetuplata/deploy/systemd/rindetuplata-backup.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now rindetuplata-backup.timer
 
-cd /srv/rindetuplata # the checkout; cron starts in the home directory
-compose=(docker compose -f compose.yaml -f deploy/compose.vps.yaml --env-file /srv/rindetuplata/api.env)
-backups=/srv/rindetuplata/backups
-dump="$backups/rindetuplata-$(date +%F).dump"
-
-mkdir -p "$backups"
-trap 'rm -f "$dump.tmp"' EXIT
-
-"${compose[@]}" exec -T postgres pg_dump -U rindetuplata -Fc rindetuplata > "$dump.tmp"
-
-if [ ! -s "$dump.tmp" ]; then
-  echo "pg_dump produced an empty file; keeping every existing dump" >&2
-  exit 1
-fi
-
-mv "$dump.tmp" "$dump"
-find "$backups" -name 'rindetuplata-*.dump' -mtime +30 -delete
-
-# Restore (a new or broken volume), same pgdata volume in place:
-docker compose -f compose.yaml -f deploy/compose.vps.yaml --env-file /srv/rindetuplata/api.env \
-  exec -T postgres pg_restore -U rindetuplata -d rindetuplata --clean \
-  < /srv/rindetuplata/backups/rindetuplata-YYYY-MM-DD.dump
+systemctl list-timers rindetuplata-backup.timer      # the next run, 03:30 local
+sudo systemctl start rindetuplata-backup.service     # run it now, once
+journalctl -u rindetuplata-backup.service -n 20      # "backup written: ..." or the reason it failed
 ```
 
-Copy the dumps off the box (object storage, `rclone`, or a second host): a backup on the same disk
-survives a bad deploy, not a lost VPS. The `pgdata` volume is the only stateful thing to preserve.
+The units assume the checkout at `/srv/rindetuplata` and a system service (root, which can reach Docker); edit
+`WorkingDirectory` and `ExecStart` in the `.service` if yours lives elsewhere. A failed run leaves the unit in the
+`failed` state (`systemctl --failed`), which is the signal to look at the journal.
+
+### Copy the dumps off the box
+
+A backup on the same disk survives a bad deploy, not a lost VPS. Where the copies go is the owner's choice (object
+storage, a second host); until then `BACKUP_COPY_COMMAND` stays unset and the dumps stay local. When it is set, the
+script runs it after each good dump with the dump's path as `$1`, for example in `backup.env`:
+
+```bash
+BACKUP_COPY_COMMAND='rclone copyto "$1" offsite:rindetuplata/"$(basename "$1")"'
+```
+
+(The single quotes matter: systemd must hand the text to the script untouched, `$1` and all.)
+
+If the command fails, the script exits non-zero (the unit fails) but keeps the local dump. It never runs after a
+failed dump.
+
+### Restore drill
+
+Do this once after installing the timer, and again whenever the schema or the host changes: an untested backup is not
+a backup. The drill restores into the live database, so schedule it, or do it on a second box.
+
+```bash
+cd /srv/rindetuplata
+ls -lh /srv/rindetuplata/backups                                  # pick the dump
+compose=(docker compose -f compose.yaml -f deploy/compose.vps.yaml --env-file /srv/rindetuplata/api.env)
+
+"${compose[@]}" stop api                                          # its connections would block the DROPs
+deploy/restore.sh --confirm rindetuplata-YYYY-MM-DD.dump          # a name in BACKUP_DIR, or a full path
+"${compose[@]}" start api
+```
+
+Then check that the data is what the dump held:
+
+```bash
+"${compose[@]}" exec -T postgres psql -U rindetuplata -d rindetuplata -c 'select count(*) from app_user'
+"${compose[@]}" exec -T postgres psql -U rindetuplata -d rindetuplata -c 'select count(*) from alert_rule'
+curl -fsS https://api.<domain>/actuator/health
+```
+
+Without `--confirm` the script prints why it refused and changes nothing. Restoring into a new or empty volume works
+the same way: bring up `postgres` alone (`"${compose[@]}" up -d --wait postgres`), run `restore.sh --confirm`, then
+start the rest.
 
 ## What the owner still has to decide
 

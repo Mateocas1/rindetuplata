@@ -18,11 +18,25 @@
 #   - Mailpit and the local-site Caddy are out: the VPS sends real mail and the site lives on a CDN;
 #   - the API runs with the `prod` profile (SPRING_PROFILES_ACTIVE=prod), whose startup guard refuses a configuration
 #     that still has a development default;
-#   - a `caddy` service terminates TLS for api.<domain> (deploy/Caddyfile.vps).
+#   - a `caddy` service terminates TLS for api.<domain> (deploy/Caddyfile.vps);
+#   - memory limits sized for a 2 GB box, 1,792m in total: postgres 512m, rabbitmq 384m, api 768m, caddy 128m
+#     (T4c, S4). The JVM sizes its heap from its container limit (`-XX:MaxRAMPercentage=75` in the
+#     Dockerfile), so the api heap is about 576m and it can no longer take memory from the database or the
+#     broker; the OOM killer now picks the container that overran, not a random neighbour;
+#   - json-file log rotation, 10m x 3, on every service: Docker's default driver never rotates, and a
+#     long-lived box would fill its disk with logs. Checked per service by deploy/test/compose-limits-test.sh.
+
+x-logging: &rotated-logs
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
 
 services:
   postgres:
     restart: unless-stopped
+    mem_limit: 512m
+    logging: *rotated-logs
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the env file}
     ports: !override []
@@ -34,6 +48,8 @@ services:
 
   rabbitmq:
     restart: unless-stopped
+    mem_limit: 384m
+    logging: *rotated-logs
     # RabbitMQ derives its node name, and therefore its data directory, from the container hostname:
     # without a fixed one a restarted broker comes up as a new node and cannot read the mnesia state
     # it wrote before. The image declares `/var/lib/rabbitmq` as its volume and sets
@@ -49,14 +65,18 @@ services:
   # Local SMTP catcher only.
   mailpit:
     profiles: !override ["mailpit"]
+    logging: *rotated-logs
 
   # The local site server (Caddy over web/dist) only; on the VPS Caddy serves api.<domain> instead and
   # the pages come from the CDN.
   web:
     profiles: !override ["local-site"]
+    logging: *rotated-logs
 
   api:
     restart: unless-stopped
+    mem_limit: 768m
+    logging: *rotated-logs
     environment:
       # The `prod` profile (application-prod.properties): the API refuses to start, naming each property, when a
       # value below is still a local default (HTTP or localhost URLs, Mailpit, no admin, a short build token).
@@ -89,6 +109,8 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    mem_limit: 128m
+    logging: *rotated-logs
     depends_on:
       api:
         condition: service_healthy
