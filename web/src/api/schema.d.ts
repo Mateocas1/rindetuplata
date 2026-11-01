@@ -864,13 +864,13 @@ export interface components {
         };
         JsonNode: {
             container?: boolean;
-            valueNode?: boolean;
-            missingNode?: boolean;
-            object?: boolean;
             /** @enum {string} */
             nodeType?: "ARRAY" | "BINARY" | "BOOLEAN" | "MISSING" | "NULL" | "NUMBER" | "OBJECT" | "POJO" | "STRING";
             string?: boolean;
             integralNumber?: boolean;
+            missingNode?: boolean;
+            valueNode?: boolean;
+            object?: boolean;
             pojo?: boolean;
             floatingPointNumber?: boolean;
             short?: boolean;

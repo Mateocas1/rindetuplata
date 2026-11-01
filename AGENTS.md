@@ -13,7 +13,7 @@ daily history, simulates amount + days, and sends alerts.
 
 ## Stack
 
-- Java 21, Spring Boot 4.1.1, Maven wrapper (`./mvnw`; Maven is not installed globally).
+- Java 21, Spring Boot 4.1.2, Maven wrapper (`./mvnw`; Maven is not installed globally).
 - PostgreSQL 18 with Flyway migrations (`src/main/resources/db/migration`).
 - Tests: JUnit 5, Spring Boot test slices, Testcontainers (`postgres:18-alpine`). Docker must be running.
 
@@ -67,8 +67,8 @@ Pane prompt checklist (learned in T4 with DeepSeek v4 flash; each item cost an a
 - **Test-first must be explicit.** Without it the pane writes production code first (T4a). Say: "write the test, run
   it, paste the RED output, only then create the production class"; a stub that throws counts only if a later
   assertion RED follows.
-- **Name the API traps of this stack up front:** Spring Boot 4.1.1 + Spring Batch 6 moved packages (`JobOperator`
-  replaces `JobLauncher`); Jackson 3 (`tools.jackson`) has different node accessors; Boot 4.1.1 has no
+- **Name the API traps of this stack up front:** Spring Boot 4.1 + Spring Batch 6 moved packages (`JobOperator`
+  replaces `JobLauncher`); Jackson 3 (`tools.jackson`) has different node accessors; Boot 4.1 has no
   `RestClient.Builder` bean; `spring.main.allow-bean-definition-overriding` does not replace real port beans in tests
   (use `@Primary` stubs or remove the definitions); a component with two constructors breaks the context.
 - **Security tests (T7a).** Assert cookie attributes over real HTTP (`RANDOM_PORT` + JDK `HttpClient`): MockMvc's

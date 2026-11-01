@@ -19,6 +19,14 @@ updates:
     groups:
       npm-minor-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # The typings follow the Node runtime (engines >=24, Node 24 in every workflow); they move when it does.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # @astrojs/check declares the peer typescript "^5.0.0 || ^6.0.0", so npm ci fails with ERESOLVE on TypeScript 7
+      # (#25). Lift this once @astrojs/check accepts TypeScript 7.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -38,3 +46,8 @@ updates:
     groups:
       docker-minor-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # A new Java major is one deliberate change of the build image, the runtime image and java.version in
+      # pom.xml, on an LTS release; a base-image bump would move only one stage (#20).
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
