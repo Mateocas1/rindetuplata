@@ -7,7 +7,7 @@
 # Tests are not run here: they need a Docker daemon for Testcontainers. They run locally with
 # `./mvnw test` and in CI (.github/workflows/java-test.yml).
 
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:24-jdk-alpine AS build
 
 WORKDIR /build
 
@@ -20,7 +20,7 @@ RUN chmod +x mvnw && ./mvnw -B -DskipTests dependency:go-offline
 COPY src src
 RUN ./mvnw -B -DskipTests package && cp "$(ls target/*.jar | head -1)" /build/app.jar
 
-FROM eclipse-temurin:21-jre-alpine AS runtime
+FROM eclipse-temurin:24-jre-alpine AS runtime
 
 # curl is only the health probe; the application itself needs nothing from the base image.
 RUN apk add --no-cache curl \
