@@ -1,0 +1,88 @@
+name: Deploy tests
+
+# The deploy scripts and Compose files have tests that need only Docker, Node (with web/'s dependencies) and Python, all on the runner
+# (T4e, S4, L36b). The scripts are picked up by a glob, so a new deploy/test/*-test.sh runs without editing
+# this file.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "deploy/**"
+      - "compose.yaml"
+      - ".github/workflows/deploy-test.yml"
+  pull_request:
+    paths:
+      - "deploy/**"
+      - "compose.yaml"
+      - ".github/workflows/deploy-test.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: deploy scripts and Compose files
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      # preview.sh refuses to start without web/node_modules (the rebuild sidecar's site build needs it),
+      # and preview-script-test.sh drives that path.
+      - name: Install the web dependencies
+        working-directory: web
+        run: npm ci
+      - name: Run every deploy/test/*-test.sh
+        run: |
+          shopt -s nullglob
+          scripts=(deploy/test/*-test.sh)
+          if [ "${#scripts[@]}" -eq 0 ]; then
+            echo "::error::no deploy/test/*-test.sh found"
+            exit 1
+          fi
+          failed=()
+          for script in "${scripts[@]}"; do
+            echo "::group::$script"
+            if bash "$script"; then
+              echo "ok: $script"
+            else
+              echo "::error::$script failed"
+              failed+=("$script")
+            fi
+            echo "::endgroup::"
+          done
+          if [ "${#failed[@]}" -gt 0 ]; then
+            printf 'failed: %s\n' "${failed[@]}"
+            exit 1
+          fi
+      - name: Render compose.yaml
+        run: docker compose --profile stack -f compose.yaml config --quiet
+      # Fake values only: `--env-file` feeds the `${VAR:?}` guards of the overlay, nothing is started.
+      - name: Render the VPS overlay with fake env values
+        run: |
+          env_file="$RUNNER_TEMP/api.env"
+          cat > "$env_file" <<'ENV'
+          POSTGRES_PASSWORD=fake-postgres-password
+          RABBITMQ_DEFAULT_PASS=fake-rabbitmq-password
+          SPRING_MAIL_HOST=smtp.example.com
+          SPRING_MAIL_USERNAME=fake-user
+          SPRING_MAIL_PASSWORD=fake-mail-password
+          RINDETUPLATA_AUTH_MAGICLINKURL=https://example.com/ingresar
+          RINDETUPLATA_ALERT_MANAGEURL=https://example.com/alertas
+          RINDETUPLATA_WEB_ALLOWEDORIGINS=https://example.com
+          RINDETUPLATA_AUTH_ADMINEMAILS=admin@example.com
+          RINDETUPLATA_INGEST_REBUILDHOOKURL=https://example.com/hook
+          ENV
+          docker compose -f compose.yaml -f deploy/compose.vps.yaml --profile stack --env-file "$env_file" config --quiet
+      - name: The VPS overlay refuses an empty env file
+        run: |
+          : > "$RUNNER_TEMP/empty.env"
+          if docker compose -f compose.yaml -f deploy/compose.vps.yaml --profile stack --env-file "$RUNNER_TEMP/empty.env" config --quiet; then
+            echo "::error::deploy/compose.vps.yaml rendered without its required env values"
+            exit 1
+          fi
