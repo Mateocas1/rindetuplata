@@ -1,5 +1,6 @@
 package ar.rindetuplata.account;
 
+import ar.rindetuplata.api.ratelimit.ApiKeyAdmission;
 import ar.rindetuplata.api.ratelimit.ApiRateLimitFilter;
 import ar.rindetuplata.api.ratelimit.ApiRateLimitProperties;
 import ar.rindetuplata.api.ratelimit.ApiRateLimiter;
@@ -41,7 +42,7 @@ import org.springframework.web.filter.CorsFilter;
  * T6a security (S4, S13): one chain for the API, magic-link login over Spring Security's JDBC one-time-token
  * service, JDBC sessions, SPA CSRF, CORS with credentials, and JSON {@code ProblemDetail} for 401/403. Public
  * reads stay open, behind a per-address rate limit (T1a); the authorities of a session are recomputed on every request ({@link RolesRefreshFilter});
- * {@code /api/v1/me} and {@code /api/v1/alerts/**} need a login; {@code /api/v1/admin/**} needs
+ * {@code /api/v1/me}, {@code /api/v1/alerts/**} and {@code /api/v1/account/**} (API keys, T6d) need a login; {@code /api/v1/admin/**} needs
  * {@code ROLE_ADMIN}; everything else is denied.
  */
 @Configuration(proxyBeanMethods = false)
@@ -53,10 +54,11 @@ public class SecurityConfiguration {
 	SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource,
 			SecurityContextRepository securityContextRepository, CsrfTokenRepository csrfTokenRepository,
 			AuthenticationEntryPoint authenticationEntryPoint, AccessDeniedHandler accessDeniedHandler,
-			AccountRoles accountRoles, ApiRateLimiter apiRateLimiter, ApiRateLimitProperties rateLimitProperties)
+			AccountRoles accountRoles, ApiRateLimiter apiRateLimiter, ApiRateLimitProperties rateLimitProperties,
+			ApiKeyAdmission apiKeyAdmission)
 			throws Exception {
 		http
-				.addFilterAfter(new ApiRateLimitFilter(apiRateLimiter, rateLimitProperties.bypassToken()),
+				.addFilterAfter(new ApiRateLimitFilter(apiRateLimiter, rateLimitProperties.bypassToken(), apiKeyAdmission),
 						CorsFilter.class)
 				.addFilterAfter(new RolesRefreshFilter(accountRoles), SecurityContextHolderFilter.class)
 				.cors(cors -> cors.configurationSource(corsConfigurationSource))
@@ -78,7 +80,7 @@ public class SecurityConfiguration {
 						.requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
 						.requestMatchers("/error").permitAll()
 						.requestMatchers("/api/v1/auth/**").permitAll()
-						.requestMatchers("/api/v1/me", "/api/v1/alerts/**").authenticated()
+						.requestMatchers("/api/v1/me", "/api/v1/alerts/**", "/api/v1/account/**").authenticated()
 						.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 						.anyRequest().denyAll())
 				.formLogin(AbstractHttpConfigurer::disable)

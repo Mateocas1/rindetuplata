@@ -261,6 +261,32 @@ docker compose -f compose.yaml -f deploy/compose.vps.yaml \
   first drops the buckets that have refilled completely and, if it is still full, answers the same 429 to
   any client it does not know yet, while the ones it already tracks keep being served. That fail-closed choice is a trade-off: a sustained flood from many addresses can keep new visitors out for as long as it lasts (each refused visitor gets a `Retry-After` of up to 60 s), while visitors already being served are unaffected. `days` is capped at 1825 and
   `amount` at 1000000000000 (a 400 naming the parameter), because the simulation cost grows with `days`.
+- **API keys and plans (T6d).** A request with a valid `X-Api-Key` on the public read API is limited by the plan of
+  its key instead of its address: a bucket per key and a quota of counted requests per Argentine day
+  (`America/Argentina/Buenos_Aires`). `FREE` is every key a user creates: a bucket of 600 refilled 10 per second and
+  20000 requests per day. `PARTNER` is a key the operator promotes: 3000, 50 per second and 500000 per day. The
+  anonymous plan (no key) is the per-address bucket above. Change the numbers with
+  `RINDETUPLATA_API_PLANS_FREE_CAPACITY`, `..._REFILLPERSECOND`, `..._DAILYQUOTA` and the same three under
+  `RINDETUPLATA_API_PLANS_PARTNER_*`. Buckets and quotas live in the API's memory (single instance, S16): a restart
+  gives every key a full bucket and a fresh quota, and a second instance would need a shared store. The plan lives in
+  the `api_key` table; promote a key by hand and the next request already uses the new plan (the key is looked up in
+  Postgres on every request, which is also why a revoked key stops at once):
+
+  ```sql
+  -- find the key by owner and display prefix (the full key is never stored), then promote it
+  select k.id, u.email, k.key_prefix, k.plan, k.revoked_at
+  from api_key k join app_user u on u.id = k.user_id order by k.id;
+  update api_key set plan = 'PARTNER' where id = 42;
+  -- back to the normal plan
+  update api_key set plan = 'FREE' where id = 42;
+  ```
+
+  An unknown or revoked key is a 401 `ProblemDetail`, never a silent fall back to the address bucket, and costs one token
+  of the per-address bucket (once it is spent the answer is the address 429 with no database lookup, so invented keys
+  cannot flood Postgres); over the bucket
+  or the quota is a 429 `ProblemDetail` with `Retry-After` (seconds to the next token, or to midnight for the quota).
+  The header is read only on the public read paths; a key never signs anyone in. Details in
+  [`api-keys.md`](api-keys.md).
 - **Ranking cache and conditional requests (T3a).** `GET /api/v1/ranking` keeps up to
   `RINDETUPLATA_RANKING_CACHEMAXENTRIES` results in the API's memory (default 64, least recently used out
   first; one entry is a whole ranking, so the cap is a memory bound). An entry is reused only for the same data

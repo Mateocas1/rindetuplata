@@ -53,6 +53,14 @@ public class ApiRateLimiter {
 			return OptionalLong.of(Math.max(1, (long) Math.ceil((1 - tokens) / refillPerSecond)));
 		}
 
+		synchronized OptionalLong peek(Instant now) {
+			refill(now);
+			if (tokens >= 1) {
+				return OptionalLong.empty();
+			}
+			return OptionalLong.of(Math.max(1, (long) Math.ceil((1 - tokens) / refillPerSecond)));
+		}
+
 		synchronized boolean isFull(Instant now) {
 			refill(now);
 			return tokens >= capacity;
@@ -122,6 +130,16 @@ public class ApiRateLimiter {
 			bucket = buckets.computeIfAbsent(key, k -> new Bucket(now));
 		}
 		return bucket.tryTake(now);
+	}
+
+	/**
+	 * Like {@link #tryAcquire} but takes nothing: empty when the address has a token (or no bucket yet), otherwise the
+	 * seconds until it has one. The API-key path asks it before a key lookup, so an address that has spent its
+	 * bucket on refused keys costs no database read (T6d, F1).
+	 */
+	public OptionalLong peek(String address) {
+		Bucket bucket = buckets.get(bucketKey(address));
+		return bucket == null ? OptionalLong.empty() : bucket.peek(clock.instant());
 	}
 
 	int trackedAddresses() {

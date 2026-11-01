@@ -61,6 +61,8 @@ saver persona). Of the top 200, **79 lose to expected inflation** over the 30 da
   which index it used.
 - **History.** Built by our own daily ingestion, since no source keeps per-bank or per-wallet history.
 - **Alerts.** Passwordless magic-link login; "tell me when a wallet goes above X% a year" by email.
+- **API keys.** A signed-in user creates up to 3 keys at `/claves-api/` and sends one as `X-Api-Key` to get its own
+  rate limit and daily quota on the public read API ([`docs/api-keys.md`](docs/api-keys.md)).
 - **Honest data.** Each rate carries its source, its data date and a confidence level (official automatic,
   aggregator automatic, scraped from the entity's web page, curated by hand with a verified-at date). Stale data
   is shown flagged, never as current.

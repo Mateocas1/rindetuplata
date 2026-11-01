@@ -1,7 +1,8 @@
 ---
 /**
  * Site chrome: a sticky header with the wordmark and the public pages (the
- * ranking, the four category landings and the methodology page). The height
+ * ranking, the four category landings and the methodology page) and, last, the
+ * API-keys page (T6d), which asks for a login itself. The height
  * (3.5rem) must stay in sync with `scroll-padding-block-start` in global.css so
  * anchors and focused elements never land under it. On narrow screens the nav
  * scrolls sideways rather than wrapping, so the header height never changes; its
@@ -29,6 +30,7 @@ const links = [
   { href: '/bancos/', label: 'Bancos' },
   { href: '/informes/', label: 'Informes' },
   { href: '/metodologia/', label: 'Cómo se calcula' },
+  { href: '/claves-api/', label: 'Claves API' },
 ];
 
 /** `page` on the page itself, `true` on the section link while a page inside it is open (the monthly reports). */
