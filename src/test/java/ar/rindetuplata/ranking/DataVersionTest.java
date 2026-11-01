@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -47,6 +48,9 @@ class DataVersionTest {
 
 	@Autowired
 	BankPlazoFijoWriter banks;
+
+	@Autowired
+	JdbcClient jdbc;
 
 	@Test
 	void theVersionIsStableWhileNothingIsWritten() {
@@ -84,6 +88,24 @@ class DataVersionTest {
 		String confirmed = version.current();
 
 		assertThat(List.of(before, saved, confirmed)).doesNotHaveDuplicates();
+	}
+
+	@Test
+	void anAuditEntryCommittedAfterOneWithAHigherIdStillChangesTheVersion() {
+		// Two overlapping curation saves: the one with the lower id commits last (T3a verify, F1).
+		insertAudit(1_000_000);
+		String before = version.current();
+
+		insertAudit(999_999);
+
+		assertThat(version.current()).isNotEqualTo(before);
+	}
+
+	private void insertAudit(long id) {
+		jdbc.sql("""
+				insert into curated_wallet_rate_audit (id, wallet_id, action, payload, actor, at)
+				values (:id, 'test-wallet', 'SAVE', '{}'::jsonb, 'admin@rindetuplata.ar', now())
+				""").param("id", id).update();
 	}
 
 	@Test
