@@ -1,0 +1,18 @@
+# Daily database backup (T4c): runs deploy/backup.sh once and exits. Triggered by rindetuplata-backup.timer.
+#
+# Install (docs/deploy.md, "Backups"): this assumes the checkout at /srv/rindetuplata; change
+# WorkingDirectory and ExecStart if it lives elsewhere. Optional overrides (BACKUP_DIR,
+# BACKUP_RETENTION_DAYS, BACKUP_COPY_COMMAND, ...) go in /srv/rindetuplata/backup.env, one KEY=value per line.
+[Unit]
+Description=rindetuplata database backup (pg_dump through Docker Compose)
+Documentation=file:///srv/rindetuplata/docs/deploy.md
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/rindetuplata
+EnvironmentFile=-/srv/rindetuplata/backup.env
+ExecStart=/srv/rindetuplata/deploy/backup.sh
+# A hung pg_dump must not pile up behind tomorrow's run.
+TimeoutStartSec=30min
