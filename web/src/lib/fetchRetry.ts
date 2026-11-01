@@ -9,7 +9,7 @@
  *
  * Build-time only, like `data.ts`.
  */
-import type { Env } from './data';
+import type { BuildDataOptions, Env } from './data';
 
 export const DEFAULT_TIMEOUT_MS = 15_000;
 export const DEFAULT_ATTEMPTS = 3;
@@ -201,4 +201,32 @@ export function memoizedGetJson(
   cache.set(key, pending);
   pending.catch(() => cache.delete(key));
   return pending;
+}
+
+/**
+ * The build token, when set, is sent as `X-Build-Token` so the API skips its per-address limit for this build; a
+ * blank value sends nothing. It never reaches an error or a log line (errors name the URL, never the headers).
+ */
+function apiHeaders(env: Env): Record<string, string> {
+  const headers: Record<string, string> = { accept: 'application/json' };
+  const token = env.API_BUILD_TOKEN?.trim();
+  if (token) headers['x-build-token'] = token;
+  return headers;
+}
+
+/**
+ * The one way a loader reads the API while building: deadline and retries from the environment
+ * (`API_TIMEOUT_MS`), the build token, and one request per identical URL and headers for the build. `data.ts`
+ * builds the same request, so a URL asked for by two modules is still sent once. (F6: the bank and report loaders
+ * had their own bare `fetch`, so a hung API hung the build on those pages.)
+ */
+export function buildApiGet(url: string, options: BuildDataOptions, env: Env): Promise<unknown> {
+  // `globalThis.fetch` is one stable function, so every module asking through it shares one memo.
+  const doFetch = options.fetch ?? globalThis.fetch;
+  return memoizedGetJson(
+    doFetch,
+    url,
+    { headers: apiHeaders(env) },
+    { timeoutMs: timeoutFromEnv(env), sleep: options.sleep },
+  );
 }

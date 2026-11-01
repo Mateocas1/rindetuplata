@@ -3,6 +3,8 @@
 # Install (docs/deploy.md, "Backups"): this assumes the checkout at /srv/rindetuplata; change
 # WorkingDirectory and ExecStart if it lives elsewhere. Optional overrides (BACKUP_DIR,
 # BACKUP_RETENTION_DAYS, BACKUP_COPY_COMMAND, ...) go in /srv/rindetuplata/backup.env, one KEY=value per line.
+# Dumps go to /var/backups/rindetuplata (created 0700 by the script), outside the checkout, so cleaning the checkout
+# and `docker build` never touch them.
 [Unit]
 Description=rindetuplata database backup (pg_dump through Docker Compose)
 Documentation=file:///srv/rindetuplata/docs/deploy.md

@@ -10,8 +10,11 @@
 # temporary file is removed, the script exits non-zero and nothing is pruned: a failed day can never
 # delete the older dumps that are still good (finding R4 of `review-d018a62efca39d30`).
 #
+# The default directory is outside the checkout on purpose (finding F4 of the T4 verify): inside it a clean of
+# untracked files deletes the dumps and every `docker build` sends them as build context.
+#
 # Configuration, all optional (defaults are the VPS layout of docs/deploy.md):
-#   BACKUP_DIR             where dumps go                                  /srv/rindetuplata/backups
+#   BACKUP_DIR             where dumps go (created 0700 if missing)        /var/backups/rindetuplata
 #   BACKUP_RETENTION_DAYS  dumps older than this many days are deleted      30
 #   BACKUP_COMPOSE_FILES   space-separated Compose files (-f, from the repo root)
 #                                                                          "compose.yaml deploy/compose.vps.yaml"
@@ -27,7 +30,7 @@ set -Eeuo pipefail
 
 cd "$(dirname "$0")/.."
 
-backup_dir="${BACKUP_DIR:-/srv/rindetuplata/backups}"
+backup_dir="${BACKUP_DIR:-/var/backups/rindetuplata}"
 retention_days="${BACKUP_RETENTION_DAYS:-30}"
 compose_files="${BACKUP_COMPOSE_FILES:-compose.yaml deploy/compose.vps.yaml}"
 env_file="${BACKUP_ENV_FILE-/srv/rindetuplata/api.env}"

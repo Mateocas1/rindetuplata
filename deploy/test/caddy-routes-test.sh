@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Caddy routes of every stack (T6e, S6, L32c): the paths the API publishes to the outside world reach it.
 #
-# llms.txt names /api/*, /v3/api-docs and /mcp, so each Caddyfile must proxy exactly those to the API container:
+# llms.txt names /api/*, /v3/api-docs and /mcp, and the uptime monitor and the post-restore check (docs/deploy.md)
+# read /actuator/health and /actuator/health/ingestion (T4c, F1), so each Caddyfile must proxy exactly those to
+# the API container, and not the rest of /actuator/*:
 # a path Caddy does not proxy answers 404 (VPS) or a static page (local, preview) instead of the API. The check
 # adapts each Caddyfile with the same caddy:2-alpine image the stacks run, so it reads Caddy's own route tree
 # instead of grepping the text, and asserts which paths the reverse-proxy route matches.
@@ -12,7 +14,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 image=caddy:2-alpine
-expected='["/api/*", "/mcp", "/v3/api-docs"]'
+expected='["/actuator/health", "/actuator/health/ingestion", "/api/*", "/mcp", "/v3/api-docs"]'
 failures=0
 scratch=$(mktemp -d)
 trap 'rm -r "$scratch"' EXIT
