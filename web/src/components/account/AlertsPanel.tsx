@@ -2,8 +2,9 @@
  * `/alertas` island (S3, S13, T7d) — client only.
  *
  * Reads `GET /api/v1/me`, then lists the session's rules, lets the reader create
- * one (optional kind, optional instrument from the public list, threshold as a
- * percent) and delete one with a confirmation. Any 401 leaves for `/ingresar`:
+ * one of four types (T6c: a threshold with optional kind and instrument and the
+ * rate as a percent, a change of the best option, a drop of one rate, a weekly
+ * digest) and delete one with a confirmation. Any 401 leaves for `/ingresar`:
  * a page with no session has nothing to show.
  *
  * The panel owns the session, the data and the requests; `AlertCreateForm` and
@@ -26,7 +27,12 @@ import ProblemNotice from './ProblemNotice';
 import StatusNotice from './StatusNotice';
 
 const LOGIN_PATH = '/ingresar';
-const EMPTY_FORM: AlertFormState = { kind: '', instrumentId: '', thresholdPercent: '' };
+const EMPTY_FORM: AlertFormState = {
+  type: 'THRESHOLD',
+  kind: '',
+  instrumentId: '',
+  thresholdPercent: '',
+};
 
 type Status = 'loading' | 'ready' | 'error';
 
@@ -155,8 +161,9 @@ export default function AlertsPanel() {
         <details className="disclosure">
           <summary className="type-label">Cómo funcionan las alertas</summary>
           <p className="mt-2 max-w-prose type-body text-muted">
-            Te avisamos por email cuando una opción supera la tasa que elijas. Podés mirar un tipo de
-            opción, una opción puntual o todas.
+            Te avisamos por email. Podés pedir un aviso cuando una opción supera la tasa que elijas,
+            cuando cambia la mejor opción, cuando baja la tasa de un plazo fijo o una billetera que
+            seguís, o un resumen cada semana con las cinco mejores opciones.
           </p>
         </details>
 

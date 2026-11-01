@@ -38,6 +38,8 @@ describe('inSitemap', () => {
       '/admin/',
       '/admin/tasas',
       '/admin/tasas/',
+      '/claves-api',
+      '/claves-api/',
     ]) {
       expect(inSitemap(`${SITE}${path}`), path).toBe(false);
     }

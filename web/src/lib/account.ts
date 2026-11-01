@@ -15,19 +15,26 @@ export interface MagicLinkResponse {
   status: string;
 }
 
+/** The kinds of alert rule (T6c, L32 a); `THRESHOLD` is the original one and the API's default. */
+export type AlertType = 'THRESHOLD' | 'BEST_CHANGED' | 'RATE_DROP' | 'WEEKLY_DIGEST';
+
 export interface AlertRule {
   id: number;
+  /** A rule stored before the types existed is `THRESHOLD`. */
+  type: string;
   kind: string | null;
   instrumentId: number | null;
-  thresholdPercent: number;
+  /** Only a `THRESHOLD` rule has one. */
+  thresholdPercent: number | null;
   active: boolean;
   createdAt: string;
 }
 
 export interface AlertInput {
+  type: AlertType;
   kind: string | null;
   instrumentId: number | null;
-  thresholdPercent: number;
+  thresholdPercent: number | null;
 }
 
 export interface InstrumentSummary {

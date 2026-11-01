@@ -1,0 +1,10 @@
+Hola,
+
+Se disparó tu alerta: Wallet Legacy está rindiendo 30% TNA, por encima de tu umbral de 25%.
+
+Datos del 2026-10-14 · Fuente: test-source
+
+Regla #12. Podés ver el detalle y administrar tus alertas acá:
+https://app.rindetuplata.ar/alertas
+
+rindetuplata compara rendimientos con datos públicos y no da asesoramiento financiero.

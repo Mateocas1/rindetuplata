@@ -11,7 +11,7 @@
  */
 
 /** Account pages that carry `noindex`; the crawler gets one `Disallow` per path. */
-export const ACCOUNT_PATHS = ['/ingresar', '/alertas', '/admin'];
+export const ACCOUNT_PATHS = ['/ingresar', '/alertas', '/admin', '/claves-api'];
 
 const EXCLUDED = new Set(ACCOUNT_PATHS);
 

@@ -1,10 +1,7 @@
 package ar.rindetuplata.alert;
 
 import ar.rindetuplata.ranking.RankedEntry;
-import java.time.Clock;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -14,11 +11,9 @@ import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Reconciles one rule against the day's ranked entries, in one transaction (T6c, S4): every entry above the
+ * Reconciles one THRESHOLD rule against the day's ranked entries, in one transaction (T6c, S4): every entry above the
  * threshold that has no match yet inserts the {@code alert_match} and one {@code AlertTriggered} outbox row, and
  * every match whose instrument is no longer above (or no longer ranked) is deleted, which re-arms the rule. The
  * match and its event are written together, so a crash can never leave a fired alert with no event to relay.
@@ -28,15 +23,13 @@ public class AlertRuleReconciler {
 
 	static final String EVENT_TYPE = "AlertTriggered";
 
-	private static final JsonMapper MAPPER = JsonMapper.builder().build();
-
 	private final JdbcClient jdbc;
 
-	private final Clock clock;
+	private final AlertOutbox outbox;
 
-	public AlertRuleReconciler(JdbcClient jdbc, Clock clock) {
+	AlertRuleReconciler(JdbcClient jdbc, AlertOutbox outbox) {
 		this.jdbc = jdbc;
-		this.clock = clock;
+		this.outbox = outbox;
 	}
 
 	@Transactional
@@ -83,29 +76,9 @@ public class AlertRuleReconciler {
 	}
 
 	private void insertEvent(AlertRule rule, RankedEntry entry, LocalDate dataDate) {
-		UUID eventId = UUID.randomUUID();
-		AlertTriggered payload = new AlertTriggered(eventId, rule.id(), rule.email(), entry.id(), entry.name(),
-				entry.kind().name(), entry.rateUsed().fraction(), rule.thresholdRate(), entry.captureDate(),
-				entry.dataDate(), entry.source().displayName());
-		jdbc.sql("""
-				insert into outbox_event (id, event_type, aggregate_id, payload, created_at, attempts)
-				values (:id, :eventType, :aggregateId, cast(:payload as jsonb), :createdAt, 0)
-				""")
-			.param("id", eventId)
-			.param("eventType", EVENT_TYPE)
-			.param("aggregateId", String.valueOf(rule.id()))
-			.param("payload", write(payload))
-			.param("createdAt", OffsetDateTime.ofInstant(clock.instant(), ZoneOffset.UTC))
-			.update();
-	}
-
-	private static String write(AlertTriggered payload) {
-		try {
-			return MAPPER.writeValueAsString(payload);
-		}
-		catch (JacksonException e) {
-			throw new IllegalStateException("Cannot encode the alert payload", e);
-		}
+		outbox.enqueue(EVENT_TYPE, rule.id(), new AlertTriggered(UUID.randomUUID(), rule.id(), rule.email(), entry.id(),
+				entry.name(), entry.kind().name(), entry.rateUsed().fraction(), rule.thresholdRate(),
+				entry.captureDate(), entry.dataDate(), entry.source().displayName()));
 	}
 
 }
