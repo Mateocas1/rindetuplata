@@ -47,7 +47,8 @@ public class SimulationController {
 	}
 
 	@GetMapping
-	@Operation(summary = "Simulate one instrument", description = ConditionalResponses.DESCRIPTION,
+	@Operation(summary = "Simulate one instrument", description = ConditionalResponses.DESCRIPTION + " "
+					+ "Entries carry breakEvenMep and the response carries dollarMep. " + BreakEvenMepView.DESCRIPTION,
 			responses = {
 					@ApiResponse(responseCode = "200", description = "The simulation, ineligible or excluded status.",
 							headers = {

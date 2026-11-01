@@ -6,6 +6,7 @@ import ar.rindetuplata.domain.Evaluation;
 import ar.rindetuplata.domain.Ineligible;
 import ar.rindetuplata.domain.Inflation;
 import ar.rindetuplata.domain.Instrument;
+import ar.rindetuplata.domain.MepBreakEven;
 import ar.rindetuplata.domain.Money;
 import ar.rindetuplata.domain.MoneyMarketFund;
 import ar.rindetuplata.domain.PlazoFijo;
@@ -80,11 +81,12 @@ public class RankingService {
 		Ranking domain = Ranking.of(instruments(basket), query.amount(), query.days(),
 				rem == null ? BigDecimal.ZERO : rem.value());
 		Map<Instrument, Candidate> byInstrument = byInstrument(basket);
+		MepQuote mep = reader.latestDollarMep(query.asOf()).orElse(null);
 
 		List<RankedEntry> ranked = new ArrayList<>(domain.ranked().size());
 		for (Ranking.Entry entry : domain.ranked()) {
 			ranked.add(entry(byInstrument.get(entry.instrument()), entry.simulation(),
-					rem == null ? null : entry.realReturn()));
+					rem == null ? null : entry.realReturn(), mep));
 		}
 		if (groupFunds) {
 			ranked = groupFunds(ranked);
@@ -101,7 +103,7 @@ public class RankingService {
 		InflationView inflation = rem == null ? null : new InflationView(InflationView.REM_12M_EXPECTED, rem.value(),
 				rem.observationDate(), domain.inflationOverHorizon());
 		return new RankingResult(query, inflation, page, ineligible, excluded,
-				new RankingTotals(total, ineligible.size(), excluded.size()));
+				new RankingTotals(total, ineligible.size(), excluded.size()), mep);
 	}
 
 	/**
@@ -156,7 +158,8 @@ public class RankingService {
 						.map(rem -> Inflation.realReturn(simulation.nominalReturn(),
 								Inflation.overHorizon(rem.value(), days)))
 						.orElse(null);
-				return new SimulationResult.Simulated(entry(candidate, simulation, realReturn));
+				MepQuote mep = reader.latestDollarMep(asOf).orElse(null);
+				return new SimulationResult.Simulated(entry(candidate, simulation, realReturn, mep), mep);
 			}
 			return new SimulationResult.IneligibleInstrument(id, candidate.name(), (Ineligible) evaluation);
 		}
@@ -421,12 +424,14 @@ public class RankingService {
 		return byInstrument;
 	}
 
-	private static RankedEntry entry(Candidate candidate, Simulation simulation, BigDecimal realReturn) {
+	private static RankedEntry entry(Candidate candidate, Simulation simulation, BigDecimal realReturn,
+			MepQuote mep) {
 		return new RankedEntry(candidate.id(), candidate.kind(), candidate.name(), candidate.entity(),
 				SourceRegistry.of(candidate.sourceId()), candidate.confidence(), candidate.verifiedAt(),
 				candidate.captureDate(), candidate.dataDate(), candidate.rateUsed(), simulation.finalAmount(),
 				simulation.earned(), simulation.nominalReturn(), realReturn, simulation.conditional().orElse(null),
-				candidate.warnings(), 0);
+				candidate.warnings(), 0,
+				mep == null ? null : MepBreakEven.of(simulation.nominalReturn(), mep.buy(), mep.sell()));
 	}
 
 	private static IneligibleEntry ineligible(Candidate candidate, Ineligible ineligible) {

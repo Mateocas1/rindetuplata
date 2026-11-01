@@ -1,6 +1,7 @@
 package ar.rindetuplata.ranking;
 
 import ar.rindetuplata.domain.ConditionalOutcome;
+import ar.rindetuplata.domain.MepBreakEven;
 import ar.rindetuplata.domain.Money;
 import ar.rindetuplata.source.Confidence;
 import ar.rindetuplata.source.ValidationFlag;
@@ -15,11 +16,12 @@ import java.util.Objects;
  * {@code upTo} is the best conditional outcome, reported as "up to" and never used for the ranking.
  * {@code foldedClasses} is how many sibling classes of the same fund the grouped ranking folded into this row
  * (the best class for the request); it is 0 for every other kind and whenever grouping is off.
+ * {@code breakEvenMep} is when the instrument beats the dólar MEP (S5, L24 b); null when no MEP quote is stored.
  */
 public record RankedEntry(String id, RankedKind kind, String name, String entity, SourceView source,
 		Confidence confidence, LocalDate verifiedAt, LocalDate captureDate, LocalDate dataDate, RateUsed rateUsed,
 		Money finalAmount, Money earned, BigDecimal nominalReturn, BigDecimal realReturn, ConditionalOutcome upTo,
-		List<ValidationFlag> warnings, int foldedClasses) {
+		List<ValidationFlag> warnings, int foldedClasses, MepBreakEven breakEvenMep) {
 
 	public RankedEntry {
 		Objects.requireNonNull(id, "id");
@@ -41,6 +43,6 @@ public record RankedEntry(String id, RankedKind kind, String name, String entity
 
 	RankedEntry withFoldedClasses(int folded) {
 		return new RankedEntry(id, kind, name, entity, source, confidence, verifiedAt, captureDate, dataDate,
-				rateUsed, finalAmount, earned, nominalReturn, realReturn, upTo, warnings, folded);
+				rateUsed, finalAmount, earned, nominalReturn, realReturn, upTo, warnings, folded, breakEvenMep);
 	}
 }

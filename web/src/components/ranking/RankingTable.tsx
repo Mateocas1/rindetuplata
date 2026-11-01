@@ -32,6 +32,7 @@ import {
 } from '../../lib/labels';
 import { instrumentPageHref } from '../../lib/slug';
 import type { RankedEntry, Ranking } from '../../lib/types';
+import BreakEvenNote from './BreakEvenNote';
 import RealReturnBadge from './RealReturnBadge';
 
 /** Mono caps column heads, the same role as the row labels below them. */
@@ -203,6 +204,20 @@ export default function RankingTable({
                               {formatMoney(entry.earned)}
                             </span>
                           </span>
+                          {/* The dollar comparison lives behind the row's own disclosure, so the
+                              row keeps its figures and the note costs nothing until it is opened. */}
+                          {entry.breakEvenMep != null && ranking.dollarMep != null && (
+                            <details className="disclosure mt-2">
+                              <summary className="type-label hover:text-text">Contra el dólar MEP</summary>
+                              <div className="mt-2 flex flex-col gap-1">
+                                <BreakEvenNote
+                                  breakEven={entry.breakEvenMep}
+                                  quote={ranking.dollarMep}
+                                  days={days}
+                                />
+                              </div>
+                            </details>
+                          )}
                           {isStale(entry) && (
                             <span className="block type-data text-warning">
                               {flagLabel('STALE')}

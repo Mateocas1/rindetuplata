@@ -29,6 +29,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /**
+         * Request a magic link
+         * @description Emails a one-time login link. A valid email always answers 202 with the same body, whether or not the account exists and even when the email already holds its maximum of unexpired tokens (then nothing is sent). An invalid email is a 400. Each remote address may make rindetuplata.auth.magic-link-per-ip-limit requests per rindetuplata.auth.magic-link-per-ip-window (fixed window, counted in memory by the single API instance, invalid emails included); beyond it the answer is a 429 with a Retry-After header in seconds, no token and no mail, for known and unknown emails alike.
+         */
         post: operations["requestMagicLink"];
         delete?: never;
         options?: never;
@@ -95,6 +99,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Simulate one instrument
+         * @description Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.
+         */
         get: operations["simulate"];
         put?: never;
         post?: never;
@@ -111,6 +119,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /**
+         * Personalized ranking
+         * @description Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.
+         */
         get: operations["ranking"];
         put?: never;
         post?: never;
@@ -308,6 +320,13 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        /** @description When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored. */
+        BreakEvenMepView: {
+            /** @description The highest rise of the MEP buy price, as a fraction at scale 6 (0.023100 is 2.31%), at which the instrument still beats the dollar over the requested days. */
+            devaluation?: number;
+            /** @description The break-even MEP buy price in ARS per USD at scale 2: (1 + nominalReturn) * sell. Above it at the end of the term the dollar wins; below it the instrument wins. */
+            price?: number;
+        };
         ExcludedView: {
             id?: string;
             name?: string;
@@ -319,6 +338,24 @@ export interface components {
             name?: string;
             reason?: string;
             detail?: string;
+        };
+        /** @description The dollar MEP quote every breakEvenMep of the response was computed from: the latest stored quote at or before the request's asOf. Null when no usable quote is stored. */
+        MepQuoteView: {
+            /** @description ARS per USD the market pays for a dollar (the price you leave at), scale 2. */
+            buy?: number;
+            /** @description ARS per USD the market charges for a dollar (the price you buy at), scale 2. */
+            sell?: number;
+            source?: components["schemas"]["SourceView"];
+            /**
+             * Format: date
+             * @description The capture date the quote is stored under.
+             */
+            quoteDate?: string;
+            /**
+             * Format: date-time
+             * @description The instant the source reports for the quote; null when it gave none.
+             */
+            updatedAt?: string;
         };
         RankedEntryView: {
             id?: string;
@@ -342,6 +379,7 @@ export interface components {
             warnings?: components["schemas"]["ValidationFlagView"][];
             /** Format: int32 */
             foldedClasses?: number;
+            breakEvenMep?: components["schemas"]["BreakEvenMepView"];
         };
         RateUsedView: {
             fraction?: number;
@@ -350,6 +388,7 @@ export interface components {
         };
         SimulationResponse: {
             status?: string;
+            dollarMep?: components["schemas"]["MepQuoteView"];
             entry?: components["schemas"]["RankedEntryView"];
             ineligible?: components["schemas"]["IneligibleView"];
             excluded?: components["schemas"]["ExcludedView"];
@@ -413,6 +452,7 @@ export interface components {
         RankingResponse: {
             request?: components["schemas"]["RankingRequestView"];
             inflation?: components["schemas"]["InflationResponse"];
+            dollarMep?: components["schemas"]["MepQuoteView"];
             ranked?: components["schemas"]["RankedEntryView"][];
             ineligible?: components["schemas"]["IneligibleEntryView"][];
             excluded?: components["schemas"]["ExcludedEntryView"][];
@@ -700,8 +740,37 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description The simulation, ineligible or excluded status. */
             200: {
+                headers: {
+                    /** @description public, no-cache: store, but revalidate with If-None-Match. */
+                    "Cache-Control"?: string;
+                    /** @description Weak entity tag of the data version and the request. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SimulationResponse"];
+                };
+            };
+            /** @description If-None-Match matched the current ETag; the body is empty. */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A parameter is out of range. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SimulationResponse"];
+                };
+            };
+            /** @description No ranked instrument carries this id. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -728,8 +797,28 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description The ranking. */
             200: {
+                headers: {
+                    /** @description public, no-cache: store, but revalidate with If-None-Match. */
+                    "Cache-Control"?: string;
+                    /** @description Weak entity tag of the data version and the request. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RankingResponse"];
+                };
+            };
+            /** @description If-None-Match matched the current ETag; the body is empty. */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A parameter is out of range. */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

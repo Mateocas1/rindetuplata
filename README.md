@@ -105,7 +105,10 @@ flowchart LR
   `MathContext` and rounding, tested against hand-computed values.
 - **Read side** (`ranking`, `api`): turns stored snapshots into domain instruments and simulates them per
   request; ProblemDetail errors; OpenAPI at `/v3/api-docs`. `GET /api/v1/simulations` reads only the requested
-  instrument. `GET /api/v1/ranking` is cached in process (LRU, 64 entries by default) per data version and
+  instrument. Every ranked and simulated entry carries `breakEvenMep { devaluation, price }` (the MEP buy price
+  may rise less than `(1 + r) * sell / buy - 1` for the instrument to beat the dollar; break-even price
+  `(1 + r) * sell`) and the response carries the `dollarMep` quote it used, the latest stored one at or before
+  `asOf`; both are `null` when no quote is stored. `GET /api/v1/ranking` is cached in process (LRU, 64 entries by default) per data version and
   resolved query. The data version is one aggregate read from the database on every request (`source_run`,
   curated wallet rates and their audit, newest instrument), so the daily job, the startup ingestion, a backfill
   and a curation save all invalidate it with no event bus. Both endpoints send a weak `ETag` (data version +

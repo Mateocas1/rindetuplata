@@ -2,9 +2,11 @@ package ar.rindetuplata.api.ranking;
 
 import ar.rindetuplata.api.JsonScales;
 import ar.rindetuplata.api.instrument.ValidationFlagView;
+import ar.rindetuplata.domain.MepBreakEven;
 import ar.rindetuplata.ranking.ExcludedEntry;
-import ar.rindetuplata.ranking.IneligibleEntry;
 import ar.rindetuplata.ranking.InflationView;
+import ar.rindetuplata.ranking.IneligibleEntry;
+import ar.rindetuplata.ranking.MepQuote;
 import ar.rindetuplata.ranking.RankedEntry;
 import ar.rindetuplata.ranking.RankingResult;
 import ar.rindetuplata.ranking.SimulationResult;
@@ -26,6 +28,7 @@ final class RankingApiPresenter {
 		return new RankingResponse(
 				request(result),
 				result.inflation() == null ? null : inflation(result.inflation()),
+				mepQuote(result.dollarMep()),
 				result.ranked().stream().map(RankingApiPresenter::entry).toList(),
 				result.ineligible().stream().map(RankingApiPresenter::ineligible).toList(),
 				result.excluded().stream().map(RankingApiPresenter::excluded).toList(),
@@ -34,7 +37,8 @@ final class RankingApiPresenter {
 
 	static SimulationResponse simulation(SimulationResult result) {
 		return switch (result) {
-			case SimulationResult.Simulated simulated -> SimulationResponse.simulated(entry(simulated.entry()));
+			case SimulationResult.Simulated simulated -> SimulationResponse.simulated(entry(simulated.entry()),
+					mepQuote(simulated.dollarMep()));
 			case SimulationResult.IneligibleInstrument ineligible -> SimulationResponse.ineligible(
 					new SimulationResponse.IneligibleView(ineligible.id(), ineligible.name(),
 							ineligible.ineligible().reason().name(), ineligible.ineligible().detail()));
@@ -54,6 +58,17 @@ final class RankingApiPresenter {
 	private static InflationResponse inflation(InflationView inflation) {
 		return new InflationResponse(inflation.index(), JsonScales.rate(inflation.twelveMonthRate()),
 				inflation.observationDate(), JsonScales.rate(inflation.overHorizon()));
+	}
+
+	private static MepQuoteView mepQuote(MepQuote quote) {
+		return quote == null ? null
+				: new MepQuoteView(JsonScales.money(quote.buy()), JsonScales.money(quote.sell()), quote.source(),
+						quote.quoteDate(), quote.updatedAt());
+	}
+
+	private static BreakEvenMepView breakEvenMep(MepBreakEven breakEven) {
+		return breakEven == null ? null
+				: new BreakEvenMepView(JsonScales.rate(breakEven.devaluation()), JsonScales.money(breakEven.price()));
 	}
 
 	static RankedEntryView entry(RankedEntry entry) {
@@ -77,7 +92,8 @@ final class RankingApiPresenter {
 						: new UpToView(entry.upTo().condition(),
 								JsonScales.money(entry.upTo().finalAmount().presented())),
 				flags(entry.warnings()),
-				entry.foldedClasses());
+				entry.foldedClasses(),
+				breakEvenMep(entry.breakEvenMep()));
 	}
 
 	private static IneligibleEntryView ineligible(IneligibleEntry entry) {
