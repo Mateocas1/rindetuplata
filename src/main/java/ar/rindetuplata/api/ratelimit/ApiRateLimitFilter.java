@@ -47,8 +47,9 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
 
 	public ApiRateLimitFilter(ApiRateLimiter limiter, String bypassToken) {
 		this.limiter = limiter;
+		// Trimmed like the web build trims API_BUILD_TOKEN, so a stray newline in an env file cannot silently mismatch.
 		this.bypassToken = bypassToken == null || bypassToken.isBlank() ? null
-				: bypassToken.getBytes(StandardCharsets.UTF_8);
+				: bypassToken.strip().getBytes(StandardCharsets.UTF_8);
 	}
 
 	@Override
