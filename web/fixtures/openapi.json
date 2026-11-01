@@ -1169,6 +1169,9 @@
           },
           "tnaEquivalent": {
             "type": "number"
+          },
+          "tea": {
+            "type": "number"
           }
         }
       },
@@ -1239,6 +1242,9 @@
           },
           "sourceId": {
             "type": "string"
+          },
+          "annualized": {
+            "type": "number"
           }
         }
       },
@@ -1270,6 +1276,9 @@
             "items": {
               "$ref": "#/components/schemas/ValidationFlagView"
             }
+          },
+          "tea": {
+            "type": "number"
           }
         }
       },

@@ -1,5 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { breadcrumbJsonLd, financialProductJsonLd } from './seo';
+import { breadcrumbJsonLd, financialProductJsonLd, serializeJsonLd } from './seo';
 
 /**
  * JSON-LD builders (T7c, S14): breadcrumbs on instrument and category pages, and
@@ -104,5 +105,50 @@ describe('financialProductJsonLd', () => {
         interestRate: Number.NaN,
       }),
     ).toThrow(/rate/i);
+  });
+});
+
+/**
+ * `Seo.astro` writes the serialized block inside a `<script>` with `set:html`, so a
+ * `</script>` in a name would close the block and let the rest run as markup.
+ */
+describe('serializeJsonLd', () => {
+  const hostile = '</script><script>alert(1)</script>';
+  const block = financialProductJsonLd({
+    name: `Banco ${hostile} & Cía`,
+    description: 'Tasa del día',
+    url: 'https://rindetuplata.ar/instrumentos/banco-1',
+    interestRate: 0.24,
+    provider: `Proveedor ${hostile}`,
+  });
+  const html = `<script type="application/ld+json">${serializeJsonLd(block)}</script>`;
+
+  it('keeps a hostile name inside one JSON-LD block', () => {
+    expect(html.match(/<\/script/gi)).toHaveLength(1);
+    expect(html.match(/<script/gi)).toHaveLength(1);
+    expect(html).not.toContain('alert(1)</script>');
+    expect(html.endsWith('</script>')).toBe(true);
+  });
+
+  it('round-trips through JSON.parse to the original block', () => {
+    const body = html.slice(html.indexOf('>') + 1, html.lastIndexOf('</script>'));
+    expect(JSON.parse(body)).toEqual(block);
+  });
+
+  it('escapes <, >, &, U+2028 and U+2029 as unicode escapes', () => {
+    const json = serializeJsonLd({ name: '<>&\u2028\u2029' });
+    expect(json).toBe('{"name":"\\u003c\\u003e\\u0026\\u2028\\u2029"}');
+    expect(JSON.parse(json)).toEqual({ name: '<>&\u2028\u2029' });
+  });
+
+  it('leaves a block without special characters byte for byte as JSON.stringify writes it', () => {
+    const plain = breadcrumbJsonLd([{ name: 'Inicio', url: 'https://rindetuplata.ar/' }]);
+    expect(serializeJsonLd(plain)).toBe(JSON.stringify(plain));
+  });
+
+  it('is what Seo.astro uses to write every block', () => {
+    const source = readFileSync(new URL('../components/Seo.astro', import.meta.url), 'utf8');
+    expect(source).toContain('set:html={serializeJsonLd(block)}');
+    expect(source).not.toContain('JSON.stringify');
   });
 });

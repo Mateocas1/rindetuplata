@@ -269,6 +269,13 @@ describe('prerendered methodology page', () => {
   it('ships no script tag at all', () => {
     expect(html('metodologia/index.html')).not.toContain('<script');
   });
+
+  it('explains why the history chart annualizes both the rate and the inflation', () => {
+    const text = renderedText(html('metodologia/index.html')).replace(/\s+/g, ' ');
+    expect(text).toContain('Por qué el gráfico anualiza los dos');
+    expect(text).toContain('inflación anualizada');
+    expect(text).toContain('tasa efectiva anual');
+  });
 });
 
 describe('robots.txt', () => {

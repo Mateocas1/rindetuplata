@@ -1,8 +1,9 @@
 /**
  * History chart geometry (T7c, S10, S14).
  *
- * The instrument page plots the rate the API returned against the past INDEC
- * monthly inflation, at build time, as an inline SVG. All the geometry lives
+ * The instrument page plots the effective annual rate (TEA) the API returned
+ * against the INDEC inflation annualized by the API, both on one comparable
+ * annual basis, at build time, as an inline SVG. All the geometry lives
  * here — scales, tick positions, path strings, marker coordinates — so the
  * component stays markup and the chart ships zero client JavaScript.
  *
@@ -98,34 +99,29 @@ function yMaxOf(all: TimePoint[]): number {
   return max + (span === 0 ? 0.01 : span * 0.05);
 }
 
-/** The rate series and the INDEC inflation series of one instrument's history. */
+/**
+ * The effective annual rate (TEA) and the annualized INDEC inflation of one instrument's history. Both are
+ * effective annual rates the API computed, so they share one axis: the TNA and the monthly index never do.
+ */
 export function seriesFromHistory(history: InstrumentHistory): ChartSeriesInput[] {
   const ratePoints: TimePoint[] = history.quotes.length > 0
     ? history.quotes
-        .filter((quote) => quote.tnaEquivalent !== null)
-        .map((quote) => ({ date: quote.quoteDate, value: quote.tnaEquivalent as number }))
+        .filter((quote) => quote.tea !== null)
+        .map((quote) => ({ date: quote.quoteDate, value: quote.tea as number }))
     : history.points
-        .filter((point) => point.rate !== null)
-        .map((point) => ({ date: point.captureDate, value: point.rate as number }));
-
-  const basis = history.points[0]?.basis;
-  const rateLabel =
-    history.quotes.length > 0
-      ? 'TNA equivalente del fondo'
-      : basis === undefined || basis === 'TNA'
-        ? 'Tasa (TNA)'
-        : `Tasa (${basis})`;
+        .filter((point) => point.tea !== null)
+        .map((point) => ({ date: point.captureDate, value: point.tea as number }));
 
   return [
-    { key: 'rate', label: rateLabel, dashed: false, marker: 'circle', points: ratePoints },
+    { key: 'rate', label: 'Tasa efectiva anual (TEA)', dashed: false, marker: 'circle', points: ratePoints },
     {
       key: 'inflation',
-      label: 'Inflación mensual (INDEC)',
+      label: 'Inflación anualizada (INDEC)',
       dashed: true,
       marker: 'square',
       points: history.monthlyInflation.map((point) => ({
         date: point.observationDate,
-        value: point.value,
+        value: point.annualized,
       })),
     },
   ];

@@ -53,7 +53,7 @@ const description =
     ? ''
     : `${rateSeries.label} y ${inflationSeries.label} de ${history.displayName} ` +
       `entre el ${formatDate(history.from)} y el ${formatDate(history.to)}. ` +
-      `La tasa es anual y la inflación es la variación del mes; los dos valores comparten la escala de porcentaje.`;
+      `Las dos son tasas efectivas anuales: la inflación de cada mes está compuesta durante 12 meses, así que comparten la escala de porcentaje.`;
 ---
 
 <figure class="flex flex-col gap-3">
@@ -205,7 +205,8 @@ const description =
         </ul>
 
         <p class="type-body max-w-prose text-muted">
-          La tasa es anual y cada punto de inflación es la variación mensual del IPC del INDEC.
+          Las dos líneas están en términos anuales: la tasa es la efectiva anual (TEA) y cada punto de
+          inflación es la variación mensual del IPC del INDEC compuesta durante 12 meses.
         </p>
 
         <details class="disclosure card px-4 py-3">

@@ -452,6 +452,7 @@ export interface components {
             quoteDate?: string;
             vcp?: number;
             tnaEquivalent?: number;
+            tea?: number;
         };
         InstrumentHistory: {
             id?: string;
@@ -475,6 +476,7 @@ export interface components {
             value?: number;
             confidence?: string;
             sourceId?: string;
+            annualized?: number;
         };
         SnapshotPoint: {
             /** Format: date */
@@ -486,6 +488,7 @@ export interface components {
             clientRate?: number;
             invalid?: boolean;
             flags?: components["schemas"]["ValidationFlagView"][];
+            tea?: number;
         };
         CsrfTokenResponse: {
             headerName?: string;
