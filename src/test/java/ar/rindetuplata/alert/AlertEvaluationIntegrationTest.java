@@ -167,7 +167,7 @@ class AlertEvaluationIntegrationTest {
 	/** Creates (or reuses) the account and a rule through the alert service, the same path the API uses. */
 	private long rule(String email, String kind, Long instrumentId, String percent) {
 		accounts.findByEmail(email).orElseGet(() -> accounts.create(email, NOW));
-		return alerts.create(email, new AlertRequest(kind, instrumentId, new BigDecimal(percent))).id();
+		return alerts.create(email, new AlertRequest(null, kind, instrumentId, new BigDecimal(percent))).id();
 	}
 
 	private long seedWallet(String sourceId, String walletId, String name, String tna, LocalDate captureDate) {

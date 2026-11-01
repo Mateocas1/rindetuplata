@@ -85,6 +85,40 @@ class AlertEmailConsumerIntegrationTest {
 		assertThat(processedCount(eventId)).isEqualTo(1);
 	}
 
+	/**
+	 * Back-compat (T6c, L32 a): an outbox row stored in today's AlertTriggered shape, with no type, is delivered
+	 * through the new dispatch as exactly today's email, word for word.
+	 */
+	@Test
+	void anEventStoredBeforeTheAlertTypesIsDeliveredAsTodaysEmail() {
+		UUID eventId = UUID.randomUUID();
+
+		deliver(AlertFixtures.payload(AlertFixtures.STORED_ALERT_TRIGGERED, eventId));
+
+		MailMessage mail = awaitMail();
+		assertThat(mail.to()).isEqualTo("saver@example.com");
+		assertThat(mail.subject()).isEqualTo("rindetuplata: se disparó tu alerta de rendimiento");
+		assertThat(mail.body()).isEqualTo(AlertFixtures.read("alert-triggered-stored.email.txt"));
+		assertThat(processedCount(eventId)).isEqualTo(1);
+	}
+
+	@Test
+	void aWeeklyDigestEventTravelsTheSameQueueAndIsDeliveredOnce() {
+		UUID eventId = UUID.randomUUID();
+		String payload = AlertFixtures.payload(AlertFixtures.WEEKLY_DIGEST, eventId);
+
+		deliver(payload);
+		MailMessage mail = awaitMail();
+		deliver(payload);
+		awaitQueueEmpty();
+
+		assertThat(mail.to()).isEqualTo("saver@example.com");
+		assertThat(mail.subject()).isEqualTo("rindetuplata: tu resumen semanal");
+		assertThat(mail.body()).contains("Wallet Nueva").contains("Fondo Prueba").contains(MANAGE_URL);
+		assertThat(mailer.sent()).as("the redelivery is recognized").hasSize(1);
+		assertThat(processedCount(eventId)).isEqualTo(1);
+	}
+
 	private void deliver(String payload) {
 		template.convertAndSend(AlertEvents.EXCHANGE, AlertEvents.ROUTING_KEY, payload);
 	}

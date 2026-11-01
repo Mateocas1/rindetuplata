@@ -12,7 +12,14 @@
  * so the shared `formatPercent` can render it.
  */
 import { kindLabel } from './labels';
-import type { AlertInput, InstrumentSummary, WalletRate, WalletRateInput, WalletTier } from './account';
+import type {
+  AlertInput,
+  AlertType,
+  InstrumentSummary,
+  WalletRate,
+  WalletRateInput,
+  WalletTier,
+} from './account';
 
 export interface TierFormState {
   floor: string;
@@ -33,9 +40,42 @@ export interface WalletFormState {
 }
 
 export interface AlertFormState {
+  type: AlertType;
   kind: string;
   instrumentId: string;
   thresholdPercent: string;
+}
+
+/**
+ * The alert types the form offers, in the order of the selector (T6c, L32 a). The first is the original rule and
+ * the form's default; the description sits under the selector and says what the rule watches.
+ */
+export const ALERT_TYPE_OPTIONS: Array<{ value: AlertType; label: string; description: string }> = [
+  {
+    value: 'THRESHOLD',
+    label: 'Superó una tasa',
+    description: 'Te avisamos cuando una opción supera la tasa que elegís.',
+  },
+  {
+    value: 'BEST_CHANGED',
+    label: 'Cambió la mejor opción',
+    description: 'Te avisamos cuando otra opción pasa a ser la mejor del tipo que elegís.',
+  },
+  {
+    value: 'RATE_DROP',
+    label: 'Bajó una tasa',
+    description: 'Te avisamos cuando baja la tasa de un plazo fijo o una billetera que seguís.',
+  },
+  {
+    value: 'WEEKLY_DIGEST',
+    label: 'Resumen semanal',
+    description: 'Una vez por semana te mandamos las cinco mejores opciones del tipo que elegís.',
+  },
+];
+
+/** The Spanish name of an alert type; an unknown one is shown as the API sent it. */
+export function alertTypeLabel(type: string): string {
+  return ALERT_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
 }
 
 /** The API's own bounds (WalletRateValidator, AlertService): 0 < percent <= 300. */
@@ -58,6 +98,7 @@ const TIERS_MESSAGE = 'Cargá al menos una franja de tasa.';
 const TIERS_ORDER_MESSAGE = 'Las franjas tienen que ir en orden y sin superponerse.';
 const CONDITION_MESSAGE = 'Escribí un nombre para la condición.';
 const INSTRUMENT_MESSAGE = 'Elegí una opción de la lista.';
+const RATE_DROP_INSTRUMENT_MESSAGE = 'Elegí el banco o la billetera que querés seguir.';
 
 const percentFormatter = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
 
@@ -129,29 +170,59 @@ function parseInstrumentId(raw: string): number | null {
   return id;
 }
 
-/** Field-keyed errors for the alert form; an empty kind or instrument means "cualquiera". */
+/**
+ * Field-keyed errors for the alert form. Each type asks for its own fields and ignores what the others asked, so a
+ * value typed before switching type never blocks the new one: THRESHOLD needs a percent and takes an optional kind
+ * and instrument ("cualquiera" when empty), RATE_DROP needs the instrument, the other two take only a kind.
+ */
 export function validateAlertForm(form: AlertFormState): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (parsePercentInput(form.thresholdPercent) === null) {
-    errors.thresholdPercent = PERCENT_MESSAGE;
-  }
   const instrument = form.instrumentId.trim();
-  if (instrument !== '' && parseInstrumentId(instrument) === null) {
-    errors.instrumentId = INSTRUMENT_MESSAGE;
+  switch (form.type) {
+    case 'THRESHOLD':
+      if (parsePercentInput(form.thresholdPercent) === null) {
+        errors.thresholdPercent = PERCENT_MESSAGE;
+      }
+      if (instrument !== '' && parseInstrumentId(instrument) === null) {
+        errors.instrumentId = INSTRUMENT_MESSAGE;
+      }
+      break;
+    case 'RATE_DROP':
+      if (instrument === '' || parseInstrumentId(instrument) === null) {
+        errors.instrumentId = RATE_DROP_INSTRUMENT_MESSAGE;
+      }
+      break;
+    default:
+      break;
   }
   return errors;
 }
 
+/** The body of `POST /api/v1/alerts`: only the fields the form's type takes, the rest null. */
 export function alertRequest(form: AlertFormState): AlertInput {
   if (Object.keys(validateAlertForm(form)).length > 0) {
     throw new Error('alert form is invalid');
   }
-  const kind = form.kind.trim();
-  return {
-    kind: kind === '' ? null : kind,
-    instrumentId: form.instrumentId.trim() === '' ? null : parseInstrumentId(form.instrumentId),
-    thresholdPercent: parsePercentInput(form.thresholdPercent)!,
-  };
+  const kind = form.kind.trim() === '' ? null : form.kind.trim();
+  switch (form.type) {
+    case 'THRESHOLD':
+      return {
+        type: form.type,
+        kind,
+        instrumentId: form.instrumentId.trim() === '' ? null : parseInstrumentId(form.instrumentId),
+        thresholdPercent: parsePercentInput(form.thresholdPercent)!,
+      };
+    case 'RATE_DROP':
+      // The API derives the kind from the instrument.
+      return {
+        type: form.type,
+        kind: null,
+        instrumentId: parseInstrumentId(form.instrumentId),
+        thresholdPercent: null,
+      };
+    default:
+      return { type: form.type, kind, instrumentId: null, thresholdPercent: null };
+  }
 }
 
 function validateTiers(
@@ -257,6 +328,14 @@ export function walletFormFromRate(rate: WalletRate): WalletFormState {
 export function selectableInstruments(instruments: InstrumentSummary[]): InstrumentSummary[] {
   return instruments.filter(
     (instrument) => !instrument.invalid && instrument.kind !== UNRANKABLE_KIND,
+  );
+}
+
+/** What a "bajó una tasa" alert can follow: the valid plazos fijos of a bank and the wallets. */
+export function rateDropInstruments(instruments: InstrumentSummary[]): InstrumentSummary[] {
+  return instruments.filter(
+    (instrument) =>
+      !instrument.invalid && (instrument.kind === 'PLAZO_FIJO_BANK' || instrument.kind === 'WALLET'),
   );
 }
 

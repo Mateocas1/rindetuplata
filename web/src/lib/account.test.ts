@@ -96,6 +96,7 @@ describe('current user', () => {
 describe('alerts', () => {
   const rule = {
     id: 3,
+    type: 'THRESHOLD',
     kind: 'WALLET',
     instrumentId: 7,
     thresholdPercent: 23.5,
@@ -113,13 +114,27 @@ describe('alerts', () => {
     const { account, calls } = api(withCsrf(() => jsonResponse(rule, 201)));
 
     await expect(
-      account.createAlert({ kind: 'WALLET', instrumentId: 7, thresholdPercent: 23.5 }),
+      account.createAlert({ type: 'THRESHOLD', kind: 'WALLET', instrumentId: 7, thresholdPercent: 23.5 }),
     ).resolves.toEqual(rule);
 
     const request = calls.find((call) => call.url === '/api/v1/alerts')!;
     expect(request.init.method).toBe('POST');
     expect(request.init.body).toBe(
-      JSON.stringify({ kind: 'WALLET', instrumentId: 7, thresholdPercent: 23.5 }),
+      JSON.stringify({ type: 'THRESHOLD', kind: 'WALLET', instrumentId: 7, thresholdPercent: 23.5 }),
+    );
+  });
+
+  it('creates a rule of a type that has no threshold with nulls the API reads as absent', async () => {
+    const digest = { ...rule, id: 4, type: 'WEEKLY_DIGEST', kind: null, instrumentId: null, thresholdPercent: null };
+    const { account, calls } = api(withCsrf(() => jsonResponse(digest, 201)));
+
+    await expect(
+      account.createAlert({ type: 'WEEKLY_DIGEST', kind: null, instrumentId: null, thresholdPercent: null }),
+    ).resolves.toEqual(digest);
+
+    const request = calls.find((call) => call.url === '/api/v1/alerts')!;
+    expect(request.init.body).toBe(
+      JSON.stringify({ type: 'WEEKLY_DIGEST', kind: null, instrumentId: null, thresholdPercent: null }),
     );
   });
 

@@ -316,7 +316,8 @@ at its own rebuild sidecar (`http://rebuilder:8787/`, see "Private preview" abov
 
 ## Backups
 
-The database holds only what cannot be rebuilt: users and their alert rules. The ranking and the
+The database holds only what cannot be rebuilt: users and their alert rules, with what the rule types remember
+between evaluations (the stored best option and rate, the digests already sent; `docs/alerts.md`). The ranking and the
 history come from the sources and can be re-ingested.
 
 ```bash
