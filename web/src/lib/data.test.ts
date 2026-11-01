@@ -373,3 +373,62 @@ describe('loadHistory complaints (D9)', () => {
     await rm(scratch, { recursive: true, force: true });
   });
 });
+
+describe('the API build token (rate-limit bypass)', () => {
+  const EMPTY_RANKING = { ranked: [], ineligible: [], excluded: [] };
+  const EMPTY_HISTORY = {
+    id: '29',
+    kind: 'PLAZO_FIJO_BANK',
+    displayName: 'REBA',
+    entityName: null,
+    segment: null,
+    sourceId: 'argentinadatos-plazo-fijo',
+    from: '2026-07-17',
+    to: '2026-10-14',
+    points: [],
+    quotes: [],
+    monthlyInflation: [],
+  };
+
+  function recordHeaders(body: unknown, seen: Array<Record<string, string>>): typeof fetch {
+    return async (_input, init) => {
+      seen.push({ ...(init?.headers as Record<string, string>) });
+      return okJson(body);
+    };
+  }
+
+  it('sends X-Build-Token on ranking and history requests when API_BUILD_TOKEN is set', async () => {
+    const seen: Array<Record<string, string>> = [];
+    const env = { API_URL: 'http://localhost:8080', API_BUILD_TOKEN: 's3cret' };
+
+    await loadRanking(DEFAULT_STATE, { env, fetch: recordHeaders(EMPTY_RANKING, seen) });
+    await loadHistory('29', { env, fetch: recordHeaders(EMPTY_HISTORY, seen) });
+
+    expect(seen).toHaveLength(2);
+    for (const headers of seen) {
+      expect(headers['x-build-token']).toBe('s3cret');
+      expect(headers.accept).toBe('application/json');
+    }
+  });
+
+  it.each([undefined, '', '   '])('sends no X-Build-Token when API_BUILD_TOKEN is %j', async (token) => {
+    const seen: Array<Record<string, string>> = [];
+    const env = { API_URL: 'http://localhost:8080', API_BUILD_TOKEN: token };
+
+    await loadRanking(DEFAULT_STATE, { env, fetch: recordHeaders(EMPTY_RANKING, seen) });
+
+    expect(Object.keys(seen[0])).not.toContain('x-build-token');
+  });
+
+  it('never puts the token in the error of a failed request', async () => {
+    const env = { API_URL: 'http://localhost:8080', API_BUILD_TOKEN: 's3cret' };
+
+    const failure = loadRanking(DEFAULT_STATE, {
+      env,
+      fetch: async () => new Response('Too many requests', { status: 429 }),
+    });
+
+    await expect(failure).rejects.toThrow(/429/);
+    await expect(failure).rejects.not.toThrow(/s3cret/);
+  });
+});

@@ -35,6 +35,10 @@ final class RankingRequest {
 			throw ApiException.badRequest("amount",
 					"Parameter 'amount' must be greater than 0: " + amount.toPlainString());
 		}
+		if (amount.compareTo(RankingQuery.MAX_AMOUNT) > 0) {
+			throw ApiException.badRequest("amount", "Parameter 'amount' must be at most "
+					+ RankingQuery.MAX_AMOUNT.toPlainString() + ": " + amount.toPlainString());
+		}
 		return Money.ars(amount);
 	}
 
@@ -42,8 +46,9 @@ final class RankingRequest {
 		if (days == null) {
 			return RankingQuery.DEFAULT_DAYS;
 		}
-		if (days < 1) {
-			throw ApiException.badRequest("days", "Parameter 'days' must be at least 1: " + days);
+		if (days < 1 || days > RankingQuery.MAX_DAYS) {
+			throw ApiException.badRequest("days",
+					"Parameter 'days' must be between 1 and " + RankingQuery.MAX_DAYS + ": " + days);
 		}
 		return days;
 	}
