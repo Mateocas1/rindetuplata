@@ -104,9 +104,31 @@ herdr pane send-text "$pane" "gentle-shell -- --model claude-bridge/claude-opus-
 herdr pane send-text "$pane" "$(cat /tmp/rindetuplata-handoff.md)" && herdr pane send-keys "$pane" enter
 ```
 
+**Context check at every wave end (mandatory).** When a wave closes (workers finished, integrated, suites green,
+document and mirror updated), the orchestrator measures its own context before starting the next wave: below ~40% it
+continues with the next wave; at ~40% or above it hands off now; it never starts a wave it could not finish under
+60%. It records the measurement and the decision as one Log line in the feature document.
+
 The handoff prompt names the feature document, the next task, this section, and repeats the directive verbatim so
 the new session hands off the same way. Before sending it, save `mem_session_summary` and confirm the new pane is
 working (read its tail). The old session then stops starting work.
+
+## Closing audit loop (owner directive, `odd/tasks/post-mvp.md` S9)
+
+When every task of the feature document is done, run the same end-to-end audit as observation 4475 (rev 2) in Engram
+(`rindetuplata/post-mvp-audit`): backend, web, deploy/capture/CI, product and market, each claim verified against code,
+git, fixtures or live sources, never assumed. Then:
+
+- **Finding bar.** A finding qualifies only if it has evidence (`path:line`, a command output or a source) AND a
+  concrete consequence: wrong numbers or advice to a user, a security or data-loss risk, a production blocker, a
+  broken contract, or a clear product gap against S1-S9. Taste, renames, "could be cleaner", speculative scale and
+  anything already decided in the Log do not qualify; list them under "Not pursued" with one line each, or omit them.
+- **No findings is a valid result.** The auditor is told explicitly that it is not expected to find improvements, that
+  "mejorar por mejorar" and "corregir por corregir" are failures, and that a clean report ends the loop.
+- **Round.** Qualifying findings become a new wave of tasks (new `T#` rows, Log entry with the audit summary), built
+  and verified like any other wave; then audit again.
+- **Stop.** The loop ends when a round has no qualifying finding, or when a round's findings are all owner decisions
+  (report them as one "Needs your decision" list). The final report states which round ended it and why.
 
 ## Conventions
 
