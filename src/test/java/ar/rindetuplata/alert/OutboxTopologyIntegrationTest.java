@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import ar.rindetuplata.account.AccountTestConfiguration;
 import java.time.Duration;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -52,6 +54,19 @@ class OutboxTopologyIntegrationTest {
 
 	@Autowired
 	RabbitMQContainer rabbitmq;
+
+	@Autowired
+	RabbitListenerEndpointRegistry listeners;
+
+	/**
+	 * {@code consumer-enabled=false} only keeps the email listener from auto-starting. Spring 7 pauses a cached
+	 * context while another one loads and restarts it on reuse, and the listener registry then starts every
+	 * container whatever its autoStartup, so the consumer would take the message this test reads back.
+	 */
+	@BeforeEach
+	void keepTheEmailConsumerOff() {
+		listeners.getListenerContainers().forEach(container -> container.stop());
+	}
 
 	@Test
 	void theExchangeTheQueueAndTheDeadLetterPairAreDeclared() {

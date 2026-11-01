@@ -248,6 +248,18 @@ docker compose -f compose.yaml -f deploy/compose.vps.yaml \
   `RINDETUPLATA_WEB_ALLOWEDORIGINS` must be the site's own origin, and nothing else.
 - Caddy needs ports 80 and 443 open and is the only published service; the API is reachable only from
   the Compose network. `JAVA_OPTS` (for example `JAVA_OPTS=-Xmx512m`) caps the heap on a small box.
+- **Rate limit of the public read API (optional settings).** `GET /api/v1/ranking`, `/api/v1/simulations`
+  and `/api/v1/instruments/**` allow a burst of 120 requests per client address and refill 2 per second;
+  beyond that the answer is a 429 `ProblemDetail` with `Retry-After`. The address is the `X-Forwarded-For`
+  that Caddy sends (`server.forward-headers-strategy=native`). The counters live in the API's memory, so
+  the limit assumes the single API instance. `RINDETUPLATA_API_RATELIMIT_CAPACITY` and
+  `RINDETUPLATA_API_RATELIMIT_REFILLPERSECOND` change the two numbers. `days` is capped at 1825 and
+  `amount` at 1000000000000 (a 400 naming the parameter), because the simulation cost grows with `days`.
+- **Build token (optional).** The site build calls the API hundreds of times from one machine and would
+  trip that limit. Put the same random string in `API_BUILD_TOKEN` in `api.env` (the overlay hands it to
+  the API as `RINDETUPLATA_API_RATELIMIT_BYPASSTOKEN`) and as a build-time env var `API_BUILD_TOKEN` of
+  the CDN project: `web/src/lib/data.ts` then sends it as `X-Build-Token` and the API skips the limit for
+  that request. Blank or unset disables the bypass, and the token is never logged.
 - The daily ingestion runs in LIVE mode and needs nothing extra. To replay a day of the T9 archive
   (REPLAY mode) mount a checkout of the `data` branch at `/app/archive`: uncomment the `volumes:` line
   of the `api` service in `deploy/compose.vps.yaml`.
@@ -266,6 +278,7 @@ Cloudflare Pages (or any static host with a build pipeline), pointing at this re
 | Build-time env `SITE_URL` | `https://rindetuplata.ar` (canonicals, sitemap, `robots.txt`) |
 | Build-time env `API_URL` | `https://api.rindetuplata.ar` (the API the pages are built from) |
 | Build-time env `PUBLIC_API_URL` | `https://api.rindetuplata.ar` (the URL the browser island calls) |
+| Build-time env `API_BUILD_TOKEN` | optional: the API's rate-limit bypass token (see "VPS: the API"); never `PUBLIC_` |
 | SPA fallback / routing | off: the site is fully prerendered, and `404.html` is the error page |
 
 `API_URL` and `PUBLIC_API_URL` are different on purpose: the first one is only read while building,

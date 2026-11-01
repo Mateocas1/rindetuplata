@@ -1,6 +1,7 @@
 package ar.rindetuplata.api.instrument;
 
 import ar.rindetuplata.api.JsonScales;
+import ar.rindetuplata.domain.Inflation;
 import ar.rindetuplata.source.macro.MacroVariable;
 import ar.rindetuplata.store.InstrumentKind;
 import java.math.BigDecimal;
@@ -79,7 +80,7 @@ public class InstrumentQueryRepository {
 	}
 
 	/** The rate snapshots of a range, oldest first, INVALID ones included: the history shows what was stored. */
-	public List<SnapshotPoint> snapshots(long instrumentId, LocalDate from, LocalDate to) {
+	public List<SnapshotPoint> snapshots(long instrumentId, InstrumentKind kind, LocalDate from, LocalDate to) {
 		return jdbc.sql("""
 				select capture_date, data_date, basis, rate, client_rate, invalid, flags
 				from rate_snapshot
@@ -89,14 +90,19 @@ public class InstrumentQueryRepository {
 				.param("instrumentId", instrumentId)
 				.param("from", from)
 				.param("to", to)
-				.query((rs, rowNum) -> new SnapshotPoint(
-						rs.getObject("capture_date", LocalDate.class),
-						rs.getObject("data_date", LocalDate.class),
-						rs.getString("basis"),
-						JsonScales.rate(rs.getObject("rate", BigDecimal.class)),
-						JsonScales.rate(rs.getObject("client_rate", BigDecimal.class)),
-						rs.getBoolean("invalid"),
-						FlagJson.read(rs.getString("flags"))))
+				.query((rs, rowNum) -> {
+					String basis = rs.getString("basis");
+					BigDecimal rate = rs.getObject("rate", BigDecimal.class);
+					return new SnapshotPoint(
+							rs.getObject("capture_date", LocalDate.class),
+							rs.getObject("data_date", LocalDate.class),
+							basis,
+							JsonScales.rate(rate),
+							JsonScales.rate(rs.getObject("client_rate", BigDecimal.class)),
+							rs.getBoolean("invalid"),
+							FlagJson.read(rs.getString("flags")),
+							EffectiveRate.tea(kind, basis, rate));
+				})
 				.list();
 	}
 
@@ -141,12 +147,16 @@ public class InstrumentQueryRepository {
 				.param("variable", MacroVariable.MONTHLY_INFLATION.name())
 				.param("from", from)
 				.param("to", to)
-				.query((rs, rowNum) -> new MonthlyInflationPoint(
-						InstrumentService.INDEC_CPI_MONTHLY,
-						rs.getObject("observation_date", LocalDate.class),
-						JsonScales.rate(rs.getObject("value", BigDecimal.class)),
-						rs.getString("confidence"),
-						rs.getString("source_id")))
+				.query((rs, rowNum) -> {
+					BigDecimal monthly = rs.getObject("value", BigDecimal.class);
+					return new MonthlyInflationPoint(
+							InstrumentService.INDEC_CPI_MONTHLY,
+							rs.getObject("observation_date", LocalDate.class),
+							JsonScales.rate(monthly),
+							rs.getString("confidence"),
+							rs.getString("source_id"),
+							JsonScales.rate(Inflation.annualized(monthly)));
+				})
 				.list();
 	}
 

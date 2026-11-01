@@ -12,9 +12,10 @@ import org.springframework.stereotype.Service;
 
 /**
  * The evaluation of T6c (S3, S4): it ranks the day the ingestion just wrote with the public defaults ($1.000.000
- * over 30 days, non-client, every kind, as of the job's data date, the maximum page) and hands each active rule its
- * slice of that ranking. Each rule is reconciled in its own transaction by {@link AlertRuleReconciler}; with no
- * active rule nothing is read and nothing is written.
+ * over 30 days, non-client, every kind, as of the job's data date) without truncating it to a page, so a rule on an
+ * instrument ranked beyond the public cap still sees it, and hands each active rule its slice of that ranking. Each
+ * rule is reconciled in its own transaction by {@link AlertRuleReconciler}; with no active rule nothing is read and
+ * nothing is written.
  */
 @Service
 public class AlertEvaluationService implements AlertEvaluator {
@@ -40,7 +41,7 @@ public class AlertEvaluationService implements AlertEvaluator {
 			log.debug("no active alert rule: nothing to evaluate for {}", dataDate);
 			return;
 		}
-		RankingResult result = ranking.rank(new RankingQuery(RankingQuery.DEFAULT_AMOUNT, RankingQuery.DEFAULT_DAYS,
+		RankingResult result = ranking.rankAll(new RankingQuery(RankingQuery.DEFAULT_AMOUNT, RankingQuery.DEFAULT_DAYS,
 				Set.of(), null, dataDate, RankingQuery.MAX_LIMIT));
 		for (AlertRule rule : active) {
 			reconciler.reconcile(rule, result.ranked(), dataDate);

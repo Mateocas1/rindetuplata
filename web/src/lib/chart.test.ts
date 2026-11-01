@@ -20,7 +20,7 @@ function history(id: string): InstrumentHistory {
 
 const rate: ChartSeriesInput = {
   key: 'rate',
-  label: 'Tasa (TNA)',
+  label: 'Tasa efectiva anual (TEA)',
   dashed: false,
   marker: 'circle',
   points: [
@@ -32,7 +32,7 @@ const rate: ChartSeriesInput = {
 
 const inflation: ChartSeriesInput = {
   key: 'inflation',
-  label: 'Inflación mensual (INDEC)',
+  label: 'Inflación anualizada (INDEC)',
   dashed: true,
   marker: 'square',
   points: [
@@ -42,38 +42,49 @@ const inflation: ChartSeriesInput = {
 };
 
 describe('seriesFromHistory', () => {
-  it('plots the rate snapshots of a plazo fijo against INDEC monthly inflation', () => {
+  it('plots the TEA of a plazo fijo against annualized INDEC inflation, not the TNA against monthly', () => {
     const series = seriesFromHistory(history('29'));
     expect(series.map((entry) => entry.key)).toEqual(['rate', 'inflation']);
-    expect(series[0].label).toBe('Tasa (TNA)');
-    expect(series[0].points).toEqual([{ date: '2026-10-14', value: 0.24 }]);
+    expect(series[0].label).toBe('Tasa efectiva anual (TEA)');
+    // The API's tea (0.268282), not the TNA it also serves (rate 0.24).
+    expect(series[0].points).toEqual([{ date: '2026-10-14', value: 0.268282 }]);
     expect(series[0].dashed).toBe(false);
     expect(series[0].marker).not.toBe(series[1].marker);
     expect(series[1].dashed).toBe(true);
-    expect(series[1].label).toBe('Inflación mensual (INDEC)');
-    expect(series[1].points.map((point) => point.date)).toEqual([
-      '2026-07-31',
-      '2026-08-31',
-      '2026-09-30',
+    expect(series[1].label).toBe('Inflación anualizada (INDEC)');
+    // The API's annualized values (1 + m)^12 - 1, not the monthly 0.021, 0.017, 0.019.
+    expect(series[1].points).toEqual([
+      { date: '2026-07-31', value: 0.283243 },
+      { date: '2026-08-31', value: 0.224197 },
+      { date: '2026-09-30', value: 0.253401 },
     ]);
   });
 
-  it('plots the fund TNA equivalent and drops quotes whose value fell', () => {
+  it('plots the fund TEA and drops quotes with no yield', () => {
     const series = seriesFromHistory(history('102'));
     expect(series[0].key).toBe('rate');
-    expect(series[0].label).toBe('TNA equivalente del fondo');
-    expect(series[0].points).toEqual([{ date: '2026-10-14', value: 0.175192 }]);
+    expect(series[0].label).toBe('Tasa efectiva anual (TEA)');
+    expect(series[0].points).toEqual([{ date: '2026-10-14', value: 0.191425 }]);
   });
 
-  it('names the basis when the API gives a TEA instead of a TNA', () => {
-    const tea = history('29');
-    tea.points = [{ ...tea.points[0], basis: 'TEA' }];
-    expect(seriesFromHistory(tea)[0].label).toBe('Tasa (TEA)');
+  it('keeps one label whatever the basis of the stored rate, because tea is already effective', () => {
+    const apy = history('29');
+    apy.points = [{ ...apy.points[0], basis: 'APY', rate: 0.05, tea: 0.05 }];
+    const series = seriesFromHistory(apy);
+    expect(series[0].label).toBe('Tasa efectiva anual (TEA)');
+    expect(series[0].points).toEqual([{ date: '2026-10-14', value: 0.05 }]);
+  });
+
+  it('skips a point whose tea is null', () => {
+    const missing = history('29');
+    // A stored rate without an effective annual value must not fall back to the nominal one.
+    missing.points = [{ ...missing.points[0], tea: null }];
+    expect(seriesFromHistory(missing)[0].points).toEqual([]);
   });
 
   it('keeps a series with no points so the component can explain the gap', () => {
     const empty = history('102');
-    empty.quotes = [{ quoteDate: '2026-10-14', vcp: 10, tnaEquivalent: null }];
+    empty.quotes = [{ quoteDate: '2026-10-14', vcp: 10, tnaEquivalent: null, tea: null }];
     empty.monthlyInflation = [];
     const series = seriesFromHistory(empty);
     expect(series[0].points).toEqual([]);

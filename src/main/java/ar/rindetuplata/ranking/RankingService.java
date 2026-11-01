@@ -54,6 +54,18 @@ public class RankingService {
 
 	/** The personalized ranking: every eligible instrument simulated for the query, sorted by final amount. */
 	public RankingResult rank(RankingQuery query) {
+		return rank(query, query.limit());
+	}
+
+	/**
+	 * The same ranking for internal callers (the alert evaluation): {@code ranked} holds every ranked entry, not the
+	 * first {@code query.limit()}. The public page cap stays in {@link RankingQuery#MAX_LIMIT}.
+	 */
+	public RankingResult rankAll(RankingQuery query) {
+		return rank(query, Integer.MAX_VALUE);
+	}
+
+	private RankingResult rank(RankingQuery query, int pageSize) {
 		Basket basket = collect(query.kinds(), query.asOf(), query.clientOf(), query.amount(), query.days());
 		RankingReader.StoredInflation rem = reader.latestExpectedInflation(query.asOf()).orElse(null);
 		Ranking domain = Ranking.of(instruments(basket), query.amount(), query.days(),
@@ -73,8 +85,7 @@ public class RankingService {
 		excluded.sort(Comparator.comparing(ExcludedEntry::name));
 
 		int total = ranked.size();
-		List<RankedEntry> page = total <= query.limit() ? List.copyOf(ranked)
-				: List.copyOf(ranked.subList(0, query.limit()));
+		List<RankedEntry> page = total <= pageSize ? List.copyOf(ranked) : List.copyOf(ranked.subList(0, pageSize));
 		InflationView inflation = rem == null ? null : new InflationView(InflationView.REM_12M_EXPECTED, rem.value(),
 				rem.observationDate(), domain.inflationOverHorizon());
 		return new RankingResult(query, inflation, page, ineligible, excluded,

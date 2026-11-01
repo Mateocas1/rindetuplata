@@ -3,6 +3,7 @@ package ar.rindetuplata.ranking;
 import ar.rindetuplata.domain.Money;
 import ar.rindetuplata.domain.Ranking;
 import ar.rindetuplata.source.ValidationRules;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.Objects;
@@ -21,14 +22,22 @@ public record RankingQuery(Money amount, int days, Set<Long> clientOf, Set<Ranke
 	public static final int DEFAULT_DAYS = Ranking.DEFAULT_DAYS;
 	public static final int DEFAULT_LIMIT = 50;
 	public static final int MAX_LIMIT = 200;
+	/** Five years: {@code RemuneratedAccount.accrue} loops once per day per wallet, so the horizon must be bounded. */
+	public static final int MAX_DAYS = 1825;
+	/** One trillion ARS, far above any real deposit and still safe for the {@code BigDecimal} arithmetic. */
+	public static final BigDecimal MAX_AMOUNT = new BigDecimal("1000000000000");
 
 	public RankingQuery {
 		Objects.requireNonNull(amount, "amount");
 		if (!amount.isPositive()) {
 			throw new IllegalArgumentException("amount must be positive: " + amount.presented());
 		}
-		if (days < 1) {
-			throw new IllegalArgumentException("days must be positive: " + days);
+		if (amount.value().compareTo(MAX_AMOUNT) > 0) {
+			throw new IllegalArgumentException("amount must be at most " + MAX_AMOUNT.toPlainString() + ": "
+					+ amount.presented());
+		}
+		if (days < 1 || days > MAX_DAYS) {
+			throw new IllegalArgumentException("days must be between 1 and " + MAX_DAYS + ": " + days);
 		}
 		clientOf = clientOf == null ? Set.of() : Set.copyOf(clientOf);
 		kinds = kinds == null || kinds.isEmpty() ? allKinds() : Set.copyOf(kinds);

@@ -8,6 +8,8 @@ public final class Inflation {
 
     private static final BigDecimal DAYS_IN_YEAR = BigDecimal.valueOf(AnnualRate.DAY_COUNT);
 
+    private static final BigDecimal MONTHS_IN_YEAR = BigDecimal.valueOf(12);
+
     private Inflation() {
     }
 
@@ -21,6 +23,15 @@ public final class Inflation {
         }
         BigDecimal exponent = BigDecimal.valueOf(days).divide(DAYS_IN_YEAR, Money.MATH);
         return DecimalMath.pow(BigDecimal.ONE.add(twelveMonthRate), exponent, Money.MATH).subtract(BigDecimal.ONE);
+    }
+
+    /** Annualizes one monthly INDEC rate by compounding twelve months: (1 + m)^12 − 1. Never {@code m · 12}. */
+    public static BigDecimal annualized(BigDecimal monthlyRate) {
+        BigDecimal factor = BigDecimal.ONE.add(monthlyRate);
+        if (factor.signum() <= 0) {
+            throw new IllegalArgumentException("Monthly inflation must be greater than -100%: " + monthlyRate);
+        }
+        return DecimalMath.pow(factor, MONTHS_IN_YEAR, Money.MATH).subtract(BigDecimal.ONE);
     }
 
     /** Cumulative inflation of consecutive monthly INDEC rates: ∏(1 + m) − 1. */

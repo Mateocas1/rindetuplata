@@ -89,3 +89,20 @@ export function financialProductJsonLd(
   }
   return product;
 }
+
+const JSON_LD_ESCAPES: Record<string, string> = {
+  '<': '\\u003c',
+  '>': '\\u003e',
+  '&': '\\u0026',
+  '\u2028': '\\u2028',
+  '\u2029': '\\u2029',
+};
+
+/**
+ * A block as the text of an inline `<script type="application/ld+json">`. The characters
+ * that can end the script element or the line are written as unicode escapes, which
+ * `JSON.parse` reads back as the same characters.
+ */
+export function serializeJsonLd(block: unknown): string {
+  return JSON.stringify(block).replace(/[<>&\u2028\u2029]/g, (char) => JSON_LD_ESCAPES[char]);
+}

@@ -151,6 +151,12 @@ const sources = [
         vez de dividirla: (1 + inflación a 12 meses) elevado a (días ÷ 365), menos 1. Cada vista
         indica qué índice usó y con qué fecha de observación.
       </p>
+      <p class="type-body">
+        <strong>Por qué el gráfico anualiza los dos.</strong> La TNA es anual y el IPC del INDEC es
+        mensual: en un mismo eje, una tasa de 30% parecería quince veces una inflación de 2%. Por
+        eso el gráfico muestra la tasa efectiva anual (TEA) y la inflación anualizada, que es la
+        del mes compuesta durante 12 meses: (1 + inflación del mes) elevado a 12, menos 1.
+      </p>
       <details class={detailsClass}>
         <summary class={summaryClass}>Ver el ejemplo completo</summary>
         <p class="type-body mt-2">

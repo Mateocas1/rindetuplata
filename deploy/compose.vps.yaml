@@ -74,6 +74,9 @@ services:
       RINDETUPLATA_INGEST_REBUILDHOOKURL: ${RINDETUPLATA_INGEST_REBUILDHOOKURL:?set the CDN deploy hook}
       # TLS terminates in front of the API: without this the session and CSRF cookies travel in clear.
       RINDETUPLATA_AUTH_SECURECOOKIE: "true"
+      # Optional (T1a): the shared secret the CDN site build sends as `X-Build-Token` (build-time env
+      # `API_BUILD_TOKEN`) so its hundreds of calls skip the per-address rate limit. Blank disables it.
+      RINDETUPLATA_API_RATELIMIT_BYPASSTOKEN: "${API_BUILD_TOKEN:-}"
     # To replay the T9 archive (REPLAY mode of the daily job) mount a checkout of the `data` branch:
     # volumes:
     #   - ./archive:/app/archive:ro
