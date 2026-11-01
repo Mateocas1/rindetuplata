@@ -129,8 +129,20 @@ function requireApiUrl(env: Env): string {
   return baseUrl.replace(/\/+$/, '');
 }
 
-async function apiGet(url: string, doFetch: typeof fetch): Promise<unknown> {
-  const response = await doFetch(url, { headers: { accept: 'application/json' } });
+/**
+ * The build calls the API hundreds of times from one machine (rankings plus one history per instrument), which the
+ * API's per-address rate limit would refuse. `API_BUILD_TOKEN`, when set, is sent as `X-Build-Token` so the API
+ * skips the limit for this build; a blank value sends nothing. The token is never put in an error or a log line.
+ */
+function apiHeaders(env: Env): Record<string, string> {
+  const headers: Record<string, string> = { accept: 'application/json' };
+  const token = env.API_BUILD_TOKEN?.trim();
+  if (token) headers['x-build-token'] = token;
+  return headers;
+}
+
+async function apiGet(url: string, doFetch: typeof fetch, env: Env): Promise<unknown> {
+  const response = await doFetch(url, { headers: apiHeaders(env) });
   if (!response.ok) {
     const body = await response.text();
     throw new Error(`GET ${url} failed with ${response.status}: ${body.slice(0, 300)}`);
@@ -191,7 +203,7 @@ export async function loadRanking(
   params.set('limit', String(limit));
   const url = `${requireApiUrl(env)}/api/v1/ranking?${params.toString()}`;
   const doFetch = options.fetch ?? globalThis.fetch;
-  return assertRanking(await apiGet(url, doFetch), url);
+  return assertRanking(await apiGet(url, doFetch, env), url);
 }
 
 /**
@@ -266,7 +278,7 @@ export async function loadHistory(
   }
 
   const url = `${requireApiUrl(env)}/api/v1/instruments/${encodeURIComponent(instrumentId)}/history`;
-  return assertHistory(await apiGet(url, options.fetch ?? globalThis.fetch), url);
+  return assertHistory(await apiGet(url, options.fetch ?? globalThis.fetch, env), url);
 }
 
 /**

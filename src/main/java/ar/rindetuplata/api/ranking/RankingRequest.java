@@ -18,6 +18,9 @@ import java.util.Set;
  */
 final class RankingRequest {
 
+	/** The longest integer or fraction part a rejected amount is echoed with in plain form. */
+	private static final int MAX_PLAIN_DIGITS = 40;
+
 	private RankingRequest() {
 	}
 
@@ -33,17 +36,33 @@ final class RankingRequest {
 		}
 		if (amount.signum() <= 0) {
 			throw ApiException.badRequest("amount",
-					"Parameter 'amount' must be greater than 0: " + amount.toPlainString());
+					"Parameter 'amount' must be greater than 0: " + echo(amount));
+		}
+		if (amount.compareTo(RankingQuery.MAX_AMOUNT) > 0) {
+			throw ApiException.badRequest("amount", "Parameter 'amount' must be at most "
+					+ RankingQuery.MAX_AMOUNT.toPlainString() + ": " + echo(amount));
 		}
 		return Money.ars(amount);
+	}
+
+	/**
+	 * The rejected value as the caller can read it. Spring parses {@code 1e999999999} as a valid {@code BigDecimal},
+	 * whose plain form is a billion characters, so a value with more than {@value #MAX_PLAIN_DIGITS} digits on either
+	 * side of the point is echoed in scientific notation instead.
+	 */
+	private static String echo(BigDecimal amount) {
+		long integerDigits = (long) amount.precision() - amount.scale();
+		return integerDigits > MAX_PLAIN_DIGITS || amount.scale() > MAX_PLAIN_DIGITS ? amount.toString()
+				: amount.toPlainString();
 	}
 
 	static int days(Integer days) {
 		if (days == null) {
 			return RankingQuery.DEFAULT_DAYS;
 		}
-		if (days < 1) {
-			throw ApiException.badRequest("days", "Parameter 'days' must be at least 1: " + days);
+		if (days < 1 || days > RankingQuery.MAX_DAYS) {
+			throw ApiException.badRequest("days",
+					"Parameter 'days' must be between 1 and " + RankingQuery.MAX_DAYS + ": " + days);
 		}
 		return days;
 	}

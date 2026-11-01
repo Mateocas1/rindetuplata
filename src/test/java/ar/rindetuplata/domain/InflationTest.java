@@ -76,4 +76,26 @@ class InflationTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("days must not be negative");
     }
+
+    @Test
+    void monthlyInflationIsAnnualizedByCompoundingTwelveMonths() {
+        // 1.02^12 - 1, not 0.02 * 12 = 0.24
+        assertThat(Inflation.annualized(new BigDecimal("0.02")))
+                .isCloseTo(new BigDecimal("0.268241794562545318301696"), within(TOLERANCE));
+        assertThat(Inflation.annualized(new BigDecimal("0.019")))
+                .isCloseTo(new BigDecimal("0.253401494152226722337275816563694161"), within(TOLERANCE));
+    }
+
+    @Test
+    void annualizingZeroMonthlyInflationIsZeroAndDeflationStaysNegative() {
+        assertThat(Inflation.annualized(BigDecimal.ZERO)).isEqualByComparingTo("0");
+        assertThat(Inflation.annualized(new BigDecimal("-0.005")))
+                .isCloseTo(new BigDecimal("-0.058377193085624182069668554443359375"), within(TOLERANCE));
+    }
+
+    @Test
+    void annualizingRejectsMonthlyInflationOfMinusOneHundredPercentOrLess() {
+        assertThatThrownBy(() -> Inflation.annualized(new BigDecimal("-1")))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }

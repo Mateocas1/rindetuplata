@@ -51,7 +51,7 @@ public class InstrumentService {
 		checkRange(rangeFrom, rangeTo);
 
 		boolean fund = instrument.kind() == InstrumentKind.FUND_CLASS;
-		List<SnapshotPoint> points = fund ? List.of() : repository.snapshots(id, rangeFrom, rangeTo);
+		List<SnapshotPoint> points = fund ? List.of() : repository.snapshots(id, instrument.kind(), rangeFrom, rangeTo);
 		List<FundQuotePoint> quotes = fund ? fundQuotes(id, rangeFrom, rangeTo) : List.of();
 		List<MonthlyInflationPoint> inflation = repository.monthlyInflation(rangeFrom, rangeTo);
 
@@ -65,20 +65,21 @@ public class InstrumentService {
 		QuoteRow previous = repository.quoteBefore(id, from).orElse(null);
 		List<FundQuotePoint> points = new ArrayList<>(quotes.size());
 		for (QuoteRow quote : quotes) {
-			BigDecimal tna = previous == null ? null : tnaEquivalent(previous, quote);
-			points.add(new FundQuotePoint(quote.date(), JsonScales.money(quote.vcp()), tna));
+			FundYield yield = previous == null ? null : yieldBetween(previous, quote);
+			points.add(new FundQuotePoint(quote.date(), JsonScales.money(quote.vcp()),
+					yield == null ? null : JsonScales.rate(yield.tna().fraction()),
+					yield == null ? null : JsonScales.rate(yield.tea())));
 			previous = quote;
 		}
 		return points;
 	}
 
-	/** The TNA-equivalent between two quotes, or {@code null} when the vcp fell: a losing class has no yield. */
-	private static BigDecimal tnaEquivalent(QuoteRow previous, QuoteRow current) {
+	/** The yield between two quotes, or {@code null} when the vcp fell: a losing class has no yield. */
+	private static FundYield yieldBetween(QuoteRow previous, QuoteRow current) {
 		if (current.vcp().compareTo(previous.vcp()) < 0) {
 			return null;
 		}
-		FundYield yield = new FundYield(previous.date(), previous.vcp(), current.date(), current.vcp());
-		return JsonScales.rate(yield.tna().fraction());
+		return new FundYield(previous.date(), previous.vcp(), current.date(), current.vcp());
 	}
 
 	private static void checkRange(LocalDate from, LocalDate to) {

@@ -87,6 +87,9 @@ services:
       RINDETUPLATA_INGEST_RUNONSTARTUP: "true"
       # T4d: after a COMPLETED ingestion the site is rebuilt by the sidecar below.
       RINDETUPLATA_INGEST_REBUILDHOOKURL: "http://rebuilder:8787/"
+      # Optional (T1a): the secret the rebuilder sends as `X-Build-Token` so a site build skips the
+      # per-address rate limit of the public read API. Blank (the default) disables the bypass.
+      RINDETUPLATA_API_RATELIMIT_BYPASSTOKEN: "${API_BUILD_TOKEN:-}"
 
   web:
     restart: unless-stopped
@@ -139,6 +142,8 @@ services:
       API_URL: "http://web"
       # Canonicals, sitemap and robots.txt must name the public Funnel URL, never localhost.
       SITE_URL: "${PREVIEW_URL:?set PREVIEW_URL in deploy/preview.env}"
+      # Optional (T1a): sent to the API as `X-Build-Token`; must equal the API's bypass token above.
+      API_BUILD_TOKEN: "${API_BUILD_TOKEN:-}"
       # npm writes its logs under $HOME; /tmp is the only directory an unprivileged user is sure of.
       HOME: "/tmp"
     volumes:

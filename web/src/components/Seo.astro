@@ -5,6 +5,8 @@
  * `jsonLd` block is only passed on pages that need it: pages that ship no
  * islands must keep zero `<script>` tags (checked by the build smoke test).
  */
+import { serializeJsonLd } from '../lib/seo';
+
 export interface Props {
   title: string;
   description: string;
@@ -49,6 +51,6 @@ const socialTitle = title.length > SOCIAL_TITLE_LIMIT ? `${title.slice(0, 69)}â€
 <meta name="twitter:image" content={imageUrl.href} />
 {
   jsonLdBlocks.map((block) => (
-    <script type="application/ld+json" set:html={JSON.stringify(block)} />
+    <script type="application/ld+json" set:html={serializeJsonLd(block)} />
   ))
 }

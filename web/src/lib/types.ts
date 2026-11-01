@@ -126,20 +126,25 @@ export interface SnapshotPoint {
   clientRate: number | null;
   invalid: boolean;
   flags: ValidationFlag[];
+  /** `rate` on the effective annual basis; null when the snapshot has no rate. */
+  tea: number | null;
 }
 
-/** One fund cuotaparte quote; `tnaEquivalent` is null when the value fell. */
+/** One fund cuotaparte quote; `tnaEquivalent` and `tea` are null when the value fell. */
 export interface FundQuotePoint {
   quoteDate: string;
   vcp: number;
   tnaEquivalent: number | null;
+  tea: number | null;
 }
 
-/** INDEC monthly inflation, the past index used by history (S10). */
+/** INDEC monthly inflation, the past index used by history (S10), with its 12-month compounding. */
 export interface MonthlyInflationPoint {
   index: string;
   observationDate: string;
   value: number;
+  /** `(1 + value)^12 - 1`: the monthly rate on the annual basis the chart plots. */
+  annualized: number;
   confidence: string;
   sourceId: string;
 }

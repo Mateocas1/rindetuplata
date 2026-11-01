@@ -179,7 +179,11 @@ describe('instrument pages', () => {
       expect(page, slug).toContain('<svg');
       expect(page, slug).toContain(`<title id="chart-title-${entry.id}">`);
       expect(page, slug).toContain(`<desc id="chart-desc-${entry.id}">`);
-      expect(page, slug).toContain('Inflación mensual (INDEC)');
+      expect(page, slug).toContain('Tasa efectiva anual (TEA)');
+      expect(page, slug).toContain('Inflación anualizada (INDEC)');
+      // The mismatched pair of the old chart: a nominal annual rate against a monthly index.
+      expect(page, slug).not.toContain('Inflación mensual (INDEC)');
+      expect(page, slug).not.toContain('Tasa anual contra IPC mensual');
       expect(page, slug).toContain('role="img"');
     }
   });
