@@ -1,5 +1,6 @@
 package ar.rindetuplata.curation;
 
+import ar.rindetuplata.TestContainers;
 import ar.rindetuplata.account.RecordingMailer;
 import java.time.Clock;
 import java.time.Instant;
@@ -9,7 +10,6 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * Testcontainers, a frozen clock and a recording mailer for the {@code curation} tests: "today" is always
@@ -27,7 +27,7 @@ public class CurationTestConfiguration {
 	@Bean
 	@ServiceConnection
 	PostgreSQLContainer postgresContainer() {
-		return new PostgreSQLContainer(DockerImageName.parse("postgres:18-alpine"));
+		return TestContainers.postgres();
 	}
 
 	@Bean
