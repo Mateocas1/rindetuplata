@@ -1,0 +1,35 @@
+---
+/**
+ * `/claves-api/` (S6, T6d): the reader's API keys. `noindex` and client only — the
+ * island loads the session with `GET /api/v1/me` and the keys in the browser, so
+ * nothing personal is prerendered, and a key lives only in the island's memory.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ApiKeysPanel from '../components/apikeys/ApiKeysPanel';
+import LogoutButton from '../components/account/LogoutButton';
+---
+
+<BaseLayout
+  title="Claves de API | rindetuplata"
+  description="Creá y revocá tus claves de la API pública de rindetuplata: un límite propio para consultar el ranking desde tu código."
+  noindex
+>
+  <div class="flex flex-col gap-section py-section">
+    <header class="flex flex-col gap-block">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <h1 class="type-display">Claves de API</h1>
+        <div id="claves-api-logout">
+          <LogoutButton client:only="react" />
+        </div>
+      </div>
+      <p class="max-w-prose type-body text-lead text-muted">
+        Una clave te da un límite propio para consultar la API pública desde tu código. Podés tener
+        hasta tres activas y revocarlas cuando quieras.
+      </p>
+    </header>
+
+    <div id="claves-api-island">
+      <ApiKeysPanel client:only="react" />
+    </div>
+  </div>
+</BaseLayout>
