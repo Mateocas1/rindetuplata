@@ -51,7 +51,7 @@ docker compose --profile stack up -d --wait
 
 ## CI for the deploy files
 
-Three GitHub Actions workflows and Dependabot watch what the Java and web test workflows do not (T4e, S4):
+Two GitHub Actions workflows and Dependabot watch what the Java and web test workflows do not (T4e, S4):
 
 | Workflow | Runs when | What it proves |
 |---|---|---|
@@ -66,9 +66,11 @@ Three GitHub Actions workflows and Dependabot watch what the Java and web test w
 - Run the same checks locally: `docker build -t rindetuplata-api:ci .`, then `for t in deploy/test/*-test.sh; do bash "$t"; done`
   (after `cd web && npm ci`).
 - `.github/dependabot.yml` opens weekly update PRs for Maven (`/`), npm (`/web`), GitHub Actions and the base images
-  of both Dockerfiles (`/` and `/deploy/rebuilder`). Minor and patch updates of one ecosystem arrive as a single
-  grouped PR; a major update is its own PR. At most three PRs per ecosystem (two per Dockerfile) stay open. Every
+  of the API `Dockerfile` (`/`, the only Dockerfile). Minor and patch updates of one ecosystem arrive as a single
+  grouped PR; a major update is its own PR. At most three PRs per ecosystem (two for the Dockerfile) stay open. Every
   action in the workflows is pinned by commit SHA with a version comment, and Dependabot bumps both together.
+  The images Compose runs as published (`postgres`, `rabbitmq`, `caddy`, the preview's `node:24` rebuilder) are not
+  watched: bump their tags by hand.
 
 ## Private preview (Tailscale Funnel)
 
