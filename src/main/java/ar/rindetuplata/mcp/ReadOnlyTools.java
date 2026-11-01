@@ -233,7 +233,8 @@ class ReadOnlyTools {
 				"Kinds to rank; all when omitted.", "items", Map.of("type", "string", "enum",
 						Arrays.stream(RankedKind.values()).map(Enum::name).toList())));
 		properties.put("clientOf", Map.of("type", "array", "description",
-				"Instrument ids of the banks the user is a client of, to use their client rate.", "items",
+				"Instrument ids of the banks the user is a client of, to use their client rate; at most "
+						+ RankingQuery.MAX_CLIENT_OF + ".", "maxItems", RankingQuery.MAX_CLIENT_OF, "items",
 				Map.of("type", "integer")));
 		properties.put("asOf", dateProperty("Reference date as yyyy-MM-dd; today in Argentina when omitted."));
 		properties.put("limit", Map.of("type", "integer", "minimum", 1, "maximum", RankingQuery.MAX_LIMIT, "default",

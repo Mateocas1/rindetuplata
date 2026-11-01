@@ -26,6 +26,11 @@ public record RankingQuery(Money amount, int days, Set<Long> clientOf, Set<Ranke
 	public static final int MAX_LIMIT = 200;
 	/** Five years: {@code RemuneratedAccount.accrue} loops once per day per wallet, so the horizon must be bounded. */
 	public static final int MAX_DAYS = 1825;
+	/**
+	 * The most banks a caller can say they are a client of. The BCRA plazo fijo list has fewer than 100 banks, so
+	 * the cap never refuses a real request; it bounds the cache key, the query kept by a cached ranking and the echo.
+	 */
+	public static final int MAX_CLIENT_OF = 100;
 	/** One trillion ARS, far above any real deposit and still safe for the {@code BigDecimal} arithmetic. */
 	public static final BigDecimal MAX_AMOUNT = new BigDecimal("1000000000000");
 
@@ -45,6 +50,10 @@ public record RankingQuery(Money amount, int days, Set<Long> clientOf, Set<Ranke
 		}
 		if (days < 1 || days > MAX_DAYS) {
 			throw new IllegalArgumentException("days must be between 1 and " + MAX_DAYS + ": " + days);
+		}
+		if (clientOf != null && clientOf.size() > MAX_CLIENT_OF) {
+			throw new IllegalArgumentException("clientOf must have at most " + MAX_CLIENT_OF + " banks: "
+					+ clientOf.size());
 		}
 		clientOf = clientOf == null ? Set.of() : Set.copyOf(clientOf);
 		kinds = kinds == null || kinds.isEmpty() ? allKinds() : Set.copyOf(kinds);

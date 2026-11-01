@@ -45,11 +45,13 @@ Rows have the field names and scales of the REST API (money at scale 2, fraction
 ### Same parameters and caps as the REST API
 
 `amount` is greater than 0 and at most `RankingQuery.MAX_AMOUNT` (1e12 ARS), `days` is between 1 and
-`RankingQuery.MAX_DAYS` (1825), `limit` between 1 and `RankingQuery.MAX_LIMIT` (200); defaults are 1,000,000 ARS, 30
+`RankingQuery.MAX_DAYS` (1825), `limit` between 1 and `RankingQuery.MAX_LIMIT` (200), `clientOf` at most
+`RankingQuery.MAX_CLIENT_OF` (100) ids (there are fewer than 100 banks in the BCRA list), counted as sent, repeats
+included, before the list is copied or echoed; defaults are 1,000,000 ARS, 30
 days, 50 rows, every kind, fund classes grouped, today in `America/Argentina/Buenos_Aires`. The bounds are read from the
 `RankingQuery` constants, and the input schemas of `tools/list` show them. The REST request classes are package-private,
 so `ToolArguments` mirrors their validation; `McpArgumentEquivalenceApiTest` sends every boundary (`days`
-0/1/cap/cap+1, `amount` 0/cap/cap+1, `limit` 0/1/200/201, an unknown `kind`, a malformed `asOf`, unknown and missing
+0/1/cap/cap+1, `amount` 0/cap/cap+1, `limit` 0/1/200/201, `clientOf` 100/101 ids, an unknown `kind`, a malformed `asOf`, unknown and missing
 `instrumentId`) to both and fails if one accepts what the other rejects or if they name a different field.
 
 ## Errors
@@ -78,6 +80,10 @@ argument a tool does not declare is refused so a typo is never silently ignored.
   client session costs three requests before its first tool call (`initialize`, `notifications/initialized`, the call).
   Over the limit the answer is the 429 `ProblemDetail` with `Retry-After`. The `X-Build-Token` bypass applies as it does
   to the REST reads.
+- The transport reads at most 64 KiB of request body (`McpConfiguration.MAX_REQUEST_BYTES`, the SDK's
+  `maxRequestSize`; its default is 16 MiB). A larger body is refused by the SDK with `413 Content Too Large` before any
+  tool runs (`McpBodyLimitApiTest`). Together with the `clientOf` cap, one request cannot put an unbounded list in the
+  ranking cache key or in the query a cached ranking keeps.
 - Tools never write, never touch accounts, alerts or curation, and answer from the ranking cache (`PublicRanking`) like
   the REST ranking.
 

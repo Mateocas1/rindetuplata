@@ -20,6 +20,9 @@ class McpConfiguration {
 
 	static final String ENDPOINT = "/mcp";
 
+	/** The largest request body the transport reads; the SDK's default is 16 MiB. */
+	static final int MAX_REQUEST_BYTES = 64 * 1024;
+
 	private static final String INSTRUCTIONS = """
 			Argentine yield comparator (rindetuplata): where does money earn the most today, measured by real return \
 			against inflation. All tools are read-only. Start with get_ranking; its rows carry an id for \
@@ -29,7 +32,8 @@ class McpConfiguration {
 
 	@Bean
 	HttpServletStatelessServerTransport mcpTransport() {
-		return HttpServletStatelessServerTransport.builder().messageEndpoint(ENDPOINT).build();
+		return HttpServletStatelessServerTransport.builder().messageEndpoint(ENDPOINT)
+				.maxRequestSize(MAX_REQUEST_BYTES).build();
 	}
 
 	@Bean

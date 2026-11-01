@@ -6,6 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -88,6 +90,24 @@ class RankingValidationApiTest extends RankingApiIntegrationTest {
 		mockMvc.perform(get("/api/v1/ranking").param("amount", "1000000000000")).andExpect(status().isOk());
 		mockMvc.perform(get("/api/v1/simulations").param("instrumentId", String.valueOf(id)).param("amount",
 				"1000000000000")).andExpect(status().isOk());
+	}
+
+	@Test
+	void moreClientBanksThanTheCapAreABadRequestNamingClientOfCountingTheRawList() throws Exception {
+		expectBadRequest(mockMvc.perform(get("/api/v1/ranking").param("clientOf", clientOf(101, false))), "clientOf",
+				"Parameter 'clientOf' must have at most 100 values: 101");
+		expectBadRequest(mockMvc.perform(get("/api/v1/ranking").param("clientOf", clientOf(101, true))), "clientOf",
+				"Parameter 'clientOf' must have at most 100 values: 101");
+	}
+
+	@Test
+	void theClientOfCapItselfIsAccepted() throws Exception {
+		mockMvc.perform(get("/api/v1/ranking").param("clientOf", clientOf(100, false))).andExpect(status().isOk());
+	}
+
+	private static String clientOf(int values, boolean repeated) {
+		return IntStream.rangeClosed(1, values).mapToObj(i -> Integer.toString(repeated ? 1 : i))
+				.collect(Collectors.joining(","));
 	}
 
 	@Test

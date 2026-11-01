@@ -99,7 +99,13 @@ final class ToolArguments {
 		return kinds;
 	}
 
+	/** The client banks; the list is counted as sent, before it is copied or any id is parsed, so it stays bounded. */
 	Set<Long> clientOf() {
+		if (values.get("clientOf") instanceof Collection<?> collection
+				&& collection.size() > RankingQuery.MAX_CLIENT_OF) {
+			throw ToolArgumentException.invalid("clientOf", "must have at most " + RankingQuery.MAX_CLIENT_OF
+					+ " values: " + collection.size());
+		}
 		Set<Long> ids = new LinkedHashSet<>();
 		for (Object element : list("clientOf")) {
 			ids.add(integer("clientOf", element));
