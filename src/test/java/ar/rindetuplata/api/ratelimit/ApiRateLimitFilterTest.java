@@ -89,6 +89,14 @@ class ApiRateLimitFilterTest {
 	}
 
 	@Test
+	void aConfiguredTokenWithSurroundingWhitespaceMatchesTheTrimmedHeaderTheBuildSends() throws Exception {
+		ApiRateLimitFilter filter = filter(" s3cret\n");
+		for (int i = 0; i < 3; i++) {
+			assertThat(call(filter, "GET", "/api/v1/ranking", "1.1.1.1", "s3cret").getStatus()).isEqualTo(200);
+		}
+	}
+
+	@Test
 	void aBlankConfiguredTokenNeverBypasses() throws Exception {
 		ApiRateLimitFilter filter = filter("");
 		assertThat(call(filter, "GET", "/api/v1/ranking", "1.1.1.1", "").getStatus()).isEqualTo(200);
