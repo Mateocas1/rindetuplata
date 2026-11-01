@@ -31,8 +31,9 @@
 	# Every response of this stack, including the 404 page and the proxied API answers.
 	header X-Robots-Tag "noindex, nofollow"
 
-	# The API: its routes, the OpenAPI document and the MCP endpoint (T6e), all named by llms.txt.
-	@api path /api/* /mcp /v3/api-docs
+	# The API: its routes, the OpenAPI document and the MCP endpoint (T6e), all named by llms.txt, and the two
+	# health URLs a monitor reads (T4c, F1; the rest of /actuator/* stays unproxied).
+	@api path /api/* /mcp /v3/api-docs /actuator/health /actuator/health/ingestion
 	handle @api {
 		# Funnel terminates TLS in front of this container, so the API is the last place that can still
 		# know the visitor's real scheme; without this the magic link, the alert link and CORS would be

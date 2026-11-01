@@ -40,3 +40,7 @@ deploy/preview.env
 # Build root of the private preview (T14c): one directory per site build plus the `current` symlink the
 # sidecar publishes and Caddy serves (`web/.site`, mounted on /srv in the preview overlay).
 web/.site/
+
+# Database dumps (T4c, F4): the default BACKUP_DIR is /var/backups/rindetuplata, outside the checkout; this keeps
+# a dump out of git for anyone who points BACKUP_DIR at a directory inside it.
+backups/

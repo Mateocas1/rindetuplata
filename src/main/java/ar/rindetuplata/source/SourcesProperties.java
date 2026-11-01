@@ -13,6 +13,7 @@ public record SourcesProperties(
         @DefaultValue("https://api.bcra.gob.ar/transparencia/v1.0") String bcraTransparencyUrl,
         @DefaultValue("https://api.bcra.gob.ar/estadisticas/v4.0") String bcraStatisticsUrl,
         @DefaultValue("https://api.argentinadatos.com/v1/finanzas") String argentinaDatosUrl,
+        @DefaultValue("https://api.argentinadatos.com/v1/cotizaciones") String argentinaDatosCotizacionesUrl,
         @DefaultValue("https://dolarapi.com/v1") String dolarApiUrl,
         @DefaultValue("https://www.uala.com.ar") String ualaUrl,
         @DefaultValue("24") int macroLimit) {

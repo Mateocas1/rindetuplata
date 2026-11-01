@@ -92,6 +92,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/backfill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/account/api-keys": {
         parameters: {
             query?: never;
@@ -445,6 +461,14 @@ export interface components {
             active?: boolean;
             /** Format: date-time */
             createdAt?: string;
+        };
+        BackfillStarted: {
+            /** Format: int64 */
+            jobId?: number;
+            /** Format: date */
+            from?: string;
+            /** Format: date */
+            to?: string;
         };
         CreateApiKeyRequest: {
             name?: string;
@@ -1019,6 +1043,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["WalletRateView"];
+                };
+            };
+        };
+    };
+    start: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BackfillStarted"];
                 };
             };
         };

@@ -1,0 +1,56 @@
+[
+  {
+    "casa": "bolsa",
+    "compra": 1544.3,
+    "venta": 1557.3,
+    "fecha": "2026-09-28"
+  },
+  {
+    "casa": "bolsa",
+    "compra": 1544,
+    "venta": 1556.5,
+    "fecha": "2026-09-29"
+  },
+  {
+    "casa": "bolsa",
+    "compra": 1537.4,
+    "venta": 1557,
+    "fecha": "2026-09-30"
+  },
+  {
+    "casa": "bolsa",
+    "compra": 1537.2,
+    "venta": 1548.7,
+    "fecha": "2026-10-01"
+  },
+  {
+    "casa": "bolsa",
+    "compra": 1547,
+    "venta": 1556,
+    "fecha": "2026-10-02"
+  },
+  {
+    "casa": "bolsa",
+    "compra": 1543.6,
+    "venta": 1551.9,
+    "fecha": "2026-10-03"
+  },
+  {
+    "casa": "bolsa",
+    "compra": 1543.6,
+    "venta": 1551.9,
+    "fecha": "2026-10-04"
+  },
+  {
+    "casa": "bolsa",
+    "compra": 1543.6,
+    "venta": 1551.9,
+    "fecha": "2026-10-05"
+  },
+  {
+    "casa": "bolsa",
+    "compra": 1532.5,
+    "venta": 1537.9,
+    "fecha": "2026-10-06"
+  }
+]

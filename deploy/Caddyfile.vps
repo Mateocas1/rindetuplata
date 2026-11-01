@@ -5,14 +5,16 @@
 # serves the API only — the local one-origin Caddyfile lives in deploy/Caddyfile.local.
 #
 # Only the API's public routes are proxied: `/api/*`, the OpenAPI document `/v3/api-docs` and the MCP endpoint
-# `/mcp` (T6e, all three named by llms.txt). The static site lives on the CDN, and a
+# `/mcp` (T6e, all three named by llms.txt), plus exactly the two health URLs the external uptime monitor and
+# the post-restore check read (T4c, F1: `/actuator/health` and `/actuator/health/ingestion`, never the rest of
+# `/actuator/*`). The static site lives on the CDN, and a
 # path that reaches this host by accident (a stale DNS record, a mistyped deploy URL) must answer 404
 # instead of hitting whatever the API serves for it (finding R1 of review-d018a62efca39d30).
 
 api.rindetuplata.ar {
 	encode zstd gzip
 
-	@api path /api/* /mcp /v3/api-docs
+	@api path /api/* /mcp /v3/api-docs /actuator/health /actuator/health/ingestion
 	handle @api {
 		reverse_proxy api:8080
 	}

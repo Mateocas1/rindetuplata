@@ -12,6 +12,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { loadHistory, fixturesEnabled, type BuildDataOptions, type Env } from './data';
+import { buildApiGet } from './fetchRetry';
 import { formatInteger } from './format';
 import type { InstrumentHistory } from './types';
 
@@ -61,19 +62,6 @@ function requireApiUrl(env: Env): string {
   return baseUrl.replace(/\/+$/, '');
 }
 
-/** The build token, when set, lets the API skip its per-address limit; it never reaches an error message. */
-async function apiGet(url: string, options: BuildDataOptions, env: Env): Promise<unknown> {
-  const headers: Record<string, string> = { accept: 'application/json' };
-  const token = env.API_BUILD_TOKEN?.trim();
-  if (token) headers['x-build-token'] = token;
-  const response = await (options.fetch ?? globalThis.fetch)(url, { headers });
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`GET ${url} failed with ${response.status}: ${body.slice(0, 300)}`);
-  }
-  return response.json();
-}
-
 function assertBank(payload: unknown, source: string): BankRates {
   const candidate = payload as Partial<BankRates> | null;
   if (
@@ -110,7 +98,7 @@ export async function loadBankList(options: BuildDataOptions = {}): Promise<Bank
     payload = JSON.parse(await readFile(source, 'utf8'));
   } else {
     source = `${requireApiUrl(env)}/api/v1/entities/banks`;
-    payload = await apiGet(source, options, env);
+    payload = await buildApiGet(source, options, env);
   }
   if (!Array.isArray(payload)) throw new Error(`Invalid bank list payload from ${source}`);
   return payload.map((bank) => assertBank(bank, source));
@@ -141,7 +129,7 @@ export async function loadBankDetail(
     return assertDetail(JSON.parse(raw), file);
   }
   const url = `${requireApiUrl(env)}/api/v1/entities/banks/${encodeURIComponent(slug)}`;
-  return assertDetail(await apiGet(url, options, env), url);
+  return assertDetail(await buildApiGet(url, options, env), url);
 }
 
 /** The detail of every bank of the list, in list order: the page set of `/bancos/<slug>/`. */

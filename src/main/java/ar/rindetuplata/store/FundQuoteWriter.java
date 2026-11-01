@@ -18,11 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class FundQuoteWriter {
 
-	private static final String INSERT = """
+	private static final String INSERT_INTO = """
 			insert into fund_quote (instrument_id, quote_date, vcp, ccp, patrimonio, horizon, fetched_at, confidence,
 			                        flags, invalid)
 			values (:instrumentId, :quoteDate, :vcp, :ccp, :patrimonio, :horizon, :fetchedAt, :confidence,
 			        cast(:flags as jsonb), :invalid)
+			""";
+
+	private static final String INSERT = INSERT_INTO + """
 			on conflict (instrument_id, quote_date) do update
 			set vcp = excluded.vcp,
 			    ccp = excluded.ccp,
@@ -33,6 +36,9 @@ public class FundQuoteWriter {
 			    flags = excluded.flags,
 			    invalid = excluded.invalid
 			""";
+
+	/** The backfill's statement: a quote that is already stored (live data) is left exactly as it is. */
+	private static final String INSERT_MISSING = INSERT_INTO + "on conflict (instrument_id, quote_date) do nothing";
 
 	private final JdbcClient jdbc;
 	private final InstrumentStore instruments;
@@ -49,6 +55,21 @@ public class FundQuoteWriter {
 
 	@Transactional
 	public WriteResult write(List<FundQuote> quotes, LocalDate captureDate) {
+		return store(quotes, captureDate, false);
+	}
+
+	/**
+	 * Insert-only variant for the backfill (T4a, L33 a): a quote whose class and date are already stored is skipped,
+	 * so live data always wins. The result counts the rows this call really inserted.
+	 */
+	@Transactional
+	public WriteResult writeMissing(List<FundQuote> quotes, LocalDate captureDate) {
+		return store(quotes, captureDate, true);
+	}
+
+	private WriteResult store(List<FundQuote> quotes, LocalDate captureDate, boolean insertOnly) {
+		String statement = insertOnly ? INSERT_MISSING : INSERT;
+		int written = 0;
 		Map<String, FundQuote> distinct = new LinkedHashMap<>();
 		List<String> duplicates = new ArrayList<>();
 		for (FundQuote quote : quotes) {
@@ -61,7 +82,7 @@ public class FundQuoteWriter {
 			FundQuote quote = entry.getValue();
 			long instrumentId = instruments.upsert(InstrumentKind.FUND_CLASS, quote.source().id(), entry.getKey(),
 					quote.name(), quote.fund(), quote.segment() == null ? null : quote.segment().name(), captureDate);
-			jdbc.sql(INSERT)
+			written += jdbc.sql(statement)
 					.param("instrumentId", instrumentId)
 					.param("quoteDate", quote.date() == null ? captureDate : quote.date())
 					.param("vcp", quote.vcp())
@@ -74,6 +95,6 @@ public class FundQuoteWriter {
 					.param("invalid", quote.isInvalid())
 					.update();
 		}
-		return WriteResult.of(distinct.size(), duplicates);
+		return WriteResult.of(insertOnly ? written : distinct.size(), duplicates);
 	}
 }

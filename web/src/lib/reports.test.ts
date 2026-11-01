@@ -171,14 +171,16 @@ describe('API mode', () => {
 
     const failing: typeof fetch = async () => okJson({ detail: 'no' }, 500);
     await expect(
-      loadReportMonths({ env: { ...env, API_BUILD_TOKEN: 's3cret' }, fetch: failing }),
+      loadReportMonths({ env: { ...env, API_BUILD_TOKEN: 's3cret' }, fetch: failing, sleep: async () => undefined }),
     ).rejects.not.toThrow(/s3cret/);
   });
 
   it('fails the build with the status when the API refuses', async () => {
     const fetcher: typeof fetch = async () => okJson({ detail: 'boom' }, 500);
 
-    await expect(loadReportMonths({ env, fetch: fetcher })).rejects.toThrow(/failed with 500/);
+    await expect(loadReportMonths({ env, fetch: fetcher, sleep: async () => undefined })).rejects.toThrow(
+      /failed with 500/,
+    );
   });
 
   it('requires API_URL outside fixture mode', async () => {
@@ -189,5 +191,72 @@ describe('API mode', () => {
     const fetcher: typeof fetch = async () => okJson({ month: '2026-11' });
 
     await expect(loadMonthlyReport('2026-11', { env, fetch: fetcher })).rejects.toThrow(/Invalid report/);
+  });
+});
+
+describe('the build client on the report loaders (T4d, L36a; F6)', () => {
+  const env = { API_URL: 'http://localhost:8080' };
+  const noSleep = async () => undefined;
+  const LIST = { months: [{ month: '2026-11', monthlyInflation: 0.02, ranked: 3, beatInflation: 1 }] };
+  const REPORT = {
+    month: '2026-11',
+    from: '2026-11-01',
+    to: '2026-11-30',
+    inflation: { index: 'INDEC_CPI_MONTHLY', value: 0.02, observationDate: '2026-11-30', confidence: 'OFFICIAL_AUTOMATIC', source: { id: 'x', displayName: 'X', official: true } },
+    rows: [],
+    leftOut: [],
+    totals: { ranked: 0, beatInflation: 0, leftOut: 0 },
+  };
+
+  function counting(respond: (call: number) => Response | Promise<Response>) {
+    const calls: string[] = [];
+    const fetcher = (async (input: RequestInfo | URL) => {
+      calls.push(String(input));
+      return respond(calls.length);
+    }) as unknown as typeof fetch;
+    return { fetch: fetcher, calls };
+  }
+
+  it('retries a 503 on the list and returns it', async () => {
+    const waits: number[] = [];
+    const { fetch, calls } = counting((call) => (call === 1 ? new Response('down', { status: 503 }) : okJson(LIST)));
+    const months = await loadReportMonths({
+      env,
+      fetch,
+      sleep: async (ms) => {
+        waits.push(ms);
+      },
+    });
+    expect(months.map((entry) => entry.month)).toEqual(['2026-11']);
+    expect(calls).toHaveLength(2);
+    expect(waits).toEqual([1000]);
+  });
+
+  it('gives a hung report request a deadline (API_TIMEOUT_MS) and names the URL', async () => {
+    const { fetch, calls } = counting(() => new Promise<Response>(() => undefined));
+    const failure = loadMonthlyReport('2026-11', { env: { ...env, API_TIMEOUT_MS: '20' }, fetch, sleep: noSleep });
+    await expect(failure).rejects.toThrow(
+      /GET http:\/\/localhost:8080\/api\/v1\/reports\/monthly\/2026-11 failed after 3 attempts: timed out after 20 ms/,
+    );
+    expect(calls).toHaveLength(3);
+  });
+
+  it('never retries a 404 for a month the API has no report for', async () => {
+    const { fetch, calls } = counting(() => okJson({ detail: 'no report' }, 404));
+    await expect(loadMonthlyReport('2026-11', { env, fetch, sleep: noSleep })).rejects.toThrow(/failed with 404/);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('sends an identical request once per build', async () => {
+    const { fetch, calls } = counting((call) => okJson(call === 1 ? LIST : REPORT));
+    const options = { env, fetch, sleep: noSleep };
+    await loadReportMonths(options);
+    await loadReportMonths(options);
+    await loadMonthlyReport('2026-11', options);
+    await loadMonthlyReport('2026-11', options);
+    expect(calls).toEqual([
+      'http://localhost:8080/api/v1/reports/monthly',
+      'http://localhost:8080/api/v1/reports/monthly/2026-11',
+    ]);
   });
 });

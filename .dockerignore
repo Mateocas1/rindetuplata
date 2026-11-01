@@ -18,3 +18,7 @@ deploy
 compose.yaml
 skills-lock.json
 *.md
+
+# Database dumps kept inside the checkout by overriding BACKUP_DIR (T4c, F4) must never reach the build context.
+backups
+**/backups

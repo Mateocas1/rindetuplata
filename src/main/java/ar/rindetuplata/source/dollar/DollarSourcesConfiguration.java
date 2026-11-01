@@ -15,4 +15,11 @@ class DollarSourcesConfiguration {
     DolarApiAdapter dolarApiAdapter(SourcesProperties properties) {
         return new DolarApiAdapter(SourceClients.create(properties, properties.dolarApiUrl()), Clock.systemUTC());
     }
+
+    /** The ArgentinaDatos MEP series the backfill reads (T4a): not a {@link DollarSource}, so the daily job ignores it. */
+    @Bean
+    ArgentinaDatosDollarAdapter argentinaDatosDollarAdapter(SourcesProperties properties) {
+        return new ArgentinaDatosDollarAdapter(SourceClients.create(properties, properties.argentinaDatosCotizacionesUrl()),
+                Clock.systemUTC());
+    }
 }
