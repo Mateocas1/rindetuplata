@@ -1,0 +1,1 @@
+{"type":"RATE_DROP","eventId":"c2c2c2c2-0000-4000-8000-000000000002","ruleId":32,"userEmail":"saver@example.com","instrumentId":"42","instrumentName":"Banco Prueba","kind":"PLAZO_FIJO","previousRate":0.30,"rate":0.275,"previousObservedOn":"2026-10-14","captureDate":"2026-10-15","dataDate":"2026-10-15","sourceDisplayName":"test-source"}

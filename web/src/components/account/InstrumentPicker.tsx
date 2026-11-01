@@ -20,6 +20,8 @@ export interface InstrumentPickerProps {
   id: string;
   instruments: InstrumentSummary[];
   selectedId: number | null;
+  /** Whether leaving it empty is fine (the alert then watches every option of its kind). Default true. */
+  optional?: boolean;
   onSelect: (id: number | null) => void;
   describedBy?: string;
 }
@@ -28,6 +30,7 @@ export default function InstrumentPicker({
   id,
   instruments,
   selectedId,
+  optional = true,
   onSelect,
   describedBy,
 }: InstrumentPickerProps) {
@@ -83,8 +86,8 @@ export default function InstrumentPicker({
         className={`${inputClass} max-w-none`}
       />
       <p id={hintId} className="type-body text-muted">
-        Escribí para buscar entre {formatInteger(instruments.length)} opciones. Si no elegís
-        ninguna, la alerta mira todas las de ese tipo.
+        Escribí para buscar entre {formatInteger(instruments.length)} opciones.
+        {optional ? ' Si no elegís ninguna, la alerta mira todas las de ese tipo.' : ''}
       </p>
       <p id={statusId} role="status" className="type-data text-muted">
         {matches.length === 0

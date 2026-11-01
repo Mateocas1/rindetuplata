@@ -77,7 +77,7 @@ class AlertEvaluationJobIntegrationTest {
 
 	private long rule(String email, String percent) {
 		accounts.findByEmail(email).orElseGet(() -> accounts.create(email, NOW));
-		return alerts.create(email, new AlertRequest(null, null, new BigDecimal(percent))).id();
+		return alerts.create(email, new AlertRequest(null, null, null, new BigDecimal(percent))).id();
 	}
 
 	private long matchCount(long rule) {

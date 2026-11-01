@@ -15,19 +15,26 @@ export interface MagicLinkResponse {
   status: string;
 }
 
+/** The kinds of alert rule (T6c, L32 a); `THRESHOLD` is the original one and the API's default. */
+export type AlertType = 'THRESHOLD' | 'BEST_CHANGED' | 'RATE_DROP' | 'WEEKLY_DIGEST';
+
 export interface AlertRule {
   id: number;
+  /** A rule stored before the types existed is `THRESHOLD`. */
+  type: string;
   kind: string | null;
   instrumentId: number | null;
-  thresholdPercent: number;
+  /** Only a `THRESHOLD` rule has one. */
+  thresholdPercent: number | null;
   active: boolean;
   createdAt: string;
 }
 
 export interface AlertInput {
+  type: AlertType;
   kind: string | null;
   instrumentId: number | null;
-  thresholdPercent: number;
+  thresholdPercent: number | null;
 }
 
 export interface InstrumentSummary {
@@ -171,8 +178,10 @@ type KeysAreKnown<Mine, Generated> = keyof Mine extends keyof Generated ? true :
 type AssertKnown<Value extends true> = Value;
 
 type _MagicLink = AssertKnown<KeysAreKnown<MagicLinkResponse, Schema['MagicLinkResponse']>>;
-type _AlertRule = AssertKnown<KeysAreKnown<AlertRule, Schema['AlertResponse']>>;
-type _AlertInput = AssertKnown<KeysAreKnown<AlertInput, Schema['AlertRequest']>>;
+// `type` (T6c, L32 a) is not in the committed OpenAPI snapshot until it is regenerated from the running API; drop
+// the `Omit`s then, so the guard covers the new field too.
+type _AlertRule = AssertKnown<KeysAreKnown<Omit<AlertRule, 'type'>, Schema['AlertResponse']>>;
+type _AlertInput = AssertKnown<KeysAreKnown<Omit<AlertInput, 'type'>, Schema['AlertRequest']>>;
 type _Instrument = AssertKnown<KeysAreKnown<InstrumentSummary, Schema['InstrumentSummary']>>;
 type _WalletTier = AssertKnown<
   KeysAreKnown<WalletTier, Schema['TierView']> & KeysAreKnown<WalletTier, Schema['TierRequest']>

@@ -121,6 +121,45 @@ class AlertEmailConsumerTransactionTest {
 		assertThat(jdbc.sql("select count(*) from processed_event").query(Long.class).single()).isZero();
 	}
 
+	@Test
+	void everyEventTypeIsDeliveredOnceByItsOwnComposer() {
+		record Case(String fixture, String subject, String phrase) {
+		}
+		List<Case> cases = List.of(
+				new Case(AlertFixtures.STORED_ALERT_TRIGGERED, "rindetuplata: se disparó tu alerta de rendimiento",
+						"Se disparó tu alerta"),
+				new Case(AlertFixtures.BEST_CHANGED, "rindetuplata: cambió la mejor opción",
+						"Cambió la mejor opción"),
+				new Case(AlertFixtures.RATE_DROP, "rindetuplata: bajó una tasa que seguís", "Bajó la tasa de"),
+				new Case(AlertFixtures.WEEKLY_DIGEST, "rindetuplata: tu resumen semanal", "semana del"));
+		for (Case each : cases) {
+			UUID eventId = UUID.randomUUID();
+			Message message = message(AlertFixtures.payload(each.fixture(), eventId));
+			mailer.clear();
+
+			consumer.onAlertTriggered(message);
+			consumer.onAlertTriggered(message);
+
+			assertThat(mailer.sent()).as(each.fixture() + " sends one email").hasSize(1);
+			assertThat(mailer.last().to()).isEqualTo("saver@example.com");
+			assertThat(mailer.last().subject()).isEqualTo(each.subject());
+			assertThat(mailer.last().body()).contains(each.phrase());
+			assertThat(processedCount(eventId)).as(each.fixture() + " leaves one processed row").isEqualTo(1);
+		}
+	}
+
+	@Test
+	void anUnknownEventTypeIsRejectedWithoutRequeueAndSendsNothing() {
+		UUID eventId = UUID.randomUUID();
+		Message unknown = message(AlertFixtures.payload(AlertFixtures.BEST_CHANGED, eventId)
+			.replace("\"type\":\"BEST_CHANGED\"", "\"type\":\"SOMETHING_ELSE\""));
+
+		assertThatThrownBy(() -> consumer.onAlertTriggered(unknown))
+			.isInstanceOf(AmqpRejectAndDontRequeueException.class);
+		assertThat(mailer.sent()).isEmpty();
+		assertThat(processedCount(eventId)).as("a rejected event leaves no row").isZero();
+	}
+
 	private static Message message(String body) {
 		return MessageBuilder.withBody(body.getBytes(StandardCharsets.UTF_8)).build();
 	}

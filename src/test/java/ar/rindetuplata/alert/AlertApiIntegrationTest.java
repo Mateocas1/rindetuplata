@@ -12,8 +12,10 @@ import ar.rindetuplata.account.MailMessage;
 import ar.rindetuplata.account.RecordingMailer;
 import ar.rindetuplata.source.Confidence;
 import ar.rindetuplata.source.SourceRef;
+import ar.rindetuplata.source.crypto.CryptoYield;
 import ar.rindetuplata.source.wallet.WalletRate;
 import ar.rindetuplata.source.wallet.WalletTier;
+import ar.rindetuplata.store.CryptoYieldWriter;
 import ar.rindetuplata.store.InstrumentKind;
 import ar.rindetuplata.store.StoreReader;
 import ar.rindetuplata.store.WalletRateWriter;
@@ -77,6 +79,9 @@ abstract class AlertApiIntegrationTest {
 	@Autowired
 	protected WalletRateWriter walletWriter;
 
+	@Autowired
+	protected CryptoYieldWriter cryptoWriter;
+
 	@BeforeEach
 	void clearMailbox() {
 		mailer.clear();
@@ -131,6 +136,14 @@ abstract class AlertApiIntegrationTest {
 				FETCHED, Confidence.SCRAPED_ENTITY_WEB, List.of());
 		walletWriter.write(List.of(rate), captureDate);
 		return reader.instrument(InstrumentKind.WALLET, sourceId, walletId).orElseThrow().id();
+	}
+
+	/** One ARS crypto yield of its own source; the APY becomes a TNA-equivalent entry of kind CRYPTO. */
+	protected long seedCrypto(String sourceId, String platform, String apy, LocalDate captureDate) {
+		CryptoYield yield = new CryptoYield(new SourceRef(sourceId, "Test " + sourceId, false), platform, "ARS",
+				new BigDecimal(apy), captureDate, FETCHED, Confidence.AGGREGATOR_AUTOMATIC, List.of());
+		cryptoWriter.write(List.of(yield), captureDate);
+		return reader.instrument(InstrumentKind.CRYPTO_YIELD, sourceId, platform + "|ARS").orElseThrow().id();
 	}
 
 }

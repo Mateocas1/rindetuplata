@@ -163,7 +163,7 @@ class AlertEvaluationBeyondPageIntegrationTest {
 
 	private long rule(String email, String instrumentId, String percent) {
 		accounts.findByEmail(email).orElseGet(() -> accounts.create(email, NOW));
-		return alerts.create(email, new AlertRequest(null, Long.valueOf(instrumentId), new BigDecimal(percent))).id();
+		return alerts.create(email, new AlertRequest(null, null, Long.valueOf(instrumentId), new BigDecimal(percent))).id();
 	}
 
 	private List<Long> matchedInstruments(long rule) {
