@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
  * themselves are not scanned: they grow with every day and fund class, and the contract is that a writer of ranking
  * data records one of the above. The version is read before the ranking is computed, so a cache entry is never
  * labelled newer than the data it holds; a write that lands in between only makes the next request recompute.
+ * The insert-only tables are counted, not read by their highest id: two overlapping transactions can commit in the
+ * opposite order of their ids, and a count moves on every commit whatever the order.
  */
 @Component
 public class DataVersion {
@@ -24,8 +26,8 @@ public class DataVersion {
 			       (select floor(extract(epoch from max(recorded_at)) * 1000000) from source_run),
 			       (select count(*) from curated_wallet_rate),
 			       (select floor(extract(epoch from max(updated_at)) * 1000000) from curated_wallet_rate),
-			       (select max(id) from curated_wallet_rate_audit),
-			       (select max(id) from instrument))
+			       (select count(*) from curated_wallet_rate_audit),
+			       (select count(*) from instrument))
 			""";
 
 	private final JdbcClient jdbc;
