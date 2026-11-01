@@ -278,7 +278,7 @@ class RankingServiceTest {
 		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-13"), "1000");
 		seedFund("Fondo Test - Clase A", ASOF, "1000.4");
 
-		RankingResult result = service.rank(query(RankedKind.WALLET, RankedKind.FUND));
+		RankingResult result = mercadoPagoOnly().rank(query(RankedKind.WALLET, RankedKind.FUND));
 
 		assertThat(result.ranked()).extracting(RankedEntry::kind, RankedEntry::name).containsExactly(
 				tuple(RankedKind.WALLET, "Mercado Pago"), tuple(RankedKind.FUND, "Fondo Test - Clase A"));
@@ -303,7 +303,7 @@ class RankingServiceTest {
 	void fciBackedFundClassIsNotExcludedTwiceWhenItsHistoryIsShort() {
 		seedFund("Mercado Fondo - Clase A", ASOF, "1000.5");
 
-		RankingResult result = service.rank(query(RankedKind.WALLET, RankedKind.FUND));
+		RankingResult result = mercadoPagoOnly().rank(query(RankedKind.WALLET, RankedKind.FUND));
 
 		assertThat(result.ranked()).isEmpty();
 		assertThat(result.excluded()).extracting(ExcludedEntry::kind, ExcludedEntry::name, ExcludedEntry::reason)
@@ -443,7 +443,7 @@ class RankingServiceTest {
 		seedFund("MERCADO  FONDO - clase a", LocalDate.parse("2026-10-13"), "1000");
 		seedFund("MERCADO  FONDO - clase a", ASOF, "1000.5");
 
-		RankingResult result = service.rank(query(RankedKind.WALLET));
+		RankingResult result = mercadoPagoOnly().rank(query(RankedKind.WALLET));
 
 		assertThat(result.ranked()).extracting(RankedEntry::kind, RankedEntry::name)
 				.containsExactly(tuple(RankedKind.WALLET, "Mercado Pago"));
@@ -472,7 +472,7 @@ class RankingServiceTest {
 		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-13"), "1000");
 		seedFund("Fondo Test - Clase A", ASOF, "1000.4");
 
-		RankingResult result = service.rank(query(RankedKind.WALLET, RankedKind.FUND));
+		RankingResult result = mercadoPagoOnly().rank(query(RankedKind.WALLET, RankedKind.FUND));
 
 		assertThat(result.excluded()).extracting(ExcludedEntry::kind, ExcludedEntry::name, ExcludedEntry::reason)
 				.containsExactly(tuple(RankedKind.WALLET, "Mercado Pago", ExcludedReason.FUND_CLASS_NOT_FOUND));
@@ -484,7 +484,7 @@ class RankingServiceTest {
 		seedFund("MERCADO FONDO - clase a", LocalDate.parse("2026-10-13"), "1000");
 		seedFund("MERCADO FONDO - clase a", ASOF, "1000.5");
 
-		RankingResult result = service.rank(query(RankedKind.WALLET, RankedKind.FUND));
+		RankingResult result = mercadoPagoOnly().rank(query(RankedKind.WALLET, RankedKind.FUND));
 
 		assertThat(result.ranked()).extracting(RankedEntry::kind, RankedEntry::name)
 				.containsExactly(tuple(RankedKind.WALLET, "Mercado Pago"));
@@ -667,7 +667,7 @@ class RankingServiceTest {
 		seedFund("Mercado Fondo - Clase A", LocalDate.parse("2026-10-13"), "1000");
 		seedFund("Mercado Fondo - Clase A", ASOF, "1000.5");
 
-		RankingResult result = service.rank(query(RankedKind.WALLET));
+		RankingResult result = mercadoPagoOnly().rank(query(RankedKind.WALLET));
 
 		assertThat(result.ranked()).extracting(RankedEntry::kind).containsOnly(RankedKind.WALLET);
 		assertThat(result.ranked()).extracting(RankedEntry::name).containsExactlyInAnyOrder("Ualá", "Mercado Pago");
@@ -727,6 +727,16 @@ class RankingServiceTest {
 	void simulateUnknownInstrumentIsTypedNotFound() {
 		assertThatThrownBy(() -> service.simulate(999_999L, Money.ars("1000000"), 30, false))
 				.isInstanceOf(InstrumentNotFoundException.class);
+	}
+
+	/**
+	 * The catalog with Mercado Pago alone: these rules are about its mapping, and Personal Pay (T5a), another
+	 * FCI-backed wallet of the classpath catalog, is covered by {@code RankingFciWalletsTest}.
+	 */
+	private RankingService mercadoPagoOnly() {
+		return new RankingService(rankingReader, FciBackedWalletCatalog.fromJson(("""
+				{"wallets":[{"id":"mercado-pago","name":"Mercado Pago","fund":"Mercado Fondo - Clase A"}]}""")
+				.getBytes(StandardCharsets.UTF_8)));
 	}
 
 	private static RankingQuery query(RankedKind... kinds) {
