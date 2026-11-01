@@ -199,4 +199,11 @@ class ApiRateLimiterTest {
 		assertThat(properties.bypassToken()).isEmpty();
 		assertThat(properties.maxTrackedAddresses()).isEqualTo(100_000);
 	}
+
+	@Test
+	void textThatIsNotAnIpv6LiteralOnceTheZoneIsCutIsKeptAsGivenWithoutParsing() {
+		// "abc%:" contains ':' only in its zone id; older JDKs would resolve "abc" by name, so it is never parsed.
+		assertThat(ApiRateLimiter.bucketKey("abc%:")).isEqualTo("abc%:");
+		assertThat(ApiRateLimiter.bucketKey("2001:db8:1:2:3:4:5:6%eth0")).isEqualTo("20010db800010002/64");
+	}
 }

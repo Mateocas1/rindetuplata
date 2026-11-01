@@ -136,6 +136,10 @@ public class ApiRateLimiter {
 		try {
 			int scope = address.indexOf('%');
 			String literal = scope < 0 ? address : address.substring(0, scope);
+			if (literal.indexOf(':') < 0) {
+				// Not an IPv6 literal once the zone id is cut (e.g. "abc%:"): older JDKs could resolve such text by name.
+				return address;
+			}
 			// The brackets make the JDK treat the text strictly as an IPv6 literal: it throws instead of doing a DNS lookup.
 			InetAddress parsed = InetAddress.getByName("[" + literal + "]");
 			if (parsed instanceof Inet6Address) {
