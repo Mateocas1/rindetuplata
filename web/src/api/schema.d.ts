@@ -269,7 +269,7 @@ export interface paths {
         };
         /**
          * Banks with today's plazo fijo rates
-         * @description Every bank that has a valid plazo fijo snapshot at or before today, sorted by slug, with its latest non-client and client TNA (fractions, scale 6) and the capture and data dates of that snapshot. A rate is null when the bank does not publish it.
+         * @description Every bank that has a valid plazo fijo snapshot at or before today, sorted by slug, with its latest non-client and client TNA (fractions, scale 6) and the capture and data dates of that snapshot. A rate is null when the bank does not publish it. current is false when the source captured a later day without a valid rate for the bank: its rates are then the last published ones, not today's.
          */
         get: operations["list_3"];
         put?: never;
@@ -793,6 +793,8 @@ export interface components {
              * @description The date the source says the rates are about.
              */
             dataDate?: string;
+            /** @description True when this is the newest capture of the bank's source among the banks (at or before today); false when the source captured a later day without a valid rate for this bank, so the rates are its last published ones and must not be called today's. */
+            current?: boolean;
         };
         /** @description A bank's latest plazo fijo rates, its 90-day non-client TNA series and bestDays/observedDays. */
         BankDetailView: {
@@ -815,6 +817,8 @@ export interface components {
              * @description The date the source says the latest rates are about.
              */
             dataDate?: string;
+            /** @description True when this is the newest capture of the bank's source among the banks (at or before today); false when the source captured a later day without a valid rate for this bank, so the rates are its last published ones and must not be called today's. */
+            current?: boolean;
             /**
              * Format: date
              * @description First day of the window.
@@ -860,13 +864,13 @@ export interface components {
         };
         JsonNode: {
             container?: boolean;
+            valueNode?: boolean;
+            missingNode?: boolean;
+            object?: boolean;
             /** @enum {string} */
             nodeType?: "ARRAY" | "BINARY" | "BOOLEAN" | "MISSING" | "NULL" | "NUMBER" | "OBJECT" | "POJO" | "STRING";
             string?: boolean;
             integralNumber?: boolean;
-            missingNode?: boolean;
-            valueNode?: boolean;
-            object?: boolean;
             pojo?: boolean;
             floatingPointNumber?: boolean;
             short?: boolean;
