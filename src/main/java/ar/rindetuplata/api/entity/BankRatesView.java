@@ -8,6 +8,7 @@ import java.time.LocalDate;
  * One bank in {@code GET /api/v1/entities/banks}: its slug, its instrument id and the latest valid plazo fijo
  * snapshot at or before today. Rates are TNA fractions at scale 6; {@code nonClientTna} is null when the bank offers
  * no plazo fijo to non-clients and {@code clientTna} when it publishes no client rate (S11 states the dates).
+ * {@code current} says whether the snapshot is from the newest capture day of the bank's source.
  */
 @Schema(description = "A bank with the latest valid plazo fijo rates stored at or before today.")
 public record BankRatesView(
@@ -23,5 +24,9 @@ public record BankRatesView(
 		@Schema(description = "Client TNA as a fraction, scale 6; null when the bank publishes none.")
 		BigDecimal clientTna,
 		@Schema(description = "The day the rates were captured.") LocalDate captureDate,
-		@Schema(description = "The date the source says the rates are about.") LocalDate dataDate) {
+		@Schema(description = "The date the source says the rates are about.") LocalDate dataDate,
+		@Schema(description = "True when this is the newest capture of the bank's source among the banks (at or "
+				+ "before today); false when the source captured a later day without a valid rate for this bank, so "
+				+ "the rates are its last published ones and must not be called today's.")
+		boolean current) {
 }

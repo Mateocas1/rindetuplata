@@ -1,5 +1,6 @@
 package ar.rindetuplata.mcp;
 
+import ar.rindetuplata.api.SupportedDates;
 import ar.rindetuplata.domain.Money;
 import ar.rindetuplata.ranking.RankedKind;
 import ar.rindetuplata.ranking.RankingQuery;
@@ -18,10 +19,10 @@ import java.util.TreeSet;
 /**
  * The arguments of one tool call, validated the way the REST API validates the same query parameters
  * ({@code RankingRequest}, which is package-private to {@code api.ranking}): every bound comes from the public
- * {@link RankingQuery} constants and a rejected value is a {@link ToolArgumentException} naming the argument.
- * {@code McpArgumentEquivalenceApiTest} sends every boundary to both and keeps the two from drifting. Numbers arrive
- * from JSON as any {@link Number} or as a numeric string, which a model sometimes sends; an argument the tool does
- * not declare is refused, so a misspelled one is never silently ignored.
+ * {@link RankingQuery} constants and {@link SupportedDates}, and a rejected value is a {@link ToolArgumentException}
+ * naming the argument. {@code McpArgumentEquivalenceApiTest} sends every boundary to both and keeps the two from
+ * drifting. Numbers arrive from JSON as any {@link Number} or as a numeric string, which a model sometimes sends; an
+ * argument the tool does not declare is refused, so a misspelled one is never silently ignored.
  */
 final class ToolArguments {
 
@@ -118,12 +119,17 @@ final class ToolArguments {
 		if (raw == null) {
 			return null;
 		}
+		LocalDate date;
 		try {
-			return LocalDate.parse(raw instanceof String text ? text.strip() : String.valueOf(raw));
+			date = LocalDate.parse(raw instanceof String text ? text.strip() : String.valueOf(raw));
 		}
 		catch (DateTimeParseException e) {
 			throw ToolArgumentException.invalid(name, "must be a date as yyyy-MM-dd: '" + echo(raw) + "'");
 		}
+		if (!SupportedDates.contains(date)) {
+			throw ToolArgumentException.invalid(name, "must be " + SupportedDates.RANGE + ": " + echo(date));
+		}
+		return date;
 	}
 
 	boolean flag(String name, boolean fallback) {

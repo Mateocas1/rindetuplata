@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { MissingHistoryRecording } from './data';
+import { formatDate } from './format';
 import {
   bestRateSentence,
   loadBankDetail,
   loadBankHistory,
   loadBankList,
   loadBankPages,
+  bankPageCopy,
   sortBanksForListing,
+  splitBanksByFreshness,
   sourceName,
   type BankRates,
 } from './entities';
@@ -17,6 +20,7 @@ import {
  */
 const FIXTURES = { WEB_FIXTURES: '1' } as const;
 const REBA = 'reba-compania-financiera-s-a';
+const VOII = 'banco-voii-s-a';
 
 const noSleep = async () => undefined;
 
@@ -42,6 +46,22 @@ describe('loadBankList', () => {
     const bbva = banks.find((bank) => bank.slug === 'banco-bbva-argentina-s-a');
     expect(bbva?.nonClientTna).toBeNull();
     expect(bbva?.clientTna).toBe(0.3);
+  });
+
+  it('carries `current`, with one bank whose last rate is older than its source\'s newest capture', async () => {
+    const banks = await loadBankList({ env: FIXTURES });
+    expect(banks.every((bank) => typeof bank.current === 'boolean')).toBe(true);
+    expect(banks.filter((bank) => !bank.current).map((bank) => bank.slug)).toEqual([VOII]);
+    expect(banks.find((bank) => bank.slug === VOII)?.captureDate).toBe('2026-10-12');
+    expect(banks.find((bank) => bank.slug === REBA)?.current).toBe(true);
+  });
+
+  it('rejects a bank payload without a boolean `current`', async () => {
+    const { current: _current, ...stale } = (await loadBankList({ env: FIXTURES }))[0];
+    const doFetch = (async () => okJson([stale])) as unknown as typeof fetch;
+    await expect(loadBankList({ env: { API_URL: 'http://api.test' }, fetch: doFetch })).rejects.toThrow(
+      /Invalid bank payload/,
+    );
   });
 
   it('calls the entities endpoint with the build token in live mode', async () => {
@@ -98,6 +118,14 @@ describe('loadBankDetail', () => {
     expect(detail.observedDays).toBe(3);
     expect(detail.from).toBe('2026-07-17');
     expect(detail.to).toBe('2026-10-14');
+  });
+
+  it('reads `current` on the detail, false for the bank whose rate is not from the newest capture', async () => {
+    expect((await loadBankDetail(REBA, { env: FIXTURES })).current).toBe(true);
+    const voii = await loadBankDetail(VOII, { env: FIXTURES });
+    expect(voii.current).toBe(false);
+    expect(voii.captureDate).toBe('2026-10-12');
+    expect(voii.series.map((point) => point.captureDate)).toEqual(['2026-10-12']);
   });
 
   it('names the recorded slugs when a fixture is missing', async () => {
@@ -173,7 +201,13 @@ describe('bestRateSentence', () => {
 });
 
 describe('sortBanksForListing', () => {
-  const base = { sourceId: 's', clientTna: null, captureDate: '2026-10-14', dataDate: '2026-10-14' };
+  const base = {
+    sourceId: 's',
+    clientTna: null,
+    captureDate: '2026-10-14',
+    dataDate: '2026-10-14',
+    current: true,
+  };
   const bank = (name: string, nonClientTna: number | null): BankRates => ({
     ...base,
     slug: name.toLowerCase(),
@@ -194,6 +228,77 @@ describe('sortBanksForListing', () => {
   });
 });
 
+describe('splitBanksByFreshness', () => {
+  const base = { sourceId: 's', clientTna: null, captureDate: '2026-10-14', dataDate: '2026-10-14' };
+  const bank = (name: string, nonClientTna: number | null, current: boolean): BankRates => ({
+    ...base,
+    slug: name.toLowerCase(),
+    name,
+    instrumentId: name,
+    nonClientTna,
+    current,
+  });
+
+  it('keeps current banks sorted as the listing sorts them and puts the others apart, sorted the same way', () => {
+    const { current, previous } = splitBanksByFreshness([
+      bank('Zeta', 0.2, true),
+      bank('Viejo alto', 0.4, false),
+      bank('Beta', 0.25, true),
+      bank('Viejo sin tasa', null, false),
+      bank('Alfa', null, true),
+      bank('Viejo bajo', 0.1, false),
+    ]);
+    expect(current.map((entry) => entry.name)).toEqual(['Beta', 'Zeta', 'Alfa']);
+    expect(previous.map((entry) => entry.name)).toEqual(['Viejo alto', 'Viejo bajo', 'Viejo sin tasa']);
+  });
+
+  it('leaves `previous` empty when every bank is current', () => {
+    const { current, previous } = splitBanksByFreshness([bank('Uno', 0.2, true)]);
+    expect(current).toHaveLength(1);
+    expect(previous).toEqual([]);
+  });
+});
+
+describe('bankPageCopy', () => {
+  const base = {
+    slug: 'banco-x',
+    name: 'BANCO X',
+    sourceId: 'argentinadatos-plazo-fijo',
+    clientTna: 0.2,
+    captureDate: '2026-10-14',
+    dataDate: '2026-10-14',
+  };
+
+  it('says "hoy" in the title, description and headline of a current bank', () => {
+    const copy = bankPageCopy({ ...base, nonClientTna: 0.24, current: true });
+    expect(copy.title).toBe('BANCO X: plazo fijo 24,00% TNA hoy | rindetuplata');
+    expect(copy.description).toContain('Cuánto paga hoy BANCO X');
+    expect(copy.headline).toBe('Hoy: 24,00% TNA para no clientes');
+  });
+
+  it('says "hoy" in the headline of a current bank that offers no non-client plazo fijo', () => {
+    const copy = bankPageCopy({ ...base, nonClientTna: null, current: true });
+    expect(copy.headline).toBe('Hoy no ofrece plazo fijo a no clientes');
+    expect(copy.title).toBe('BANCO X: plazo fijo, tasa para clientes | rindetuplata');
+    expect(copy.description).toContain('hoy');
+  });
+
+  it('states the last published rate and its date, and never says "hoy", for a bank that is not current', () => {
+    for (const nonClientTna of [0.24, null]) {
+      const copy = bankPageCopy({ ...base, nonClientTna, captureDate: '2026-10-12', current: false });
+      const date = formatDate('2026-10-12');
+      expect(copy.headline).toContain(`Última tasa publicada (${date})`);
+      expect(copy.title).not.toMatch(/\bhoy\b/i);
+      expect(copy.description).not.toMatch(/\bhoy\b/i);
+      expect(copy.headline).not.toMatch(/\bhoy\b/i);
+      expect(copy.description).toContain(date);
+    }
+    const copy = bankPageCopy({ ...base, nonClientTna: 0.24, captureDate: '2026-10-12', current: false });
+    expect(copy.headline).toBe(`Última tasa publicada (${formatDate('2026-10-12')}): 24,00% TNA para no clientes`);
+    expect(copy.title).toContain('24,00% TNA');
+  });
+});
+
 describe('sourceName', () => {
   it('names the known source and falls back to the id', () => {
     expect(sourceName('argentinadatos-plazo-fijo')).toBe('ArgentinaDatos');
@@ -210,6 +315,7 @@ describe('the build client on the bank loaders (T4d, L36a; F6)', () => {
     nonClientTna: 0.3,
     clientTna: null,
     captureDate: '2026-10-14',
+    current: true,
   };
   const DETAIL = { ...BANK, from: '2026-07-17', to: '2026-10-14', series: [], bestDays: 0, observedDays: 0 };
 

@@ -13,6 +13,7 @@ import { confidenceLabel, flagLabel, rateKindLabel } from '../../lib/labels';
 import {
   DEFAULT_AMOUNT,
   DEFAULT_DAYS,
+  MAX_DAYS,
   tryParseAmount,
   tryParseDays,
 } from '../../lib/rankingQuery';
@@ -125,7 +126,7 @@ export default function SimulatorIsland({
     const parsedAmount = tryParseAmount(amount);
     const parsedDays = tryParseDays(days);
     setAmountError(parsedAmount === null ? 'Ingresá un monto en pesos mayor a cero.' : null);
-    setDaysError(parsedDays === null ? 'Ingresá los días como número entero entre 1 y 3650.' : null);
+    setDaysError(parsedDays === null ? `Ingresá los días como número entero entre 1 y ${MAX_DAYS}.` : null);
     if (parsedAmount === null || parsedDays === null) {
       setOutcome(null);
       setSubmitted(null);

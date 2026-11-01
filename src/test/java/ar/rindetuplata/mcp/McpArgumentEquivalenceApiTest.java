@@ -55,6 +55,9 @@ class McpArgumentEquivalenceApiTest extends McpIntegrationTest {
 		cases.add(Case.of("asOf", "2026-10-14"));
 		cases.add(Case.of("asOf", "2026-13-45"));
 		cases.add(Case.of("asOf", "14/10/2026"));
+		for (String asOf : new String[] { "+999999999-12-31", "-999999999-01-01", "0001-01-01", "9999-12-31" }) {
+			cases.add(Case.of("asOf", asOf));
+		}
 		cases.add(Case.of("groupFunds", false));
 		return cases;
 	}

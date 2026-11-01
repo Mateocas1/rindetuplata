@@ -1,16 +1,21 @@
 ---
 /**
- * Bank index (T6b, S6): every bank with a plazo fijo rate today, highest non-client TNA first, each linking its
- * entity page. A static table with no island; the numbers are the API's own and the source and date are stated.
+ * Bank index (T6b, S6; T10a): every bank with a plazo fijo rate today, highest non-client TNA first, each linking its
+ * entity page; the banks whose last rate is older than their source's newest capture follow, apart, with that rate's
+ * date. Static tables with no island; the numbers are the API's own and the source and date are stated.
  */
+import BankRatesTable from '../../components/BankRatesTable.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { loadBankList, sortBanksForListing, sourceName } from '../../lib/entities';
-import { formatDate, formatPercent } from '../../lib/format';
+import { loadBankList, splitBanksByFreshness, sourceName } from '../../lib/entities';
+import { formatDate } from '../../lib/format';
 import { breadcrumbJsonLd } from '../../lib/seo';
 
-const banks = sortBanksForListing(await loadBankList());
+const all = await loadBankList();
+// "Hoy" is only said of the banks with their source's newest rates; the others are listed after them, apart.
+const { current: banks, previous } = splitBanksByFreshness(all);
 const latest = banks.reduce((date, bank) => (bank.dataDate > date ? bank.dataDate : date), '');
-const sources = [...new Set(banks.map((bank) => sourceName(bank.sourceId)))].join(', ');
+const namesOf = (list: typeof all) => [...new Set(list.map((bank) => sourceName(bank.sourceId)))].join(', ');
+const sources = namesOf(banks);
 
 const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(Astro.url.pathname, site);
@@ -23,9 +28,7 @@ const jsonLd = breadcrumbJsonLd([
 ]);
 
 const linkClass =
-  'text-text underline decoration-border-strong underline-offset-2 hover:decoration-text';
-const cell = 'type-data border-b border-border px-3 py-2';
----
+  'text-text underline decoration-border-strong underline-offset-2 hover:decoration-text';---
 
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
   <div class="flex flex-col gap-section py-section">
@@ -56,7 +59,7 @@ const cell = 'type-data border-b border-border px-3 py-2';
     <section class="flex flex-col gap-block" aria-labelledby="bancos-de-hoy">
       <h2 id="bancos-de-hoy" class="type-section">Las tasas de hoy</h2>
       {
-        banks.length === 0 ? (
+        all.length === 0 ? (
           <div class="card max-w-prose p-6">
             <p class="type-label">Todavía no hay tasas por banco</p>
             <p class="type-body mt-2">
@@ -65,55 +68,36 @@ const cell = 'type-data border-b border-border px-3 py-2';
             </p>
           </div>
         ) : (
-          <div
-            class="card relative overflow-x-auto focus-visible:-outline-offset-2"
-            role="region"
-            aria-label="Tasas de plazo fijo por banco"
-            tabindex="0"
-          >
-            <table class="w-full min-w-[32rem] border-separate border-spacing-0">
-              <caption class="sr-only">
-                Tasa nominal anual (TNA) de plazo fijo de cada banco para no clientes y para clientes.
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col" class="type-label border-b border-border px-3 py-2 text-start">
-                    Banco
-                  </th>
-                  <th scope="col" class="type-label border-b border-border px-3 py-2 text-end">
-                    TNA no clientes
-                  </th>
-                  <th scope="col" class="type-label border-b border-border px-3 py-2 text-end">
-                    TNA clientes
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {banks.map((bank) => (
-                  <tr>
-                    <th scope="row" class={`${cell} text-start font-normal`}>
-                      <a class={linkClass} href={`/bancos/${bank.slug}/`}>
-                        {bank.name}
-                      </a>
-                    </th>
-                    <td class={`${cell} text-end`}>
-                      {bank.nonClientTna === null ? (
-                        <span class="text-muted">No ofrece a no clientes</span>
-                      ) : (
-                        formatPercent(bank.nonClientTna)
-                      )}
-                    </td>
-                    <td class={`${cell} text-end`}>
-                      {bank.clientTna === null ? '—' : formatPercent(bank.clientTna)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <BankRatesTable
+            banks={banks}
+            regionLabel="Tasas de plazo fijo por banco"
+            caption="Tasa nominal anual (TNA) de plazo fijo de cada banco para no clientes y para clientes."
+          />
         )
       }
     </section>
+
+    {
+      previous.length > 0 && (
+        <section class="flex flex-col gap-block" aria-labelledby="bancos-anteriores">
+          <div class="flex max-w-prose flex-col gap-2">
+            <h2 id="bancos-anteriores" class="type-section">
+              Última tasa publicada
+            </h2>
+            <p class="type-data text-muted">
+              {namesOf(previous)} no trajo a estos bancos en su última captura. Mostramos la última tasa que
+              vimos de cada uno y de qué fecha es.
+            </p>
+          </div>
+          <BankRatesTable
+            banks={previous}
+            showDate
+            regionLabel="Última tasa publicada por banco"
+            caption="Última tasa nominal anual (TNA) de plazo fijo publicada por los bancos que la fuente no trajo en su última captura, con la fecha de esa tasa."
+          />
+        </section>
+      )
+    }
 
     <p class="type-data text-muted">
       Mirá{' '}

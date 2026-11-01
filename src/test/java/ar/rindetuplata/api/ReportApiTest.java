@@ -134,6 +134,43 @@ class ReportApiTest extends ApiIntegrationTest {
 				.andExpect(jsonPath("$.rows[0].coverage.total").value(31));
 	}
 
+	// --- T8a, L38 a: a month needs measured rate-snapshot history ------------------------------------------------
+
+	@Test
+	void aMonthWithOnlyFundQuotesIsNeitherListedNorReportable() throws Exception {
+		// The post-backfill case: FCI quotes for August (and its base month end) but not one daily rate snapshot.
+		macroWriter.write(ApiFixtures.monthlyInflation(), ApiFixtures.CAPTURE);
+		fundMonthEnds("Fondo Uno - Clase A", "2026-07-31", "100.000", "2026-08-31", "102.000");
+		recordIngestionRun();
+
+		mockMvc.perform(get("/api/v1/reports/monthly"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.months", hasSize(0)));
+		expectNotFound("/api/v1/reports/monthly/2026-08", "daily rate history");
+	}
+
+	@Test
+	void aMonthWhoseOnlyRateInstrumentsAreLeftOutIsNotReportableEvenWithFundRows() throws Exception {
+		seedSeptember();
+		// Alpha Wallet is captured since 08-29 only: for August it is left out (not captured at start), so August
+		// has a measured fund and no measured rate instrument.
+		fundMonthEnds("Fondo Agosto - Clase A", "2026-07-31", "100.000", "2026-08-31", "102.000");
+		recordIngestionRun();
+
+		mockMvc.perform(get("/api/v1/reports/monthly"))
+				.andExpect(jsonPath("$.months[*].month", contains("2026-09")));
+		expectNotFound("/api/v1/reports/monthly/2026-08", "daily rate history");
+	}
+
+	@Test
+	void anFciBackedWalletRowDoesNotCountAsRateCoverage() throws Exception {
+		macroWriter.write(ApiFixtures.monthlyInflation(), ApiFixtures.CAPTURE);
+		fundMonthEnds("Delta Pesos - Clase X", "2026-07-31", "100.000", "2026-08-31", "101.500");
+		recordIngestionRun();
+
+		expectNotFound("/api/v1/reports/monthly/2026-08", "daily rate history");
+	}
+
 	// --- the month report: rows -----------------------------------------------------------------------------------
 
 	@Test
@@ -438,6 +475,12 @@ class ReportApiTest extends ApiIntegrationTest {
 		fund("Fondo Dolar USD - Clase A", "100.000", "101.000");
 		fund("Fondo Amnistia - Clase L Ley N° 27.743", "100.000", "101.000");
 		fund("Delta Pesos - Clase X", "100.000", "101.500");
+	}
+
+	private void fundMonthEnds(String name, String baseDate, String base, String endDate, String end) {
+		long id = fundClass(name);
+		quote(id, baseDate, base);
+		quote(id, endDate, end);
 	}
 
 	private void fund(String name, String august, String september) {

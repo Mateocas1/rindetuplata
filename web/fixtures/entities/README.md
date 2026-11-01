@@ -13,6 +13,10 @@ with each other (`bestDays`/`observedDays` follow from the series: 29 is the bes
 | `banks/<slug>.json` | `GET /api/v1/entities/banks/<slug>` |
 | `history/<instrumentId>.json` | `GET /api/v1/instruments/<instrumentId>/history`, what the bank chart plots |
 
+`BANCO VOII S.A.` (`banco-voii-s-a`) is the one bank with `current: false` (T10a): its last valid snapshot is from
+2026-10-12 while its source's newest capture is 2026-10-14, so its series has the single day 12 and its counts are 1 of 1.
+The build exercises the "última tasa publicada" variants of `/bancos/` and `/bancos/<slug>/` with it.
+
 Two banks (`banco-de-galicia-y-buenos-aires-s-a`, `banco-bbva-argentina-s-a`) only publish a client rate: no series, no
 history file (the chart shows its empty state) and no instrument page to link. When the real endpoints have been
 recorded on a live stack, replace these files with the recordings and keep this table.

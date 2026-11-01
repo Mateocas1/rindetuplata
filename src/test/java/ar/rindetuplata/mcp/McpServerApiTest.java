@@ -242,6 +242,29 @@ class McpServerApiTest extends McpIntegrationTest {
 		}
 	}
 
+	@Test
+	void aDateArgumentOutsideYear1To9999IsAnInvalidArgumentAndTheFirstAndLastDatesAreAccepted() {
+		try (McpSyncClient client = client()) {
+			client.initialize();
+
+			for (String extreme : new String[] { "+999999999-12-31", "-999999999-01-01" }) {
+				assertToolError(call(client, "get_ranking", Map.of("asOf", extreme)), "invalid_argument", "asOf");
+				assertToolError(call(client, "get_instrument_history",
+						Map.of("instrumentId", bankId, "from", extreme)), "invalid_argument", "from");
+				assertToolError(call(client, "get_instrument_history",
+						Map.of("instrumentId", bankId, "to", extreme)), "invalid_argument", "to");
+			}
+			assertThat(call(client, "get_ranking", Map.of("asOf", "0001-01-01")).isError()).isNotEqualTo(true);
+			assertThat(call(client, "get_ranking", Map.of("asOf", "9999-12-31")).isError()).isNotEqualTo(true);
+			assertThat(call(client, "get_instrument_history",
+					Map.of("instrumentId", bankId, "from", "0001-01-01", "to", "0001-01-10")).isError())
+					.isNotEqualTo(true);
+			assertThat(call(client, "get_instrument_history",
+					Map.of("instrumentId", bankId, "from", "9999-12-01", "to", "9999-12-31")).isError())
+					.isNotEqualTo(true);
+		}
+	}
+
 	// --- monthly reports ------------------------------------------------------------------------------------------
 
 	@Test
