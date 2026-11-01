@@ -64,6 +64,35 @@ for script in deploy/backup.sh deploy/restore.sh; do
   fi
 done
 
+echo
+echo "== the default backup directory is outside the checkout (F4) =="
+# Inside the checkout `git clean -fdx` deletes the dumps and every docker build sends them as context.
+default_dir=/var/backups/rindetuplata
+mkdir -p "$scratch/shim"
+cat > "$scratch/shim/mkdir" <<SHIM
+#!/usr/bin/env bash
+# Records the directory the script asks for instead of creating it (the default is not writable here).
+echo "\${!#}" > "$scratch/mkdir.arg"
+SHIM
+chmod +x "$scratch/shim/mkdir"
+set +e
+env -u BACKUP_DIR PATH="$scratch/shim:$PATH" deploy/backup.sh > /dev/null 2>&1
+set -e
+check "backup.sh creates the default directory $default_dir" "$default_dir" "$(cat "$scratch/mkdir.arg" 2> /dev/null || true)"
+set +e
+env -u BACKUP_DIR deploy/restore.sh --confirm rindetuplata-1999-01-01.dump > /dev/null 2> "$scratch/restore-default.err"
+rc=$?
+set -e
+check "a bare dump name resolves in the default directory (restore.sh exits 2)" "2" "$rc"
+check_contains "restore.sh looks for the bare name in $default_dir" "$scratch/restore-default.err" "$default_dir/rindetuplata-1999-01-01.dump"
+for file in deploy/backup.sh deploy/restore.sh deploy/systemd/rindetuplata-backup.service docs/deploy.md; do
+  check "$file does not default into the checkout (/srv/rindetuplata/backups)" "0" "$(grep -c '/srv/rindetuplata/backups' "$file" || true)"
+done
+check "backups/ is git-ignored for anyone who overrides BACKUP_DIR inside the checkout" "yes" \
+  "$(git check-ignore -q backups/rindetuplata-2026-11-01.dump && echo yes || echo no)"
+check ".dockerignore keeps backups/ out of the build context" "yes" \
+  "$(grep -qxE '(\*\*/)?backups/?' .dockerignore && echo yes || echo no)"
+
 if ! docker info > /dev/null 2>&1; then
   echo "FAIL - no Docker daemon: the round trip needs a real postgres:18-alpine" >&2
   echo "passed: $passed, failed: $((failed + 1))"

@@ -9,11 +9,15 @@ on:
     paths:
       - "deploy/**"
       - "compose.yaml"
+      - "Dockerfile"
+      - "src/main/resources/application-prod.properties"
       - ".github/workflows/deploy-test.yml"
   pull_request:
     paths:
       - "deploy/**"
       - "compose.yaml"
+      - "Dockerfile"
+      - "src/main/resources/application-prod.properties"
       - ".github/workflows/deploy-test.yml"
   workflow_dispatch:
 

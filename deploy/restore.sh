@@ -4,7 +4,7 @@
 # contains, so it refuses to run without an explicit --confirm.
 #
 #   deploy/restore.sh --confirm rindetuplata-2026-11-01.dump     # a name inside BACKUP_DIR
-#   deploy/restore.sh --confirm /srv/rindetuplata/backups/rindetuplata-2026-11-01.dump
+#   deploy/restore.sh --confirm /var/backups/rindetuplata/rindetuplata-2026-11-01.dump
 #
 # The restore is one transaction (`pg_restore --single-transaction --exit-on-error`): a dump that is
 # unreadable or fails half-way leaves the database as it was. Stop the API first (docs/deploy.md), or its
@@ -15,7 +15,7 @@ set -Eeuo pipefail
 
 cd "$(dirname "$0")/.."
 
-backup_dir="${BACKUP_DIR:-/srv/rindetuplata/backups}"
+backup_dir="${BACKUP_DIR:-/var/backups/rindetuplata}"
 compose_files="${BACKUP_COMPOSE_FILES:-compose.yaml deploy/compose.vps.yaml}"
 env_file="${BACKUP_ENV_FILE-/srv/rindetuplata/api.env}"
 service="${BACKUP_SERVICE:-postgres}"

@@ -274,16 +274,62 @@ describe('a complete build against the API', () => {
       expect(rankingRequests.length).toBeGreaterThan(0);
       expect(history.length).toBeGreaterThan(0);
 
-      // The 503 costs exactly one extra request, for the default ranking it hit; every other ranking and
-      // history request went out once however many pages needed it. (The bank and report lists have
-      // their own readers in entities.ts and reports.ts, outside this memo.)
-      const repeated = [...counts].filter(
-        ([target, count]) => count > 1 && (target.startsWith('/api/v1/ranking') || target.includes('/history')),
-      );
+      // The 503 costs exactly one extra request, for the default ranking it hit; every other ranking, history,
+      // bank and report request went out once however many pages needed it (the bank and report loaders go
+      // through the same memoized client, F6).
+      const memoized = (target: string) =>
+        target.startsWith('/api/v1/ranking') ||
+        target.includes('/history') ||
+        target.startsWith('/api/v1/entities/') ||
+        target.startsWith('/api/v1/reports/');
+      const repeated = [...counts].filter(([target, count]) => count > 1 && memoized(target));
       expect(repeated).toEqual([['/api/v1/ranking?amount=1000000&days=30&limit=50', 2]]);
       expect(counts.get('/api/v1/ranking?amount=1000000&days=30&limit=200')).toBe(1);
+      // The bank list and a bank page, the report list: asked for by several pages, fetched once each.
+      expect(counts.get('/api/v1/entities/banks')).toBe(1);
+      expect([...counts.keys()].filter((target) => /^\/api\/v1\/entities\/banks\/[^/]+$/.test(target)).length).toBeGreaterThan(0);
+      expect(counts.get('/api/v1/reports/monthly')).toBe(1);
     } finally {
       await api.close();
+    }
+  }, 600_000);
+});
+
+describe('the end-to-end smoke build (deploy/e2e.sh, F5)', () => {
+  const e2eScript = readFileSync(join(webRoot, '..', 'deploy', 'e2e.sh'), 'utf8');
+  const buildLine = e2eScript.split('\n').find((line) => /\bnpm run build\b/.test(line) && !line.trim().startsWith('#'));
+
+  it('would fail a production-mode build: a fresh stack has no ingested data and the gate says so', async () => {
+    const empty = { ...freshDefaultRanking(), ranked: [] };
+    const api = await startFakeApi({ defaultRanking: empty, kindRanking: () => ({ ...empty }) });
+    try {
+      const result = await build('e2e-empty-api', { API_URL: api.url, WEB_FIXTURES: undefined });
+      expect(result.code).not.toBe(0);
+      expect(result.output).toContain('min-ranked');
+      expect(result.output).toContain('category-rankings');
+    } finally {
+      await api.close();
+    }
+  }, 180_000);
+
+  it('builds the static pages in fixture mode and leaves the runtime API base alone', async () => {
+    expect(buildLine, 'deploy/e2e.sh has no site build step').toBeDefined();
+    // Never build:api (it strips WEB_FIXTURES and demands data) and never a gate off-switch.
+    expect(buildLine).not.toContain('build:api');
+    expect(buildLine).toMatch(/\bWEB_FIXTURES=1\b/);
+    expect(buildLine).not.toMatch(/\bAPI_URL=/);
+    expect(buildLine).not.toMatch(/BUILD_(MIN_RANKED|MAX_DATA_AGE_DAYS)/);
+    // The account pages talk to PUBLIC_API_URL (default: the page's own origin, i.e. the e2e stack behind Caddy),
+    // which this build leaves unset, so fixture mode only changes where the static pages get their data.
+    const result = await build('e2e-fixture-mode', {
+      WEB_FIXTURES: '1',
+      API_URL: undefined,
+      PUBLIC_API_URL: undefined,
+    });
+    expect(result.output).not.toContain('Build gate failed');
+    expect(result.code).toBe(0);
+    for (const page of ['index.html', 'ingresar/index.html', 'alertas/index.html']) {
+      expect(existsSync(join(result.outDir, page)), page).toBe(true);
     }
   }, 600_000);
 });

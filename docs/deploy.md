@@ -33,8 +33,12 @@ docker compose --profile stack up -d --wait
   `api:8080`, so the whole product is one origin, exactly like production.
 - The site is built *against* the running API: `build:api` refuses to run without `API_URL` and strips
   `WEB_FIXTURES`, so a fixture build can never be published by mistake.
-- The end-to-end smoke does all of the above and takes the stack down again:
-  `deploy/e2e.sh` (needs `cd web && npm ci && npx playwright install chromium` once).
+- The end-to-end smoke brings the same stack up and takes it down again: `deploy/e2e.sh`. It builds the site in
+  fixture mode (`WEB_FIXTURES=1 npm run build`), not with `build:api`: the fresh stack has ingested nothing, so the
+  build gate (below) would refuse it, and the smoke tests sign-in and alerts, not rankings. The browser still calls the
+  stack's own API through Caddy, because the account pages use `PUBLIC_API_URL`, which is unset (same origin). The gate
+  has no off-switch; `web/test/build-gate.test.ts` checks both halves. It needs
+  `cd web && npm ci && npx playwright install chromium` once.
 - Locally the database has no named volume on purpose: every `down` leaves a clean database, which is
   what makes the smoke repeatable. `./mvnw spring-boot:test-run` uses its own Testcontainers
   PostgreSQL and is unaffected.
@@ -241,14 +245,18 @@ production-shaped (every statement below was checked with `docker compose config
   checked per service by `deploy/test/compose-limits-test.sh` (`docker compose config` with fake values). On a
   bigger box raise the numbers in `deploy/compose.vps.yaml`, keeping the API at 75% of its limit or less for heap.
 - Mailpit and the local site server are dropped (`profiles: !override`), and a `caddy` service
-  terminates TLS for `api.<domain>` using `deploy/Caddyfile.vps`, which proxies only `/api/*` and
-  answers 404 for every other path (the site itself lives on the CDN).
+  terminates TLS for `api.<domain>` using `deploy/Caddyfile.vps`, which proxies only `/api/*`, `/v3/api-docs`, `/mcp`
+  and the two health URLs `/actuator/health` and `/actuator/health/ingestion` (the ones an external uptime monitor and
+  the post-restore check read; the rest of `/actuator/*` stays unreachable from outside) and answers 404 for every
+  other path (the site itself lives on the CDN). `deploy/test/caddy-routes-test.sh` checks this set in all three
+  Caddyfiles.
 - Every production value comes from an env file that is never committed. `--env-file` only feeds
   `${VAR}` substitution, so the overlay names each variable, and a missing one fails the command
   instead of silently starting with the local default (Mailpit on 1025).
 
 ```ini
-# /srv/rindetuplata/api.env — root-only, never committed
+# /srv/rindetuplata/api.env — root-only, never committed; deploy/vps.env.example is the template
+COMPOSE_PROFILES=stack           # loads api and caddy in every Compose command that reads this file; keep it
 POSTGRES_PASSWORD=...            # the database user stays `rindetuplata`
 RABBITMQ_DEFAULT_PASS=...        # the broker user stays `rindetuplata`
 SPRING_MAIL_HOST=smtp.example.com
@@ -263,10 +271,17 @@ RINDETUPLATA_INGEST_REBUILDHOOKURL=https://api.cloudflare.com/client/v4/pages/we
 
 ```bash
 cd /srv/rindetuplata                     # a checkout of this repository
-chmod 600 /srv/rindetuplata/api.env
+install -m 600 deploy/vps.env.example /srv/rindetuplata/api.env     # then fill every value
 docker compose -f compose.yaml -f deploy/compose.vps.yaml \
-  --profile stack --env-file /srv/rindetuplata/api.env up -d --wait
+  --env-file /srv/rindetuplata/api.env up -d --wait
 ```
+
+`COMPOSE_PROFILES=stack` in the env file is what puts `api` and `caddy` in the project: `compose.yaml` keeps `api` behind
+the `stack` profile and the overlay makes `caddy` depend on it, so a Compose command that reads the overlay without the
+profile (a restore, a `stop api`, the nightly backup's `exec`) is rejected with `service "caddy" depends on undefined
+service "api": invalid compose project`. `deploy/test/restore-drill-test.sh` runs every documented command of the drill
+with `--dry-run` against the template, and `backup.sh` and `restore.sh` with their defaults, and fails on that error.
+(An explicit `--profile` flag overrides `COMPOSE_PROFILES`, so do not mix them.)
 
 - The SMTP port defaults to 587 and STARTTLS is on; a provider on 465 wants
   `SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_ENABLE=true` instead. `RINDETUPLATA_MAIL_FROM` defaults to
@@ -448,13 +463,18 @@ All optional; the defaults match the VPS layout above (the checkout in `/srv/rin
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `BACKUP_DIR` | `/srv/rindetuplata/backups` | where dumps go (created `0700`, dumps `0600`) |
+| `BACKUP_DIR` | `/var/backups/rindetuplata` | where dumps go (created `0700` if missing, dumps `0600`); outside the checkout on purpose, see below |
 | `BACKUP_RETENTION_DAYS` | `30` | dumps strictly older than this many days are deleted; a positive whole number |
 | `BACKUP_COPY_COMMAND` | unset | shell command run after a good dump, the dump's path is `"$1"` (see below) |
 | `BACKUP_COMPOSE_FILES` | `compose.yaml deploy/compose.vps.yaml` | space-separated Compose files, relative to the checkout |
 | `BACKUP_ENV_FILE` | `/srv/rindetuplata/api.env` | Compose `--env-file`; set it empty for none |
 | `BACKUP_SERVICE` | `postgres` | the Compose service running Postgres |
 | `BACKUP_DB_NAME`, `BACKUP_DB_USER` | `rindetuplata` | database and role |
+
+The default directory is outside the checkout on purpose: inside it, cleaning the checkout's untracked files would delete
+the dumps and every `docker build` would send them to the daemon as build context. If you override `BACKUP_DIR` to a
+`backups/` directory inside the checkout anyway, `.gitignore` and `.dockerignore` both exclude `backups/`. A dump holds
+the users' emails, so keep the directory `0700` and copy it off the box (below).
 
 Under systemd put overrides in `/srv/rindetuplata/backup.env`, one `KEY=value` per line (the unit reads it if it exists).
 `BACKUP_COMPOSE_FILES`, `BACKUP_SERVICE` and the two `BACKUP_DB_*` variables are what the test points at its throwaway
@@ -499,7 +519,7 @@ a backup. The drill restores into the live database, so schedule it, or do it on
 
 ```bash
 cd /srv/rindetuplata
-ls -lh /srv/rindetuplata/backups                                  # pick the dump
+ls -lh /var/backups/rindetuplata                                  # pick the dump
 compose=(docker compose -f compose.yaml -f deploy/compose.vps.yaml --env-file /srv/rindetuplata/api.env)
 
 "${compose[@]}" stop api                                          # its connections would block the DROPs
@@ -516,8 +536,13 @@ curl -fsS https://api.<domain>/actuator/health
 ```
 
 Without `--confirm` the script prints why it refused and changes nothing. Restoring into a new or empty volume works
-the same way: bring up `postgres` alone (`"${compose[@]}" up -d --wait postgres`), run `restore.sh --confirm`, then
-start the rest.
+the same way: bring up `postgres` alone, run `restore.sh --confirm`, then start the rest:
+
+```bash
+"${compose[@]}" up -d --wait postgres
+deploy/restore.sh --confirm rindetuplata-YYYY-MM-DD.dump
+"${compose[@]}" up -d --wait
+```
 
 ## What the owner still has to decide
 
