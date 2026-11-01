@@ -29,6 +29,8 @@ const FIXTURES = { WEB_FIXTURES: '1' } as const;
 const DEFAULT_STATE = { amount: 1_000_000, days: 30, kinds: [], clientOf: [] };
 const webRoot = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 
+const noSleep = async () => {};
+
 function okJson(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -189,6 +191,7 @@ describe('loadRanking against the API', () => {
     await expect(
       loadRanking(DEFAULT_STATE, {
         env: { API_URL: 'http://localhost:8080' },
+        sleep: noSleep,
         fetch: async () =>
           new Response('{"detail":"boom"}', {
             status: 500,
@@ -425,10 +428,179 @@ describe('the API build token (rate-limit bypass)', () => {
 
     const failure = loadRanking(DEFAULT_STATE, {
       env,
+      sleep: noSleep,
       fetch: async () => new Response('Too many requests', { status: 429 }),
     });
 
     await expect(failure).rejects.toThrow(/429/);
     await expect(failure).rejects.not.toThrow(/s3cret/);
+  });
+});
+
+describe('the build API client: deadline, retry and one fetch per request (T4d, L36a)', () => {
+  const ENV = { API_URL: 'http://localhost:8080' };
+  const EMPTY_RANKING = { ranked: [], ineligible: [], excluded: [] };
+  const EMPTY_HISTORY = {
+    id: '29',
+    kind: 'PLAZO_FIJO_BANK',
+    displayName: 'REBA',
+    entityName: null,
+    segment: null,
+    sourceId: 'argentinadatos-plazo-fijo',
+    from: '2026-07-17',
+    to: '2026-10-14',
+    points: [],
+    quotes: [],
+    monthlyInflation: [],
+  };
+
+  function counting(responses: Array<() => Response | Promise<Response>>) {
+    const calls: string[] = [];
+    const doFetch = (async (input: RequestInfo | URL) => {
+      calls.push(String(input));
+      return responses[Math.min(calls.length - 1, responses.length - 1)]();
+    }) as unknown as typeof fetch;
+    return { fetch: doFetch, calls };
+  }
+
+  it('retries a 503 and still returns the ranking', async () => {
+    const waits: number[] = [];
+    const { fetch, calls } = counting([
+      () => new Response('down', { status: 503 }),
+      () => okJson(EMPTY_RANKING),
+    ]);
+    const ranking = await loadRanking(DEFAULT_STATE, {
+      env: ENV,
+      fetch,
+      sleep: async (ms) => {
+        waits.push(ms);
+      },
+    });
+    expect(ranking.ranked).toEqual([]);
+    expect(calls).toHaveLength(2);
+    expect(waits).toEqual([1000]);
+  });
+
+  it('retries a network error on a history request', async () => {
+    let attempts = 0;
+    const calls: string[] = [];
+    const history = await loadHistory('29', {
+      env: ENV,
+      sleep: noSleep,
+      fetch: (async (input: RequestInfo | URL) => {
+        calls.push(String(input));
+        attempts += 1;
+        if (attempts === 1) throw new TypeError('fetch failed');
+        return okJson(EMPTY_HISTORY);
+      }) as unknown as typeof fetch,
+    });
+    expect(history.id).toBe('29');
+    expect(calls).toEqual([
+      'http://localhost:8080/api/v1/instruments/29/history',
+      'http://localhost:8080/api/v1/instruments/29/history',
+    ]);
+  });
+
+  it('does not retry a 400: one request, the ProblemDetail in the message', async () => {
+    const { fetch, calls } = counting([
+      () => new Response('{"detail":"bad days"}', { status: 400 }),
+    ]);
+    await expect(
+      loadRanking(DEFAULT_STATE, { env: ENV, fetch, sleep: noSleep }),
+    ).rejects.toThrow(/failed with 400: \{"detail":"bad days"\}/);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('gives up after 3 attempts with the last status in the message', async () => {
+    const { fetch, calls } = counting([() => new Response('down', { status: 502 })]);
+    await expect(
+      loadRanking(DEFAULT_STATE, { env: ENV, fetch, sleep: noSleep }),
+    ).rejects.toThrow(/failed with 502: down/);
+    expect(calls).toHaveLength(3);
+  });
+
+  it('times a request out after API_TIMEOUT_MS and says so', async () => {
+    const calls: string[] = [];
+    const hanging = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push(String(input));
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+      });
+    }) as unknown as typeof fetch;
+    await expect(
+      loadRanking(DEFAULT_STATE, {
+        env: { ...ENV, API_TIMEOUT_MS: '15' },
+        fetch: hanging,
+        sleep: noSleep,
+      }),
+    ).rejects.toThrow(/failed after 3 attempts: timed out after 15 ms/);
+    expect(calls).toHaveLength(3);
+  });
+
+  it('rejects an unreadable API_TIMEOUT_MS before asking the API anything', async () => {
+    const { fetch, calls } = counting([() => okJson(EMPTY_RANKING)]);
+    await expect(
+      loadRanking(DEFAULT_STATE, { env: { ...ENV, API_TIMEOUT_MS: 'soon' }, fetch }),
+    ).rejects.toThrow(/API_TIMEOUT_MS must be a positive whole number/);
+    expect(calls).toHaveLength(0);
+  });
+
+  it('fetches an identical ranking request once for the whole build', async () => {
+    const { fetch, calls } = counting([() => okJson(EMPTY_RANKING)]);
+    const options = { env: ENV, fetch, sleep: noSleep };
+    const home = await loadRanking(DEFAULT_STATE, options);
+    const again = await loadRanking({ ...DEFAULT_STATE }, options);
+    const catalog = await loadRankingCatalog({ ...options, limit: 50 });
+    expect(calls).toHaveLength(1);
+    expect(again).toBe(home);
+    expect(catalog).toBe(home);
+  });
+
+  it('fetches the bank list and every category ranking once even when many pages ask', async () => {
+    const { fetch, calls } = counting([() => okJson(EMPTY_RANKING)]);
+    const options = { env: ENV, fetch, sleep: noSleep };
+    await Promise.all([
+      loadBanks(options),
+      loadBanks(options),
+      loadRanking({ ...DEFAULT_STATE, kinds: ['WALLET'] }, { ...options, limit: 200 }),
+      loadRanking({ ...DEFAULT_STATE, kinds: ['WALLET'] }, { ...options, limit: 200 }),
+      loadRanking({ ...DEFAULT_STATE, kinds: ['FUND'] }, { ...options, limit: 200 }),
+    ]);
+    expect(calls.map((url) => new URL(url).searchParams.get('kind')).sort()).toEqual([
+      'FUND',
+      'PLAZO_FIJO',
+      'WALLET',
+    ]);
+  });
+
+  it('asks again for a different request: another amount or another limit', async () => {
+    const { fetch, calls } = counting([() => okJson(EMPTY_RANKING)]);
+    const options = { env: ENV, fetch, sleep: noSleep };
+    await loadRanking(DEFAULT_STATE, options);
+    await loadRanking({ ...DEFAULT_STATE, amount: 500_000 }, options);
+    await loadRanking(DEFAULT_STATE, { ...options, limit: 200 });
+    expect(calls).toHaveLength(3);
+  });
+
+  it('fetches one instrument history once however many pages need it', async () => {
+    const { fetch, calls } = counting([() => okJson(EMPTY_HISTORY)]);
+    const options = { env: ENV, fetch, sleep: noSleep };
+    await loadHistory('29', options);
+    await loadHistory('29', options);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('keeps the token out of the memoization trap: a different token is a different request', async () => {
+    const { fetch, calls } = counting([() => okJson(EMPTY_RANKING)]);
+    await loadRanking(DEFAULT_STATE, { env: ENV, fetch });
+    await loadRanking(DEFAULT_STATE, { env: { ...ENV, API_BUILD_TOKEN: 'a-token' }, fetch });
+    expect(calls).toHaveLength(2);
+  });
+
+  it('never touches the network or the memo in fixture mode', async () => {
+    const { fetch, calls } = counting([() => okJson(EMPTY_RANKING)]);
+    await loadRanking(DEFAULT_STATE, { env: FIXTURES, fetch });
+    await loadHistory('29', { env: FIXTURES, fetch });
+    expect(calls).toHaveLength(0);
   });
 });
