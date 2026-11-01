@@ -246,6 +246,32 @@ docker compose -f compose.yaml -f deploy/compose.vps.yaml \
 - `RINDETUPLATA_AUTH_SECURECOOKIE=true` is set by the overlay and is mandatory once TLS terminates in
   front of the API: without it the session and the CSRF cookies travel in clear.
   `RINDETUPLATA_WEB_ALLOWEDORIGINS` must be the site's own origin, and nothing else.
+- **The `prod` profile (T4b).** The overlay sets `SPRING_PROFILES_ACTIVE=prod` on the API
+  (`application-prod.properties`). Under that profile the API **refuses to start**, and its error lists every
+  offending property at once, when any of these is still a development default:
+  `rindetuplata.auth.secure-cookie` is `false`; `rindetuplata.web.allowed-origins`,
+  `rindetuplata.auth.magic-link-url` or `rindetuplata.alert.manage-url` is blank, not `https`, or points at
+  `localhost` (also `*.localhost`, `127.x.x.x`, `::1`, `0.0.0.0`); `spring.mail.host` is blank or one of those local
+  hosts (the Mailpit default); `rindetuplata.auth.admin-emails` names nobody; `rindetuplata.api.rate-limit.bypass-token`
+  (`API_BUILD_TOKEN`) is set but, trimmed, shorter than 32 characters (blank keeps the bypass off). The check runs
+  before the database, the broker or Flyway are touched, reads the same environment variables the API binds, and never
+  prints a token. The profile also turns `secure-cookie` on by default. Without the profile (local development,
+  tests, the preview) nothing is checked. `deploy/test/prod-profile-test.sh` renders the overlay with fake values and
+  asserts the profile reaches the container.
+- **Ingestion freshness and monitoring (T4b).** The `ingestionFreshness` health contributor reads the newest
+  `source_run` row that is `LIVE` and `OK` or `DEGRADED` (both stored rows from a source that answered; `FAILED`
+  stored nothing, and `REPLAY` and backfill rows are old history that says nothing about today's fetch). Any source
+  counts, so check `source_run` itself for a single failing source. The data is fresh until
+  `RINDETUPLATA_INGEST_STALEAFTER` (default `36h`) after the run the cron was expected to make for that capture date
+  (19:30 `America/Argentina/Buenos_Aires`, so until 07:30 two days later: one missed run is tolerated, two are not);
+  past that, or with no successful run recorded at all, its status is the custom `STALE`, ordered between `DOWN` and
+  `UP`. `STALE` is HTTP **200** on `/actuator/health`, so Docker's `HEALTHCHECK`, `depends_on: service_healthy` and
+  Caddy keep working while the data is old (a stale site is better than no site); it is HTTP **503** on the group
+  `/actuator/health/ingestion`, the URL an external uptime monitor should watch. The group (public, like health) shows
+  `lastSuccessDate`, `lastSuccessAt`, `ageSeconds`, `staleAfter` and `staleAt`; the main endpoint shows the bare status.
+  (The contributor is `ingestionFreshness` and the group `ingestion`: Spring Boot refuses one name for both.) The
+  Micrometer gauge `rindetuplata.ingest.last.success.age` (base unit seconds, NaN when there is no success) carries the
+  same age for any registry added later; no metrics endpoint is exposed today.
 - Caddy needs ports 80 and 443 open and is the only published service; the API is reachable only from
   the Compose network. `JAVA_OPTS` (for example `JAVA_OPTS=-Xmx512m`) caps the heap on a small box.
 - **Rate limit of the public read API (optional settings).** `GET /api/v1/ranking`, `/api/v1/simulations`,
