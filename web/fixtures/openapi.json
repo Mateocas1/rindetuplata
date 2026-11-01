@@ -466,6 +466,7 @@
           {
             "name": "clientOf",
             "in": "query",
+            "description": "Instrument ids of the banks the user is a client of, to use their client rate. At most 100 values, counted as sent; more is a 400.",
             "required": false,
             "schema": {
               "type": "array",
