@@ -104,7 +104,13 @@ flowchart LR
   and tiers, fund yield from cuotaparte deltas, REM horizon conversion, real return. `BigDecimal` with explicit
   `MathContext` and rounding, tested against hand-computed values.
 - **Read side** (`ranking`, `api`): turns stored snapshots into domain instruments and simulates them per
-  request; ProblemDetail errors; OpenAPI at `/v3/api-docs`.
+  request; ProblemDetail errors; OpenAPI at `/v3/api-docs`. `GET /api/v1/simulations` reads only the requested
+  instrument. `GET /api/v1/ranking` is cached in process (LRU, 64 entries by default) per data version and
+  resolved query. The data version is one aggregate read from the database on every request (`source_run`,
+  curated wallet rates and their audit, newest instrument), so the daily job, the startup ingestion, a backfill
+  and a curation save all invalidate it with no event bus. Both endpoints send a weak `ETag` (data version +
+  normalized request) and `Cache-Control: public, no-cache`; a matching `If-None-Match` is a `304` with no body
+  and no ranking work, and a new ingestion run or curated rate gives a new tag.
 - **Accounts and alerts** (`account`, `alert`, `curation`): Spring Security one-time-token login, JDBC sessions,
   CSRF for a cross-origin SPA, admin role; alert rules evaluated after each ingestion, written to an outbox in
   the same transaction and relayed to RabbitMQ with publisher confirms, an idempotent consumer and a
