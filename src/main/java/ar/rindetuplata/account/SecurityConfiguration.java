@@ -71,7 +71,8 @@ public class SecurityConfiguration {
 						.accessDeniedHandler(accessDeniedHandler))
 				.authorizeHttpRequests(requests -> requests
 						.requestMatchers(HttpMethod.GET, "/api/v1/ranking", "/api/v1/simulations",
-								"/api/v1/instruments", "/api/v1/instruments/**").permitAll()
+								"/api/v1/instruments", "/api/v1/instruments/**", "/api/v1/entities", "/api/v1/entities/**",
+								"/api/v1/reports", "/api/v1/reports/**").permitAll()
 						.requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
 						.permitAll()
 						.requestMatchers("/actuator/health", "/actuator/health/**").permitAll()

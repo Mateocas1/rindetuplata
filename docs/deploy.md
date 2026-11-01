@@ -248,8 +248,9 @@ docker compose -f compose.yaml -f deploy/compose.vps.yaml \
   `RINDETUPLATA_WEB_ALLOWEDORIGINS` must be the site's own origin, and nothing else.
 - Caddy needs ports 80 and 443 open and is the only published service; the API is reachable only from
   the Compose network. `JAVA_OPTS` (for example `JAVA_OPTS=-Xmx512m`) caps the heap on a small box.
-- **Rate limit of the public read API (optional settings).** `GET /api/v1/ranking`, `/api/v1/simulations`
-  and `/api/v1/instruments/**` allow a burst of 120 requests per client address and refill 2 per second;
+- **Rate limit of the public read API (optional settings).** `GET /api/v1/ranking`, `/api/v1/simulations`,
+  `/api/v1/instruments/**` and `/api/v1/reports/**` (the monthly reports) share one bucket per client address:
+  a burst of 120 requests, refilled 2 per second;
   beyond that the answer is a 429 `ProblemDetail` with `Retry-After`. The address is the `X-Forwarded-For`
   that Caddy sends (`server.forward-headers-strategy=native`). The counters live in the API's memory, so
   the limit assumes the single API instance. `RINDETUPLATA_API_RATELIMIT_CAPACITY` and

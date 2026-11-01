@@ -1,0 +1,15 @@
+{
+  "slug": "banco-bbva-argentina-s-a",
+  "name": "BANCO BBVA ARGENTINA S.A.",
+  "instrumentId": "3",
+  "sourceId": "argentinadatos-plazo-fijo",
+  "nonClientTna": null,
+  "clientTna": 0.3,
+  "captureDate": "2026-10-14",
+  "dataDate": "2026-10-14",
+  "from": "2026-07-17",
+  "to": "2026-10-14",
+  "series": [],
+  "bestDays": 0,
+  "observedDays": 0
+}

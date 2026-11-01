@@ -1,0 +1,15 @@
+{
+  "slug": "banco-de-galicia-y-buenos-aires-s-a",
+  "name": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+  "instrumentId": "2",
+  "sourceId": "argentinadatos-plazo-fijo",
+  "nonClientTna": null,
+  "clientTna": 0.29,
+  "captureDate": "2026-10-14",
+  "dataDate": "2026-10-14",
+  "from": "2026-07-17",
+  "to": "2026-10-14",
+  "series": [],
+  "bestDays": 0,
+  "observedDays": 0
+}

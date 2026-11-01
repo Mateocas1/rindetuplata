@@ -26,8 +26,17 @@ const current = normalizedPath(Astro.url.pathname);
 const links = [
   { href: '/', label: 'Ranking' },
   ...CATEGORIES.map((category) => ({ href: category.path, label: category.navLabel })),
+  { href: '/bancos/', label: 'Bancos' },
+  { href: '/informes/', label: 'Informes' },
   { href: '/metodologia/', label: 'Cómo se calcula' },
 ];
+
+/** `page` on the page itself, `true` on the section link while a page inside it is open (the monthly reports). */
+function currentState(href: string): 'page' | 'true' | undefined {
+  const path = normalizedPath(href);
+  if (current === path) return 'page';
+  return path !== '/' && current.startsWith(`${path}/`) ? 'true' : undefined;
+}
 ---
 
 <header class="sticky top-0 z-10 border-b border-border bg-surface">
@@ -47,12 +56,13 @@ const links = [
       <ul class="flex items-center gap-2 pe-8 whitespace-nowrap sm:gap-4 sm:pe-0">
         {
           links.map((link) => {
-            const active = current === normalizedPath(link.href);
+            const state = currentState(link.href);
+            const active = state !== undefined;
             return (
               <li>
                 <a
                   href={link.href}
-                  aria-current={active ? 'page' : undefined}
+                  aria-current={state}
                   class:list={[
                     'type-label relative block py-2 no-underline focus-visible:-outline-offset-2',
                     active ? 'text-text' : 'hover:text-text',
