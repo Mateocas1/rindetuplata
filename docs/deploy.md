@@ -45,6 +45,27 @@ docker compose --profile stack up -d --wait
   script refuses to start — naming the port — when one of those is already taken (finding R1 of
   `review-d018a62efca39d30`).
 
+## CI for the deploy files
+
+Three GitHub Actions workflows and Dependabot watch what the Java and web test workflows do not (T4e, S4):
+
+| Workflow | Runs when | What it proves |
+|---|---|---|
+| `.github/workflows/image-build.yml` | a PR or a push to `main` touches `Dockerfile`, `.dockerignore`, `src/**` or `pom.xml` | `docker build` of the API image succeeds. Nothing is pushed |
+| `.github/workflows/deploy-test.yml` | a PR or a push to `main` touches `deploy/**` or `compose.yaml` | every `deploy/test/*-test.sh` passes, `compose.yaml` renders, and `deploy/compose.vps.yaml` renders with fake env values and refuses an empty env file |
+
+- `deploy-test.yml` finds the scripts by the glob `deploy/test/*-test.sh`, so a new test is picked up without
+  editing the workflow. It installs Node 24 and runs `npm ci` in `web/` first, because `deploy/preview.sh up` (driven
+  by `preview-script-test.sh`) refuses to start without `web/node_modules`.
+- The fake values are written to a scratch env file inside the job. When the overlay gains a new
+  `${VAR:?...}` guard, add the variable to that file in the workflow, or the render step fails.
+- Run the same checks locally: `docker build -t rindetuplata-api:ci .`, then `for t in deploy/test/*-test.sh; do bash "$t"; done`
+  (after `cd web && npm ci`).
+- `.github/dependabot.yml` opens weekly update PRs for Maven (`/`), npm (`/web`), GitHub Actions and the base images
+  of both Dockerfiles (`/` and `/deploy/rebuilder`). Minor and patch updates of one ecosystem arrive as a single
+  grouped PR; a major update is its own PR. At most three PRs per ecosystem (two per Dockerfile) stay open. Every
+  action in the workflows is pinned by commit SHA with a version comment, and Dependabot bumps both together.
+
 ## Private preview (Tailscale Funnel)
 
 The whole product — login, alerts, simulator, daily ingestion — on the owner's own machine, published at
