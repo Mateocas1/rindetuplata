@@ -103,4 +103,16 @@ class ApiRateLimitFilterTest {
 
 		assertThat(call(filter, "GET", "/api/v1/ranking", "1.1.1.1", "").getStatus()).isEqualTo(429);
 	}
+
+	@Test
+	void anUnknownAddressIsA429WhenTheLimiterIsFullButAKnownOneIsServed() throws Exception {
+		ApiRateLimitFilter filter = new ApiRateLimitFilter(new ApiRateLimiter(2, 0.5, 1, clock), "");
+		assertThat(call(filter, "GET", "/api/v1/ranking", "1.1.1.1", null).getStatus()).isEqualTo(200);
+
+		MockHttpServletResponse refused = call(filter, "GET", "/api/v1/ranking", "2.2.2.2", null);
+
+		assertThat(refused.getStatus()).isEqualTo(429);
+		assertThat(Long.parseLong(refused.getHeader("Retry-After"))).isGreaterThanOrEqualTo(1);
+		assertThat(call(filter, "GET", "/api/v1/ranking", "1.1.1.1", null).getStatus()).isEqualTo(200);
+	}
 }

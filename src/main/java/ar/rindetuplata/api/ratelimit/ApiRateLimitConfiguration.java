@@ -12,6 +12,6 @@ class ApiRateLimitConfiguration {
 
 	@Bean
 	ApiRateLimiter apiRateLimiter(ApiRateLimitProperties properties, Clock clock) {
-		return new ApiRateLimiter(properties.capacity(), properties.refillPerSecond(), clock);
+		return new ApiRateLimiter(properties.capacity(), properties.refillPerSecond(), properties.maxTrackedAddresses(), clock);
 	}
 }

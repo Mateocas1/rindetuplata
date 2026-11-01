@@ -3,9 +3,14 @@ package ar.rindetuplata.api.ratelimit;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A token bucket per remote address for the public read endpoints (T1a, S1). The first request of an address finds a
@@ -13,11 +18,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * every second, never above its capacity. An empty bucket answers how many seconds remain until one token is back,
  * and a refused request takes nothing. State is in memory because the API runs as one instance (S16): a second
  * instance would need a shared store. Buckets that have refilled completely are swept at most once per refill-to-full
- * period, so memory is bounded by the addresses seen in that period.
+ * period, and the sweep is claimed with a compare-and-set so a request that finds none due takes no lock.
+ * The number of tracked buckets is capped at {@code maxTrackedAddresses}: a new address that arrives at the cap
+ * first triggers a sweep (at most once per second) and, if the map is still full, is refused like an empty bucket
+ * (fail closed for unknown clients) while existing addresses keep working. The cap check is not atomic with the
+ * insert, so a burst of concurrent new addresses can overshoot it by at most the number of request threads.
+ * An IPv6 client is keyed by its /64 prefix, because a single subscriber controls a whole /64 and would otherwise
+ * get a fresh bucket per address; IPv4 (and IPv4-mapped IPv6) clients are keyed by the full address.
  */
 public class ApiRateLimiter {
 
 	private static final double NANOS_PER_SECOND = 1_000_000_000d;
+
+	private static final long DEMAND_SWEEP_EVERY_MILLIS = 1000;
+
+	private static final int IPV6_PREFIX_BYTES = 8;
 
 	private final class Bucket {
 
@@ -58,42 +73,107 @@ public class ApiRateLimiter {
 
 	private final Clock clock;
 
-	private final Duration sweepEvery;
+	private final int maxTrackedAddresses;
+
+	private final long sweepEveryMillis;
 
 	private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
-	private Instant nextSweep;
+	private final AtomicLong nextSweepMillis;
+
+	private final AtomicLong nextDemandSweepMillis = new AtomicLong(Long.MIN_VALUE);
 
 	ApiRateLimiter(int capacity, double refillPerSecond, Clock clock) {
+		this(capacity, refillPerSecond, 100_000, clock);
+	}
+
+	ApiRateLimiter(int capacity, double refillPerSecond, int maxTrackedAddresses, Clock clock) {
 		if (capacity < 1) {
 			throw new IllegalArgumentException("rate-limit capacity must be at least 1: " + capacity);
 		}
 		if (!(refillPerSecond > 0)) {
 			throw new IllegalArgumentException("rate-limit refill per second must be positive: " + refillPerSecond);
 		}
+		if (maxTrackedAddresses < 1) {
+			throw new IllegalArgumentException(
+					"rate-limit max tracked addresses must be at least 1: " + maxTrackedAddresses);
+		}
 		this.capacity = capacity;
 		this.refillPerSecond = refillPerSecond;
+		this.maxTrackedAddresses = maxTrackedAddresses;
 		this.clock = clock;
-		this.sweepEvery = Duration.ofMillis(Math.max(1000, (long) Math.ceil(capacity / refillPerSecond * 1000)));
-		this.nextSweep = clock.instant().plus(sweepEvery);
+		this.sweepEveryMillis = Math.max(1000, (long) Math.ceil(capacity / refillPerSecond * 1000));
+		this.nextSweepMillis = new AtomicLong(clock.instant().toEpochMilli() + sweepEveryMillis);
 	}
 
 	/** Takes a token: empty when allowed, otherwise the seconds (at least 1) until the address may retry. */
 	public OptionalLong tryAcquire(String address) {
 		Instant now = clock.instant();
-		sweep(now);
-		return buckets.computeIfAbsent(address, key -> new Bucket(now)).tryTake(now);
+		sweepIfDue(now);
+		String key = bucketKey(address);
+		Bucket bucket = buckets.get(key);
+		if (bucket == null) {
+			if (buckets.size() >= maxTrackedAddresses) {
+				sweepOnDemand(now);
+				if (buckets.size() >= maxTrackedAddresses) {
+					return OptionalLong.of(secondsUntilNextSweep(now));
+				}
+			}
+			bucket = buckets.computeIfAbsent(key, k -> new Bucket(now));
+		}
+		return bucket.tryTake(now);
 	}
 
 	int trackedAddresses() {
 		return buckets.size();
 	}
 
-	private synchronized void sweep(Instant now) {
-		if (now.isBefore(nextSweep)) {
-			return;
+	/** IPv6 literals collapse to their /64; everything else keeps the address as given. Never resolves a name. */
+	static String bucketKey(String address) {
+		if (address == null || address.indexOf(':') < 0) {
+			return address;
 		}
+		try {
+			int scope = address.indexOf('%');
+			String literal = scope < 0 ? address : address.substring(0, scope);
+			if (literal.indexOf(':') < 0) {
+				// Not an IPv6 literal once the zone id is cut (e.g. "abc%:"): older JDKs could resolve such text by name.
+				return address;
+			}
+			// The brackets make the JDK treat the text strictly as an IPv6 literal: it throws instead of doing a DNS lookup.
+			InetAddress parsed = InetAddress.getByName("[" + literal + "]");
+			if (parsed instanceof Inet6Address) {
+				return HexFormat.of().formatHex(parsed.getAddress(), 0, IPV6_PREFIX_BYTES) + "/64";
+			}
+			return parsed.getHostAddress();
+		}
+		catch (UnknownHostException | RuntimeException ex) {
+			return address;
+		}
+	}
+
+	private void sweepIfDue(Instant now) {
+		long nowMillis = now.toEpochMilli();
+		long due = nextSweepMillis.get();
+		if (nowMillis >= due && nextSweepMillis.compareAndSet(due, nowMillis + sweepEveryMillis)) {
+			removeFullBuckets(now);
+		}
+	}
+
+	private void sweepOnDemand(Instant now) {
+		long nowMillis = now.toEpochMilli();
+		long due = nextDemandSweepMillis.get();
+		if (nowMillis >= due && nextDemandSweepMillis.compareAndSet(due, nowMillis + DEMAND_SWEEP_EVERY_MILLIS)) {
+			removeFullBuckets(now);
+		}
+	}
+
+	private void removeFullBuckets(Instant now) {
 		buckets.values().removeIf(bucket -> bucket.isFull(now));
-		nextSweep = now.plus(sweepEvery);
+	}
+
+	private long secondsUntilNextSweep(Instant now) {
+		long millis = nextSweepMillis.get() - now.toEpochMilli();
+		return Math.max(1, (long) Math.ceil(millis / 1000d));
 	}
 }

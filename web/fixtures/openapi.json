@@ -335,6 +335,14 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "groupFunds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -857,6 +865,10 @@
             "items": {
               "$ref": "#/components/schemas/ValidationFlagView"
             }
+          },
+          "foldedClasses": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
