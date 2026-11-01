@@ -63,6 +63,9 @@ saver persona). Of the top 200, **79 lose to expected inflation** over the 30 da
 - **Alerts.** Passwordless magic-link login; "tell me when a wallet goes above X% a year" by email.
 - **API keys.** A signed-in user creates up to 3 keys at `/claves-api/` and sends one as `X-Api-Key` to get its own
   rate limit and daily quota on the public read API ([`docs/api-keys.md`](docs/api-keys.md)).
+- **MCP and `llms.txt`.** A read-only MCP server (`POST /mcp`, stateless Streamable HTTP) lets an AI assistant ask
+  the same ranking, simulate one instrument, read its history and the monthly reports; the site serves `/llms.txt`
+  for crawlers and assistants. See [`docs/mcp.md`](docs/mcp.md).
 - **Honest data.** Each rate carries its source, its data date and a confidence level (official automatic,
   aggregator automatic, scraped from the entity's web page, curated by hand with a verified-at date). Stale data
   is shown flagged, never as current.

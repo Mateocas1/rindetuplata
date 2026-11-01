@@ -28,6 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<mcp-sdk.version>2.1.0</mcp-sdk.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -78,6 +79,17 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+		<!-- T6e (S6, L32 c): the official MCP Java SDK, stateless Streamable HTTP server and (in tests) its client. -->
+		<dependency>
+			<groupId>io.modelcontextprotocol.sdk</groupId>
+			<artifactId>mcp-core</artifactId>
+			<version>${mcp-sdk.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.modelcontextprotocol.sdk</groupId>
+			<artifactId>mcp-json-jackson3</artifactId>
+			<version>${mcp-sdk.version}</version>
 		</dependency>
 
 		<dependency>

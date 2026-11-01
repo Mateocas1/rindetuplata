@@ -62,7 +62,9 @@ public class SecurityConfiguration {
 						CorsFilter.class)
 				.addFilterAfter(new RolesRefreshFilter(accountRoles), SecurityContextHolderFilter.class)
 				.cors(cors -> cors.configurationSource(corsConfigurationSource))
-				.csrf(csrf -> csrf.spa().csrfTokenRepository(csrfTokenRepository))
+				.csrf(csrf -> csrf.spa().csrfTokenRepository(csrfTokenRepository)
+						// The MCP endpoint is stateless and cookie-free (T6e): no session means no CSRF to forge.
+						.ignoringRequestMatchers("/mcp"))
 				.securityContext(context -> context
 						.securityContextRepository(securityContextRepository)
 						.requireExplicitSave(true))
@@ -75,6 +77,7 @@ public class SecurityConfiguration {
 						.requestMatchers(HttpMethod.GET, "/api/v1/ranking", "/api/v1/simulations",
 								"/api/v1/instruments", "/api/v1/instruments/**", "/api/v1/entities", "/api/v1/entities/**",
 								"/api/v1/reports", "/api/v1/reports/**").permitAll()
+						.requestMatchers(HttpMethod.POST, "/mcp").permitAll()
 						.requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**")
 						.permitAll()
 						.requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
