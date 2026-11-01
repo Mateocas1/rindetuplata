@@ -1,0 +1,110 @@
+---
+/**
+ * The table of one monthly report (T6a): one row per option measured, in the order the API returns (best real return
+ * first). Static markup, no island. The verdict is written in words next to the arrow, so it never depends on colour
+ * alone (S10). Mirrors the ranking table's recipe: a sticky first column, mono caps heads and one hairline per row.
+ */
+import { formatInteger, formatPercent, formatSignedPercent } from '../../lib/format';
+import { kindLabel } from '../../lib/labels';
+import type { MonthlyReport } from '../../lib/reports';
+import { monthLabel } from '../../lib/reports';
+
+export interface Props {
+  report: MonthlyReport;
+}
+
+const { report } = Astro.props;
+const month = monthLabel(report.month);
+
+const headCell = 'border-b border-border bg-subtle-surface px-4 py-3 type-label';
+const identCell = 'grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3';
+const rowCell = (isLast: boolean) => `px-4 py-3 align-top ${isLast ? '' : 'border-b border-border'}`;
+---
+
+<div class="flex flex-col gap-2">
+  <p class="type-label md:hidden">Deslizá la tabla para ver todas las columnas.</p>
+  <div class="card overflow-hidden">
+    <div
+      class="relative overflow-x-auto focus-visible:-outline-offset-2"
+      role="region"
+      aria-label={`Cómo le fue a cada opción en ${month}`}
+      tabindex="0"
+    >
+      <table class="w-full min-w-[40rem] table-fixed border-separate border-spacing-0">
+        <colgroup>
+          <col class="w-[40%]" />
+          <col class="w-[18%]" />
+          <col class="w-[26%]" />
+          <col class="w-[16%]" />
+        </colgroup>
+        <caption class="sr-only">
+          {formatInteger(report.rows.length)} opciones medidas en {month}, ordenadas por su rendimiento real
+          contra la inflación del INDEC de ese mes.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" class:list={[headCell, 'sticky start-0 z-0 text-start']}>
+              <span class={identCell}>
+                <span>Nº</span>
+                <span>Opción</span>
+              </span>
+            </th>
+            <th scope="col" class:list={[headCell, 'text-end']}>Rindió en el mes</th>
+            <th scope="col" class:list={[headCell, 'text-start']}>Contra la inflación</th>
+            <th scope="col" class:list={[headCell, 'text-start']}>Datos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            report.rows.map((row, index) => {
+              const cell = rowCell(index === report.rows.length - 1);
+              const entity = row.entity !== null && row.entity !== row.name ? row.entity : null;
+              const arrow = row.real > 0 ? '▲' : row.real < 0 ? '▼' : '=';
+              const tone = row.real > 0 ? 'text-gain' : row.real < 0 ? 'text-loss' : 'text-muted';
+              return (
+                <tr class="group hover:bg-subtle-surface">
+                  <th
+                    scope="row"
+                    class:list={[
+                      cell,
+                      'sticky start-0 z-0 bg-surface-raised text-start font-normal group-hover:bg-subtle-surface',
+                    ]}
+                  >
+                    <span class={identCell}>
+                      <span class="type-index">{String(index + 1).padStart(2, '0')}</span>
+                      <span class="min-w-0">
+                        <span class="block type-body font-medium">{row.name}</span>
+                        <span class="mt-1 block type-data text-muted">
+                          {kindLabel(row.kind)}
+                          {entity === null ? '' : ` · ${entity}`}
+                          {row.foldedClasses > 0 && ` · +${formatInteger(row.foldedClasses)} ${row.foldedClasses === 1 ? 'clase' : 'clases'}`}
+                        </span>
+                      </span>
+                    </span>
+                  </th>
+                  <td class:list={[cell, 'text-end']}>
+                    <span class="block type-figure text-figure-row">{formatPercent(row.nominal)}</span>
+                  </td>
+                  <td class={cell}>
+                    <span class:list={['inline-flex items-baseline gap-1.5 whitespace-nowrap', tone]}>
+                      <span aria-hidden="true" class="type-data">{arrow}</span>
+                      <span class="type-data">{formatSignedPercent(row.real)}</span>
+                      <span class="type-data text-muted">real</span>
+                    </span>
+                    <span class="mt-1 block type-data">{row.beatInflation ? 'Le ganó' : 'No le ganó'}</span>
+                  </td>
+                  <td class:list={[cell, 'type-data text-muted']}>
+                    <span class="block">
+                      {formatInteger(row.coverage.days)} de {formatInteger(row.coverage.total)} días
+                    </span>
+                    <span class="block">{row.source.displayName}</span>
+                  </td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -56,7 +56,8 @@ class ApiRateLimitFilterTest {
 	@Test
 	void everyPublicReadPathIsLimitedAndNothingElseIs() throws Exception {
 		for (String path : new String[] { "/api/v1/ranking", "/api/v1/simulations", "/api/v1/instruments",
-				"/api/v1/instruments/7/history", "/api/v1/entities/banks", "/api/v1/entities/banks/banco-nacion" }) {
+				"/api/v1/instruments/7/history", "/api/v1/entities/banks", "/api/v1/entities/banks/banco-nacion",
+				"/api/v1/reports/monthly", "/api/v1/reports/monthly/2026-09" }) {
 			ApiRateLimitFilter filter = filter("");
 			call(filter, "GET", path, "1.1.1.1", null);
 			assertThat(call(filter, "GET", path, "1.1.1.1", null).getStatus()).as(path).isEqualTo(429);
