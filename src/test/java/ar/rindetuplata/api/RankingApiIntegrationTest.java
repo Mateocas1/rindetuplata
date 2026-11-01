@@ -37,6 +37,7 @@ abstract class RankingApiIntegrationTest extends ApiIntegrationTest {
 				decimal(clientTna), decimal(nonClientTna), terms, CAPTURE, FETCHED,
 				Confidence.AGGREGATOR_AUTOMATIC, List.of());
 		bankWriter.write(List.of(rate), CAPTURE);
+		recordIngestionRun();
 		return reader.instrument(InstrumentKind.PLAZO_FIJO_BANK, ArgentinaDatosPlazoFijoAdapter.SOURCE.id(), name)
 				.orElseThrow().id();
 	}
@@ -45,6 +46,7 @@ abstract class RankingApiIntegrationTest extends ApiIntegrationTest {
 		WalletRate rate = new WalletRate(UalaWalletAdapter.SOURCE, walletId, name, tiers, List.of(), CAPTURE, null,
 				FETCHED, Confidence.SCRAPED_ENTITY_WEB, List.of());
 		walletWriter.write(List.of(rate), CAPTURE);
+		recordIngestionRun();
 		return reader.instrument(InstrumentKind.WALLET, UalaWalletAdapter.SOURCE.id(), walletId).orElseThrow().id();
 	}
 
@@ -52,6 +54,7 @@ abstract class RankingApiIntegrationTest extends ApiIntegrationTest {
 		CryptoYield yield = new CryptoYield(ArgentinaDatosCryptoAdapter.SOURCE, platform, currency, decimal(apy),
 				CAPTURE, FETCHED, Confidence.AGGREGATOR_AUTOMATIC, List.of());
 		cryptoWriter.write(List.of(yield), CAPTURE);
+		recordIngestionRun();
 		return reader.instrument(InstrumentKind.CRYPTO_YIELD, ArgentinaDatosCryptoAdapter.SOURCE.id(),
 				platform + "|" + currency).orElseThrow().id();
 	}
@@ -61,6 +64,7 @@ abstract class RankingApiIntegrationTest extends ApiIntegrationTest {
 				MacroVariable.EXPECTED_INFLATION_12M, observationDate, decimal(value), FETCHED,
 				Confidence.OFFICIAL_AUTOMATIC, List.of());
 		macroWriter.write(List.of(observation), observationDate);
+		recordIngestionRun();
 	}
 
 	protected static BigDecimal decimal(String value) {

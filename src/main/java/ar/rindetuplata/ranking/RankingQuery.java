@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Input of the personalized ranking (S15, T5 design notes): the user's amount and days, the banks the user is a
@@ -51,6 +52,18 @@ public record RankingQuery(Money amount, int days, Set<Long> clientOf, Set<Ranke
 		if (limit < 1 || limit > MAX_LIMIT) {
 			throw new IllegalArgumentException("limit must be between 1 and " + MAX_LIMIT + ": " + limit);
 		}
+	}
+
+	/**
+	 * The query as one canonical string, for cache keys and entity tags: equal queries give equal text however the
+	 * request spelled them (amount scale, the order or repetition of kinds and clients). The amount is written in the
+	 * stripped scientific form of {@link BigDecimal#toString()}: its plain form can be a billion characters long.
+	 */
+	public String cacheKey() {
+		return "amount=" + amount.value().stripTrailingZeros() + ";days=" + days
+				+ ";clientOf=" + clientOf.stream().sorted().map(String::valueOf).collect(Collectors.joining(","))
+				+ ";kinds=" + kinds.stream().map(Enum::name).sorted().collect(Collectors.joining(","))
+				+ ";asOf=" + asOf + ";limit=" + limit + ";groupFunds=" + groupFunds;
 	}
 
 	public static RankingQuery defaults() {

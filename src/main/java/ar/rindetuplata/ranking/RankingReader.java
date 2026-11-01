@@ -7,6 +7,8 @@ import ar.rindetuplata.source.macro.BcraMonetariasClient;
 import ar.rindetuplata.source.macro.MacroVariable;
 import ar.rindetuplata.store.InstrumentKind;
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -43,6 +45,42 @@ class RankingReader {
 	record StoredInflation(BigDecimal value, LocalDate observationDate) {
 	}
 
+	/** The identity of one instrument row: what a targeted read needs to know before it reads the right table. */
+	record StoredInstrument(long id, InstrumentKind kind, String sourceId) {
+	}
+
+	/** A fund class that has at least one quote in the lookback window, without its quotes. */
+	record FundClass(long instrumentId, String displayName) {
+	}
+
+	private static final String RATE_COLUMNS = """
+			select i.id as instrument_id, i.source_id as source_id, i.display_name as display_name,
+			       i.entity_name as entity_name, s.capture_date as capture_date, s.data_date as data_date,
+			       s.rate as rate, s.client_rate as client_rate, s.minimum_amount as minimum_amount,
+			       s.details as details, s.confidence as confidence, s.verified_at as verified_at,
+			       s.flags as flags, s.invalid as invalid
+			from rate_snapshot s
+			join instrument i on i.id = s.instrument_id
+			""";
+
+	private static StoredRate storedRate(ResultSet rs, int rowNum) throws SQLException {
+		return new StoredRate(
+				rs.getLong("instrument_id"),
+				rs.getString("source_id"),
+				rs.getString("display_name"),
+				rs.getString("entity_name"),
+				rs.getObject("capture_date", LocalDate.class),
+				rs.getObject("data_date", LocalDate.class),
+				rs.getObject("rate", BigDecimal.class),
+				rs.getObject("client_rate", BigDecimal.class),
+				rs.getObject("minimum_amount", BigDecimal.class),
+				RankingJson.read(rs.getString("details")),
+				Confidence.valueOf(rs.getString("confidence")),
+				rs.getObject("verified_at", LocalDate.class),
+				RankingJson.flags(rs.getString("flags")),
+				rs.getBoolean("invalid"));
+	}
+
 	/** The latest snapshot of every instrument of one kind, per source, at or before {@code asOf}. */
 	List<StoredRate> latestRates(InstrumentKind kind, LocalDate asOf) {
 		List<Map.Entry<String, LocalDate>> dates = jdbc.sql("""
@@ -60,38 +98,45 @@ class RankingReader {
 				.list();
 		List<StoredRate> rates = new ArrayList<>();
 		for (Map.Entry<String, LocalDate> date : dates) {
-			rates.addAll(jdbc.sql("""
-					select i.id as instrument_id, i.source_id as source_id, i.display_name as display_name,
-					       i.entity_name as entity_name, s.capture_date as capture_date, s.data_date as data_date,
-					       s.rate as rate, s.client_rate as client_rate, s.minimum_amount as minimum_amount,
-					       s.details as details, s.confidence as confidence, s.verified_at as verified_at,
-					       s.flags as flags, s.invalid as invalid
-					from rate_snapshot s
-					join instrument i on i.id = s.instrument_id
+			rates.addAll(jdbc.sql(RATE_COLUMNS + """
 					where i.kind = :kind and i.source_id = :sourceId and s.capture_date = :captureDate
 					order by i.id
 					""")
 					.param("kind", kind.name())
 					.param("sourceId", date.getKey())
 					.param("captureDate", date.getValue())
-					.query((rs, rowNum) -> new StoredRate(
-							rs.getLong("instrument_id"),
-							rs.getString("source_id"),
-							rs.getString("display_name"),
-							rs.getString("entity_name"),
-							rs.getObject("capture_date", LocalDate.class),
-							rs.getObject("data_date", LocalDate.class),
-							rs.getObject("rate", BigDecimal.class),
-							rs.getObject("client_rate", BigDecimal.class),
-							rs.getObject("minimum_amount", BigDecimal.class),
-							RankingJson.read(rs.getString("details")),
-							Confidence.valueOf(rs.getString("confidence")),
-							rs.getObject("verified_at", LocalDate.class),
-							RankingJson.flags(rs.getString("flags")),
-							rs.getBoolean("invalid")))
+					.query(RankingReader::storedRate)
 					.list());
 		}
 		return rates;
+	}
+
+	/** The identity of one instrument, or empty when no instrument carries the id. */
+	Optional<StoredInstrument> instrument(long instrumentId) {
+		return jdbc.sql("select id, kind, source_id from instrument where id = :id")
+				.param("id", instrumentId)
+				.query((rs, rowNum) -> new StoredInstrument(rs.getLong("id"),
+						InstrumentKind.valueOf(rs.getString("kind")), rs.getString("source_id")))
+				.optional();
+	}
+
+	/**
+	 * The one snapshot {@link #latestRates} holds for this instrument: its row on the latest capture date of its kind
+	 * and source at or before {@code asOf}, or empty when the instrument is not in that day's response.
+	 */
+	Optional<StoredRate> latestRate(long instrumentId, InstrumentKind kind, LocalDate asOf) {
+		return jdbc.sql(RATE_COLUMNS + """
+				where i.id = :id and i.kind = :kind and s.capture_date = (
+				    select max(s2.capture_date)
+				    from rate_snapshot s2
+				    join instrument i2 on i2.id = s2.instrument_id
+				    where i2.kind = :kind and i2.source_id = i.source_id and s2.capture_date <= :asOf)
+				""")
+				.param("id", instrumentId)
+				.param("kind", kind.name())
+				.param("asOf", asOf)
+				.query(RankingReader::storedRate)
+				.optional();
 	}
 
 	/**
@@ -103,18 +148,56 @@ class RankingReader {
 	 * than the bound is absent, the same as one that was never ingested.
 	 */
 	Map<Long, List<StoredQuote>> fundSeries(LocalDate asOf) {
-		List<StoredQuote> quotes = jdbc.sql("""
+		Map<Long, List<StoredQuote>> byInstrument = new LinkedHashMap<>();
+		for (StoredQuote quote : fundQuotes(asOf, null)) {
+			byInstrument.computeIfAbsent(quote.instrumentId(), key -> new ArrayList<>()).add(quote);
+		}
+		return byInstrument;
+	}
+
+	/** The series {@link #fundSeries} holds for one class (newest first), empty when it has no quote in the window. */
+	List<StoredQuote> fundSeries(long instrumentId, LocalDate asOf) {
+		return fundQuotes(asOf, instrumentId);
+	}
+
+	/**
+	 * Every class {@link #fundSeries} would hold, by instrument id and without the quotes: a targeted read uses it to
+	 * tell which class a mapped wallet resolves to without reading the series of all of them.
+	 */
+	List<FundClass> fundClasses(LocalDate asOf) {
+		return jdbc.sql("""
+				select i.id as instrument_id, i.display_name as display_name
+				from instrument i
+				where i.kind = :kind
+				  and exists (select 1 from fund_quote f
+				              where f.instrument_id = i.id and f.quote_date between :from and :asOf)
+				order by i.id
+				""")
+				.param("kind", InstrumentKind.FUND_CLASS.name())
+				.param("from", asOf.minusDays(ValidationRules.FUND_QUOTE_LOOKBACK_DAYS))
+				.param("asOf", asOf)
+				.query((rs, rowNum) -> new FundClass(rs.getLong("instrument_id"), rs.getString("display_name")))
+				.list();
+	}
+
+	private List<StoredQuote> fundQuotes(LocalDate asOf, Long instrumentId) {
+		JdbcClient.StatementSpec statement = jdbc.sql("""
 				select i.id as instrument_id, i.source_id as source_id, i.display_name as display_name,
 				       i.entity_name as entity_name, f.quote_date as quote_date, f.vcp as vcp,
 				       f.confidence as confidence, f.flags as flags, f.invalid as invalid
 				from fund_quote f
 				join instrument i on i.id = f.instrument_id
 				where i.kind = :kind and f.quote_date between :from and :asOf
+				""" + (instrumentId == null ? "" : "and i.id = :id\n") + """
 				order by i.id, f.quote_date desc
 				""")
 				.param("kind", InstrumentKind.FUND_CLASS.name())
 				.param("from", asOf.minusDays(ValidationRules.FUND_QUOTE_LOOKBACK_DAYS))
-				.param("asOf", asOf)
+				.param("asOf", asOf);
+		if (instrumentId != null) {
+			statement = statement.param("id", instrumentId);
+		}
+		return statement
 				.query((rs, rowNum) -> new StoredQuote(
 						rs.getLong("instrument_id"),
 						rs.getString("source_id"),
@@ -126,11 +209,6 @@ class RankingReader {
 						RankingJson.flags(rs.getString("flags")),
 						rs.getBoolean("invalid")))
 				.list();
-		Map<Long, List<StoredQuote>> byInstrument = new LinkedHashMap<>();
-		for (StoredQuote quote : quotes) {
-			byInstrument.computeIfAbsent(quote.instrumentId(), key -> new ArrayList<>()).add(quote);
-		}
-		return byInstrument;
 	}
 
 	/** The latest BCRA REM expected 12-month inflation at or before {@code asOf} (S10). */
