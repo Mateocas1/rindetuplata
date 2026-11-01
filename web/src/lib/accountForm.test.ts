@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ALERT_TYPE_OPTIONS,
   alertRequest,
+  alertTypeLabel,
   buildWalletRequest,
   formatAmountInput,
   formatPercentInput,
@@ -11,6 +13,7 @@ import {
   parseAmountInput,
   parsePercentInput,
   percentToFraction,
+  rateDropInstruments,
   selectableInstruments,
   validateAlertForm,
   validateEmail,
@@ -97,40 +100,97 @@ describe('email validation', () => {
 });
 
 describe('alert form', () => {
+  const threshold = (fields: Partial<AlertFormState>): AlertFormState => ({
+    type: 'THRESHOLD',
+    kind: '',
+    instrumentId: '',
+    thresholdPercent: '',
+    ...fields,
+  });
+
   it('accepts an empty kind and instrument', () => {
-    expect(validateAlertForm({ kind: '', instrumentId: '', thresholdPercent: '25' })).toEqual({});
+    expect(validateAlertForm(threshold({ thresholdPercent: '25' }))).toEqual({});
   });
 
   it("requires a threshold in the API's percent range", () => {
-    expect(validateAlertForm({ kind: '', instrumentId: '', thresholdPercent: '' })).toHaveProperty(
-      'thresholdPercent',
-    );
-    expect(validateAlertForm({ kind: '', instrumentId: '', thresholdPercent: '0' })).toHaveProperty(
-      'thresholdPercent',
-    );
-    expect(validateAlertForm({ kind: '', instrumentId: '', thresholdPercent: '301' })).toHaveProperty(
-      'thresholdPercent',
-    );
+    expect(validateAlertForm(threshold({ thresholdPercent: '' }))).toHaveProperty('thresholdPercent');
+    expect(validateAlertForm(threshold({ thresholdPercent: '0' }))).toHaveProperty('thresholdPercent');
+    expect(validateAlertForm(threshold({ thresholdPercent: '301' }))).toHaveProperty('thresholdPercent');
   });
 
   it('rejects an instrument id that is not a number', () => {
     expect(
-      validateAlertForm({ kind: 'WALLET', instrumentId: 'abc', thresholdPercent: '20' }),
+      validateAlertForm(threshold({ kind: 'WALLET', instrumentId: 'abc', thresholdPercent: '20' })),
     ).toHaveProperty('instrumentId');
     expect(
-      validateAlertForm({ kind: 'WALLET', instrumentId: '12', thresholdPercent: '20' }),
+      validateAlertForm(threshold({ kind: 'WALLET', instrumentId: '12', thresholdPercent: '20' })),
     ).toEqual({});
   });
 
   it('builds the request the API documents: percent as a percent number', () => {
     expect(
-      alertRequest({ kind: 'WALLET', instrumentId: '12', thresholdPercent: '23,5' }),
-    ).toEqual({ kind: 'WALLET', instrumentId: 12, thresholdPercent: 23.5 });
-    expect(alertRequest({ kind: '', instrumentId: '', thresholdPercent: '20' })).toEqual({
+      alertRequest(threshold({ kind: 'WALLET', instrumentId: '12', thresholdPercent: '23,5' })),
+    ).toEqual({ type: 'THRESHOLD', kind: 'WALLET', instrumentId: 12, thresholdPercent: 23.5 });
+    expect(alertRequest(threshold({ thresholdPercent: '20' }))).toEqual({
+      type: 'THRESHOLD',
       kind: null,
       instrumentId: null,
       thresholdPercent: 20,
     });
+  });
+
+  it('asks nothing but an optional kind for "cambió la mejor opción" and the weekly digest', () => {
+    for (const type of ['BEST_CHANGED', 'WEEKLY_DIGEST'] as const) {
+      const form = threshold({ type, kind: 'FUND', instrumentId: 'abc', thresholdPercent: 'x' });
+      expect(validateAlertForm(form), `${type} ignores what the other types asked`).toEqual({});
+      expect(alertRequest(form)).toEqual({
+        type,
+        kind: 'FUND',
+        instrumentId: null,
+        thresholdPercent: null,
+      });
+      expect(alertRequest(threshold({ type }))).toEqual({
+        type,
+        kind: null,
+        instrumentId: null,
+        thresholdPercent: null,
+      });
+    }
+  });
+
+  it('needs a bank or wallet for "bajó la tasa" and sends nothing else', () => {
+    expect(validateAlertForm(threshold({ type: 'RATE_DROP' }))).toEqual({
+      instrumentId: 'Elegí el banco o la billetera que querés seguir.',
+    });
+    expect(validateAlertForm(threshold({ type: 'RATE_DROP', instrumentId: 'abc' }))).toHaveProperty(
+      'instrumentId',
+    );
+    const form = threshold({ type: 'RATE_DROP', kind: 'FUND', instrumentId: '12', thresholdPercent: '20' });
+    expect(validateAlertForm(form)).toEqual({});
+    expect(alertRequest(form)).toEqual({
+      type: 'RATE_DROP',
+      kind: null,
+      instrumentId: 12,
+      thresholdPercent: null,
+    });
+  });
+
+  it('refuses to build a request from an invalid form', () => {
+    expect(() => alertRequest(threshold({ type: 'RATE_DROP' }))).toThrow('alert form is invalid');
+  });
+
+  it('names the four types in Spanish and defaults an unknown one to its raw name', () => {
+    expect(ALERT_TYPE_OPTIONS.map((option) => option.value)).toEqual([
+      'THRESHOLD',
+      'BEST_CHANGED',
+      'RATE_DROP',
+      'WEEKLY_DIGEST',
+    ]);
+    expect(alertTypeLabel('THRESHOLD')).toBe('Superó una tasa');
+    expect(alertTypeLabel('BEST_CHANGED')).toBe('Cambió la mejor opción');
+    expect(alertTypeLabel('RATE_DROP')).toBe('Bajó una tasa');
+    expect(alertTypeLabel('WEEKLY_DIGEST')).toBe('Resumen semanal');
+    expect(alertTypeLabel('OTHER')).toBe('OTHER');
   });
 });
 
@@ -313,9 +373,44 @@ describe('instrument picker', () => {
   });
 });
 
+describe('options a "bajó la tasa" alert can follow', () => {
+  const option = (id: string, kind: string, invalid = false): InstrumentSummary => ({
+    id,
+    kind,
+    displayName: `Opción ${id}`,
+    entityName: null,
+    segment: null,
+    sourceId: 'test',
+    rate: 0.3,
+    basis: 'TNA',
+    clientRate: null,
+    captureDate: '2026-10-14',
+    dataDate: '2026-10-14',
+    confidence: 'AGGREGATOR_AUTOMATIC',
+    verifiedAt: null,
+    invalid,
+    flags: [],
+    quoteDate: null,
+    vcp: null,
+  });
+
+  it('keeps the valid plazos fijos of a bank and the wallets, nothing else', () => {
+    const all = [
+      option('1', 'PLAZO_FIJO_BANK'),
+      option('2', 'WALLET'),
+      option('3', 'FUND_CLASS'),
+      option('4', 'CRYPTO_YIELD'),
+      option('5', 'PLAZO_FIJO_OFFICIAL'),
+      option('6', 'WALLET', true),
+    ];
+
+    expect(rateDropInstruments(all).map((entry) => entry.id)).toEqual(['1', '2']);
+  });
+});
+
 describe('form state type', () => {
   it('is the transport shape of the alert form', () => {
-    const form: AlertFormState = { kind: '', instrumentId: '', thresholdPercent: '' };
+    const form: AlertFormState = { type: 'THRESHOLD', kind: '', instrumentId: '', thresholdPercent: '' };
     expect(form.thresholdPercent).toBe('');
   });
 });

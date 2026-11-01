@@ -8,6 +8,8 @@ import ar.rindetuplata.source.ValidationRules;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import org.junit.jupiter.api.Test;
 
 /** T5a ranking input defaults and validation (T5 design notes). */
@@ -61,6 +63,19 @@ class RankingQueryTest {
 				LocalDate.parse("2026-10-14"), 0)).isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> new RankingQuery(Money.ars("1000000"), 30, Set.of(), all(),
 				LocalDate.parse("2026-10-14"), 201)).isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void acceptsAsManyClientBanksAsTheCapAndRejectsOneMore() {
+		Set<Long> atCap = LongStream.rangeClosed(1, RankingQuery.MAX_CLIENT_OF).boxed().collect(Collectors.toSet());
+		Set<Long> overCap = LongStream.rangeClosed(1, RankingQuery.MAX_CLIENT_OF + 1L).boxed()
+				.collect(Collectors.toSet());
+
+		assertThat(new RankingQuery(Money.ars("1000000"), 30, atCap, all(), LocalDate.parse("2026-10-14"), 50)
+				.clientOf()).hasSize(RankingQuery.MAX_CLIENT_OF);
+		assertThatThrownBy(() -> new RankingQuery(Money.ars("1000000"), 30, overCap, all(),
+				LocalDate.parse("2026-10-14"), 50)).isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("clientOf");
 	}
 
 	private static Set<RankedKind> all() {

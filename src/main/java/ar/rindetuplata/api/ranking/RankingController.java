@@ -4,6 +4,7 @@ import ar.rindetuplata.ranking.PublicRanking;
 import ar.rindetuplata.ranking.RankedKind;
 import ar.rindetuplata.ranking.RankingQuery;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -57,6 +58,8 @@ public class RankingController {
 	ResponseEntity<RankingResponse> ranking(
 			@RequestParam(required = false) BigDecimal amount,
 			@RequestParam(required = false) Integer days,
+			@Parameter(description = "Instrument ids of the banks the user is a client of, to use their client rate. At most "
+					+ RankingQuery.MAX_CLIENT_OF + " values, counted as sent; more is a 400.")
 			@RequestParam(required = false) List<Long> clientOf,
 			@RequestParam(required = false) List<RankedKind> kind,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate asOf,

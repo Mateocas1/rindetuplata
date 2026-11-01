@@ -92,6 +92,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/account/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List my API keys
+         * @description The active API keys of the signed-in user, oldest first: id, label, display prefix, plan and creation date. The key itself is never returned again.
+         */
+        get: operations["list_1"];
+        put?: never;
+        /**
+         * Create an API key
+         * @description Creates a key for the signed-in user and returns it once, in the key field: only its SHA-256 and a display prefix are stored, so it cannot be shown again. A user may hold at most 3 active keys (a 400 beyond that). Send the key in the X-Api-Key header of the public read API to get the FREE plan limits (a bucket per key and a daily quota); a key never authenticates an account endpoint. The body is optional: {"name": label of at most 60 characters}.
+         */
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/simulations": {
         parameters: {
             query?: never;
@@ -195,7 +219,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -231,7 +255,7 @@ export interface paths {
          * Banks with today's plazo fijo rates
          * @description Every bank that has a valid plazo fijo snapshot at or before today, sorted by slug, with its latest non-client and client TNA (fractions, scale 6) and the capture and data dates of that snapshot. A rate is null when the bank does not publish it.
          */
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -287,7 +311,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -323,6 +347,26 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/api-keys/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke an API key
+         * @description Revokes one of the caller's active keys; it stops working on the next request. An unknown id, a key of somebody else and an already revoked key are the same 404.
+         */
+        delete: operations["revoke"];
         options?: never;
         head?: never;
         patch?: never;
@@ -384,6 +428,7 @@ export interface components {
             token?: string;
         };
         AlertRequest: {
+            type?: string;
             kind?: string;
             /** Format: int64 */
             instrumentId?: number;
@@ -392,6 +437,7 @@ export interface components {
         AlertResponse: {
             /** Format: int64 */
             id?: number;
+            type?: string;
             kind?: string;
             /** Format: int64 */
             instrumentId?: number;
@@ -399,6 +445,19 @@ export interface components {
             active?: boolean;
             /** Format: date-time */
             createdAt?: string;
+        };
+        CreateApiKeyRequest: {
+            name?: string;
+        };
+        CreatedApiKeyResponse: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            prefix?: string;
+            plan?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            key?: string;
         };
         /** @description The dollar MEP break-even of the instrument over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored. */
         BreakEvenMepView: {
@@ -803,6 +862,15 @@ export interface components {
             number?: boolean;
             embeddedValue?: boolean;
         };
+        ApiKeyResponse: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            prefix?: string;
+            plan?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -955,6 +1023,50 @@ export interface operations {
             };
         };
     };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiKeyResponse"][];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateApiKeyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CreatedApiKeyResponse"];
+                };
+            };
+        };
+    };
     simulate: {
         parameters: {
             query: {
@@ -1075,6 +1187,7 @@ export interface operations {
             query?: {
                 amount?: number;
                 days?: number;
+                /** @description Instrument ids of the banks the user is a client of, to use their client rate. At most 100 values, counted as sent; more is a 400. */
                 clientOf?: number[];
                 kind?: ("PLAZO_FIJO" | "WALLET" | "FUND" | "CRYPTO")[];
                 asOf?: string;
@@ -1138,7 +1251,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: {
                 kind?: "PLAZO_FIJO_OFFICIAL" | "PLAZO_FIJO_BANK" | "FUND_CLASS" | "CRYPTO_YIELD" | "WALLET";
@@ -1185,7 +1298,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -1256,7 +1369,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -1299,6 +1412,26 @@ export interface operations {
         };
     };
     delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revoke: {
         parameters: {
             query?: never;
             header?: never;

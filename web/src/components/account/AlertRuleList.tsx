@@ -5,7 +5,8 @@
  * table reads: the rule is the row header in `type-body`, its instrument in the
  * quiet mono `type-data` line, and the threshold is the figure the reader came
  * for (mono `type-data` at the row figure step, semibold) under its mono caps
- * `type-label` head. The rows stay a `ul`/`li` list — a table would drop the
+ * `type-label` head. A rule of another type (T6c) is named by what it tells the
+ * reader, shows the kind or option it watches, and says when it tells them. The rows stay a `ul`/`li` list — a table would drop the
  * `listitem` role an end-to-end walk of this page relies on — while they copy
  * the ranking table's row treatment: dividers, muted labels, tabular figures.
  *
@@ -15,7 +16,7 @@
  */
 import { useEffect, useRef } from 'react';
 import type { AlertRule, InstrumentSummary } from '../../lib/account';
-import { instrumentLabelById, percentToFraction } from '../../lib/accountForm';
+import { alertTypeLabel, instrumentLabelById, percentToFraction } from '../../lib/accountForm';
 import { formatPercent } from '../../lib/format';
 import { kindLabel } from '../../lib/labels';
 import { buttonSecondaryClass, cardClass } from './ui';
@@ -47,6 +48,38 @@ function ruleInstrumentLabel(rule: AlertRule, instruments: InstrumentSummary[]):
   return instrumentLabelById(instruments, rule.instrumentId) ?? `La opción #${rule.instrumentId}`;
 }
 
+/** A threshold rule is named by its kind, as it always was; every other type by what it tells the reader. */
+function ruleTitle(rule: AlertRule): string {
+  return rule.type === 'THRESHOLD' ? ruleKindLabel(rule) : alertTypeLabel(rule.type);
+}
+
+/** What the rule watches: its option (a threshold or "bajó una tasa" rule) or the kind it covers. */
+function ruleTarget(rule: AlertRule, instruments: InstrumentSummary[]): string {
+  return rule.type === 'THRESHOLD' || rule.type === 'RATE_DROP'
+    ? ruleInstrumentLabel(rule, instruments)
+    : ruleKindLabel(rule);
+}
+
+/** The right-hand fact of a row: the rate a threshold rule waits for, or when the other types tell the reader. */
+function ruleFigure(rule: AlertRule): { head: string; value: string; figure: boolean } {
+  switch (rule.type) {
+    case 'THRESHOLD':
+      return {
+        head: 'Avisa si la tasa supera',
+        value: rule.thresholdPercent === null ? '—' : formatPercent(percentToFraction(rule.thresholdPercent)),
+        figure: true,
+      };
+    case 'BEST_CHANGED':
+      return { head: 'Te avisamos', value: 'Si cambia la mejor', figure: false };
+    case 'RATE_DROP':
+      return { head: 'Te avisamos', value: 'Si baja su tasa', figure: false };
+    case 'WEEKLY_DIGEST':
+      return { head: 'Te avisamos', value: 'Cada semana', figure: false };
+    default:
+      return { head: 'Te avisamos', value: '—', figure: false };
+  }
+}
+
 export default function AlertRuleList({
   rules,
   instruments,
@@ -68,8 +101,9 @@ export default function AlertRuleList({
       <div className={`${cardClass} flex flex-col gap-2`}>
         <p className="type-body font-medium">Todavía no tenés alertas</p>
         <p className="type-body text-muted">
-          Una alerta te avisa por email cuando una opción supera la tasa que le pongas. Armá la
-          primera con el formulario de arriba.
+          Una alerta te avisa por email cuando una opción supera la tasa que le pongas, cuando cambia
+          la mejor opción o cuando baja una tasa, o te manda un resumen cada semana. Armá la primera
+          con el formulario de arriba.
         </p>
       </div>
     );
@@ -79,8 +113,10 @@ export default function AlertRuleList({
     <div className="card overflow-hidden">
       <ul className="flex flex-col">
         {rules.map((rule) => {
-          const instrument = ruleInstrumentLabel(rule, instruments);
-          const description = `Eliminar la alerta de ${ruleKindLabel(rule)} sobre ${instrument}`;
+          const title = ruleTitle(rule);
+          const target = ruleTarget(rule, instruments);
+          const figure = ruleFigure(rule);
+          const description = `Eliminar la alerta de ${title} sobre ${target}`;
           const confirming = confirmingId === rule.id;
           return (
             <li
@@ -90,17 +126,17 @@ export default function AlertRuleList({
               }`}
             >
               <div className="flex min-w-0 flex-col gap-1">
-                <p className="type-body font-medium">{ruleKindLabel(rule)}</p>
-                <p className="type-data text-muted">{instrument}</p>
+                <p className="type-body font-medium">{title}</p>
+                <p className="type-data text-muted">{target}</p>
                 {rule.active === false && (
                   <p className="type-data text-warning">Pausada: no envía avisos.</p>
                 )}
               </div>
 
               <div className={ROW_FIGURE}>
-                <p className="type-label">Avisa si la tasa supera</p>
-                <p className="type-data text-figure-row font-semibold">
-                  {formatPercent(percentToFraction(rule.thresholdPercent))}
+                <p className="type-label">{figure.head}</p>
+                <p className={`type-data font-semibold ${figure.figure ? 'text-figure-row' : ''}`}>
+                  {figure.value}
                 </p>
               </div>
 

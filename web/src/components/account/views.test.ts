@@ -24,6 +24,7 @@ import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { AlertRule, WalletRate } from '../../lib/account';
+import type { AlertFormState } from '../../lib/accountForm';
 import AlertCreateForm from './AlertCreateForm';
 import AlertRuleList from './AlertRuleList';
 import LoginPanel from './LoginPanel';
@@ -72,6 +73,7 @@ const PROBLEM = { status: 500, message: 'boom' };
 
 const ALERT: AlertRule = {
   id: 7,
+  type: 'THRESHOLD',
   kind: 'WALLET',
   instrumentId: null,
   thresholdPercent: 25,
@@ -92,6 +94,23 @@ const RATE: WalletRate = {
 };
 
 const noop = (): void => undefined;
+
+const EMPTY_FORM: AlertFormState = { type: 'THRESHOLD', kind: '', instrumentId: '', thresholdPercent: '' };
+
+function createForm(props: Partial<Parameters<typeof AlertCreateForm>[0]> = {}): string {
+  return renderToStaticMarkup(
+    h(AlertCreateForm, {
+      form: EMPTY_FORM,
+      errors: {},
+      instruments: [],
+      optionsFailed: false,
+      creating: false,
+      onChange: noop,
+      onSubmit: noop,
+      ...props,
+    }),
+  );
+}
 
 function alertsList(props: Partial<Parameters<typeof AlertRuleList>[0]> = {}): string {
   return renderToStaticMarkup(
@@ -171,7 +190,7 @@ describe('a view has one primary action', () => {
   it('keeps the alerts view down to the create form primary', () => {
     const form = renderToStaticMarkup(
       h(AlertCreateForm, {
-        form: { kind: '', instrumentId: '', thresholdPercent: '' },
+        form: EMPTY_FORM,
         errors: {},
         instruments: [],
         optionsFailed: false,
@@ -247,6 +266,83 @@ describe('the wallet tier table', () => {
   });
 });
 
+describe('the alert types (T6c, L32 a)', () => {
+  it('opens on the threshold rule with the fields it always had', () => {
+    const html = createForm();
+
+    expect(html).toContain('>Tipo de alerta</label>');
+    expect(html).toContain('>Tipo de opción</label>');
+    expect(html).toContain('>Avisame si supera esta tasa</label>');
+    expect(html).toContain('<option value="THRESHOLD" selected="">Superó una tasa</option>');
+    for (const label of ['Superó una tasa', 'Cambió la mejor opción', 'Bajó una tasa', 'Resumen semanal']) {
+      expect(html, `the selector offers ${label}`).toContain(`>${label}</option>`);
+    }
+  });
+
+  it('asks only for a kind when the best option changes or for the weekly digest', () => {
+    for (const type of ['BEST_CHANGED', 'WEEKLY_DIGEST'] as const) {
+      const html = createForm({ form: { ...EMPTY_FORM, type } });
+
+      expect(html, type).toContain('>Tipo de opción</label>');
+      expect(html, type).not.toContain('Avisame si supera esta tasa');
+      expect(html, type).not.toContain('Buscar por nombre, banco o fondo');
+      expect(countClass(html, buttonPrimaryClass), type).toBe(1);
+    }
+  });
+
+  it('asks for the bank or wallet to follow, and no kind or threshold, when a rate drops', () => {
+    const html = createForm({ form: { ...EMPTY_FORM, type: 'RATE_DROP' } });
+
+    expect(html).toContain('Banco o billetera a seguir');
+    expect(html).toContain('Buscar por nombre, banco o fondo');
+    expect(html).not.toContain('>Tipo de opción</label>');
+    expect(html).not.toContain('Avisame si supera esta tasa');
+  });
+
+  it('shows the error of a missing bank or wallet beside its field', () => {
+    const html = createForm({
+      form: { ...EMPTY_FORM, type: 'RATE_DROP' },
+      errors: { instrumentId: 'Elegí el banco o la billetera que querés seguir.' },
+    });
+
+    expect(html).toContain('Elegí el banco o la billetera que querés seguir.');
+  });
+
+  it('lists a rule of each type under its own name and a delete button that says which', () => {
+    const rule = (fields: Partial<AlertRule>): AlertRule => ({ ...ALERT, ...fields });
+
+    const best = alertsList({
+      rules: [rule({ id: 8, type: 'BEST_CHANGED', kind: null, thresholdPercent: null })],
+    });
+    expect(best).toContain('Cambió la mejor opción');
+    expect(best).toContain('Si cambia la mejor');
+    expect(best).toContain('Eliminar la alerta de Cambió la mejor opción sobre Cualquier tipo');
+    expect(best).not.toContain('NaN');
+
+    const digest = alertsList({
+      rules: [rule({ id: 9, type: 'WEEKLY_DIGEST', kind: 'FUND', thresholdPercent: null })],
+    });
+    expect(digest).toContain('Resumen semanal');
+    expect(digest).toContain('Cada semana');
+    expect(digest).toContain('Eliminar la alerta de Resumen semanal sobre Fondo');
+
+    const drop = alertsList({
+      rules: [rule({ id: 10, type: 'RATE_DROP', kind: 'WALLET', instrumentId: 44, thresholdPercent: null })],
+    });
+    expect(drop).toContain('Bajó una tasa');
+    expect(drop).toContain('Si baja su tasa');
+    expect(drop).toContain('Eliminar la alerta de Bajó una tasa sobre La opción #44');
+  });
+
+  it('lists a threshold rule exactly as before', () => {
+    const html = alertsList();
+
+    expect(html).toContain('Avisa si la tasa supera');
+    expect(html).toContain('25,00%');
+    expect(html).toContain('Eliminar la alerta de Billetera sobre Cualquier opción');
+  });
+});
+
 describe('account text stays on the seven type roles', () => {
   it('keeps no T12 text step in the account sources or pages', () => {
     const legacy = /\btext-(caption|body-sm|h1|h2|h3)\b/;
@@ -260,7 +356,7 @@ describe('account text stays on the seven type roles', () => {
   it('renders a field label with the mono caps label role', () => {
     const html = renderToStaticMarkup(
       h(AlertCreateForm, {
-        form: { kind: '', instrumentId: '', thresholdPercent: '' },
+        form: EMPTY_FORM,
         errors: {},
         instruments: [],
         optionsFailed: false,

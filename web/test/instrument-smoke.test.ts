@@ -383,7 +383,7 @@ describe('sitemap and robots', () => {
 
   it('excludes the account paths that carry noindex (T7d)', () => {
     const locations = sitemapLocations();
-    for (const excluded of ['/ingresar', '/alertas', '/admin']) {
+    for (const excluded of ['/ingresar', '/alertas', '/admin', '/claves-api']) {
       expect(
         locations.some((url) => url.includes(excluded)),
         `${excluded} must stay out of the sitemap`,
