@@ -29,6 +29,7 @@ class FciBackedWalletCatalogTest {
         assertThat(catalog.mappings()).extracting(FciBackedWalletMapping::walletId).containsExactly("mercado-pago");
         assertThat(catalog.mappings().get(0).name()).isEqualTo("Mercado Pago");
         assertThat(catalog.mappings().get(0).fundClass()).isEqualTo("Mercado Fondo - Clase A");
+        assertThat(catalog.mappings().get(0).aliases()).isEmpty();
     }
 
     @Test
@@ -61,6 +62,32 @@ class FciBackedWalletCatalogTest {
             assertThat(f.code()).isEqualTo(FlagCode.FUND_CLASS_NOT_FOUND);
             assertThat(f.severity()).isEqualTo(Severity.INVALID);
         });
+    }
+
+    @Test
+    void theClassKeyIgnoresCaseAccentsAndWhitespace() {
+        // The source has no class id (L7), so the key is the normalized name.
+        String json = "{\"wallets\":[{\"id\":\"x\",\"name\":\"X\",\"fund\":\"  MERCADO   FONDO - clase a \"}]}";
+
+        FciBackedWallet wallet = FciBackedWalletCatalog.fromJson(json.getBytes(StandardCharsets.UTF_8)).resolve(quotes).get(0);
+
+        assertThat(wallet.quote()).isNotNull();
+        assertThat(wallet.quote().name()).isEqualTo("Mercado Fondo - Clase A");
+        assertThat(wallet.flags()).isEmpty();
+    }
+
+    @Test
+    void anAliasResolvesTheClassWhenThePrimaryNameIsGone() {
+        String json = "{\"wallets\":[{\"id\":\"x\",\"name\":\"X\",\"fund\":\"Mercado Fondo Renombrado - Clase A\","
+                + "\"aliases\":[\"mércado fondo - CLASE A\"]}]}";
+
+        FciBackedWalletMapping mapping = FciBackedWalletCatalog.fromJson(json.getBytes(StandardCharsets.UTF_8)).mappings().get(0);
+        FciBackedWallet wallet = FciBackedWalletCatalog.fromJson(json.getBytes(StandardCharsets.UTF_8)).resolve(quotes).get(0);
+
+        assertThat(mapping.fundClass()).isEqualTo("Mercado Fondo Renombrado - Clase A");
+        assertThat(mapping.aliases()).containsExactly("mércado fondo - CLASE A");
+        assertThat(wallet.quote()).isNotNull();
+        assertThat(wallet.quote().name()).isEqualTo("Mercado Fondo - Clase A");
     }
 
     @Test

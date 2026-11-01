@@ -15,7 +15,8 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * Which wallets are backed by which fund class (S12), from the classpath mapping {@code fci-backed-wallets.json}.
- * A class is mapped only once it is confirmed in the fund response.
+ * A class is mapped only once it is confirmed in the fund response; it is matched by {@link FundClassKey}, under its
+ * primary name or any of the optional {@code aliases}.
  */
 public class FciBackedWalletCatalog {
 
@@ -46,7 +47,12 @@ public class FciBackedWalletCatalog {
             if (id == null || name == null || fund == null) {
                 throw new SourceException(SOURCE, "each wallet needs id, name and fund", null);
             }
-            mappings.add(new FciBackedWalletMapping(id, name, fund));
+            List<String> aliases = new ArrayList<>();
+            JsonNode aliasNodes = wallet.get("aliases");
+            if (aliasNodes != null && aliasNodes.isArray()) {
+                aliasNodes.forEach(alias -> aliases.add(alias.asString()));
+            }
+            mappings.add(new FciBackedWalletMapping(id, name, fund, aliases));
         }
         return new FciBackedWalletCatalog(mappings);
     }
@@ -59,7 +65,7 @@ public class FciBackedWalletCatalog {
     public List<FciBackedWallet> resolve(List<FundQuote> quotes) {
         List<FciBackedWallet> wallets = new ArrayList<>();
         for (FciBackedWalletMapping mapping : mappings) {
-            FundQuote quote = quotes.stream().filter(q -> mapping.fundClass().equals(q.name())).findFirst().orElse(null);
+            FundQuote quote = quotes.stream().filter(q -> mapping.matches(q.name())).findFirst().orElse(null);
             List<ValidationFlag> flags = quote != null ? quote.flags()
                     : List.of(new ValidationFlag(FlagCode.FUND_CLASS_NOT_FOUND, Severity.INVALID,
                             "Fund class not found: " + mapping.fundClass()));

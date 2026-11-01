@@ -2,6 +2,7 @@ package ar.rindetuplata.ranking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.Assertions.tuple;
 
 import ar.rindetuplata.domain.Ineligible;
@@ -23,6 +24,7 @@ import ar.rindetuplata.source.plazofijo.ArgentinaDatosPlazoFijoAdapter;
 import ar.rindetuplata.source.plazofijo.BankPlazoFijoRate;
 import ar.rindetuplata.source.plazofijo.TermRate;
 import ar.rindetuplata.source.wallet.CuratedWalletRateAdapter;
+import ar.rindetuplata.source.wallet.FciBackedWalletCatalog;
 import ar.rindetuplata.source.wallet.UalaWalletAdapter;
 import ar.rindetuplata.source.wallet.WalletCondition;
 import ar.rindetuplata.source.wallet.WalletRate;
@@ -37,6 +39,7 @@ import ar.rindetuplata.store.StoreTestConfiguration;
 import ar.rindetuplata.store.WalletRateWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -61,6 +64,7 @@ class RankingServiceTest {
 
 	static final Instant FETCHED = Instant.parse("2026-10-14T19:06:23Z");
 	static final LocalDate ASOF = LocalDate.parse("2026-10-14");
+	static final BigDecimal TOLERANCE = new BigDecimal("1E-9");
 
 	@Autowired
 	BankPlazoFijoWriter bankWriter;
@@ -79,6 +83,9 @@ class RankingServiceTest {
 
 	@Autowired
 	RankingService service;
+
+	@Autowired
+	RankingReader rankingReader;
 
 	@Autowired
 	StoreReader reader;
@@ -304,11 +311,17 @@ class RankingServiceTest {
 		assertThat(result.totals()).isEqualTo(new RankingTotals(0, 0, 1));
 	}
 
+	// T2b: the yield is the trailing 7-day one, not the two latest quotes (one day of vcp change, noisy).
 	@Test
-	void fundClassUsesTheYieldOfItsTwoLatestQuotes() {
-		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-08"), "900");
-		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-13"), "1000");
-		seedFund("Fondo Test - Clase A", ASOF, "1000.5");
+	void fundClassUsesTheYieldOfTheQuoteSevenDaysBeforeTheLatest() {
+		// Daily quotes 10-05..10-14. The base is 10-07 (exactly 7 days before 10-14), vcp 1000; the latest is 1001.4.
+		// n = 7, daily = (1001.4 / 1000)^(1/7) - 1 = 0.000199880103896..., TNA = daily * 365 = 0.0729562379220...
+		// Neighbours are deliberately off: the 2-latest-quotes rule (1001.3 -> 1001.4) would give about 3.6% TNA, and
+		// the 10-06 quote (8 days back, 995) would give about 29% TNA.
+		String[] vcps = {"990", "995", "1000", "1000.2", "1000.4", "1000.7", "1001", "1001.1", "1001.3", "1001.4"};
+		for (int i = 0; i < vcps.length; i++) {
+			seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-05").plusDays(i), vcps[i]);
+		}
 
 		RankingResult result = service.rank(query(RankedKind.FUND));
 
@@ -323,11 +336,158 @@ class RankingServiceTest {
 		assertThat(entry.captureDate()).isEqualTo(ASOF);
 		assertThat(entry.dataDate()).isEqualTo(ASOF);
 		assertThat(entry.rateUsed().kind()).isEqualTo(RateKind.FUND_TNA_EQUIVALENT);
-		assertThat(entry.rateUsed().fraction()).isEqualByComparingTo("0.1825");
-		assertThat(entry.finalAmount().presented()).isEqualByComparingTo("1015109.26");
-		assertThat(entry.earned().presented()).isEqualByComparingTo("15109.26");
-		assertThat(entry.nominalReturn().setScale(12, RoundingMode.HALF_EVEN))
-				.isEqualByComparingTo("0.015109259217");
+		assertThat(entry.rateUsed().fraction()).isCloseTo(new BigDecimal("0.0729562379"), within(TOLERANCE));
+		assertThat(entry.warnings()).isEmpty();
+		assertThat(result.totals()).isEqualTo(new RankingTotals(1, 0, 0));
+	}
+
+	@Test
+	void fundClassWithoutAQuoteExactlySevenDaysBackUsesTheNewestOlderOne() {
+		// Latest 10-14 = 1001.2; nothing on 10-07 (a weekend gap), so the base is the newest quote older than 7 days:
+		// 10-06 = 1000 (8 days). daily = (1001.2 / 1000)^(1/8) - 1, TNA = daily * 365 = 0.0547212777892...
+		// The 10-08 quote (6 days back, 1000.9) must not be used even though it is newer.
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-05"), "999");
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-06"), "1000");
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-08"), "1000.9");
+		seedFund("Fondo Test - Clase A", ASOF, "1001.2");
+
+		RankingResult result = service.rank(query(RankedKind.FUND));
+
+		assertThat(result.ranked()).hasSize(1);
+		assertThat(result.ranked().get(0).rateUsed().fraction())
+				.isCloseTo(new BigDecimal("0.0547212778"), within(TOLERANCE));
+		assertThat(result.ranked().get(0).warnings()).isEmpty();
+	}
+
+	@Test
+	void fundClassWithLessThanSevenDaysOfHistoryUsesItsOldestQuoteAndWarns() {
+		// Quotes 10-12 = 1000, 10-13 = 1000.1, 10-14 = 1000.4: nothing is 7 days old, so the oldest (10-12) is the
+		// base, n = 2: daily = (1000.4 / 1000)^(1/2) - 1 = 0.000199960..., TNA = 0.0729927014596...
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-12"), "1000");
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-13"), "1000.1");
+		seedFund("Fondo Test - Clase A", ASOF, "1000.4");
+
+		RankingResult result = service.rank(query(RankedKind.FUND));
+
+		assertThat(result.ranked()).hasSize(1);
+		RankedEntry entry = result.ranked().get(0);
+		assertThat(entry.rateUsed().fraction()).isCloseTo(new BigDecimal("0.0729927015"), within(TOLERANCE));
+		assertThat(entry.warnings()).extracting(ValidationFlag::code, ValidationFlag::severity)
+				.containsExactly(tuple(FlagCode.SHORT_YIELD_WINDOW, Severity.WARNING));
+	}
+
+	@Test
+	void invalidQuotesAreSkippedAsLatestAndAsBase() {
+		// Valid: 10-05 = 1000, 10-12 = 1001.5 and 10-13 = 1001.6. Invalid: 10-14 (the newest, absurd vcp 9999) and
+		// 10-06 (exactly 7 days before 10-13, vcp 3000). The latest valid quote is 10-13; the base skips the invalid
+		// 10-06 and takes 10-05 (8 days): daily = (1001.6 / 1000)^(1/8) - 1, TNA = daily * 365 = 0.0729489510413...
+		ValidationFlag invalid = new ValidationFlag(FlagCode.INVALID_QUOTE, Severity.INVALID, "vcp is not positive");
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-05"), "1000", List.of());
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-06"), "3000", List.of(invalid));
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-12"), "1001.5", List.of());
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-13"), "1001.6", List.of());
+		seedFund("Fondo Test - Clase A", ASOF, "9999", List.of(invalid));
+
+		RankingResult result = service.rank(query(RankedKind.FUND));
+
+		assertThat(result.ranked()).hasSize(1);
+		RankedEntry entry = result.ranked().get(0);
+		assertThat(entry.captureDate()).isEqualTo(LocalDate.parse("2026-10-13"));
+		assertThat(entry.rateUsed().fraction()).isCloseTo(new BigDecimal("0.0729489510"), within(TOLERANCE));
+		assertThat(entry.warnings()).isEmpty();
+	}
+
+	@Test
+	void fundSeriesIgnoresQuotesOlderThanTheLookbackBound() {
+		// A 60-day-old quote with an absurd vcp (1) must not become the oldest-available base: the lookback is
+		// FUND_STALE_DAYS + 7 + 7 = 21 days. The base is 10-12 = 1000 (2 days): TNA 0.0729927015, with the short flag.
+		seedFund("Fondo Test - Clase A", ASOF.minusDays(60), "1");
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-12"), "1000");
+		seedFund("Fondo Test - Clase A", ASOF, "1000.4");
+
+		RankingResult result = service.rank(query(RankedKind.FUND));
+
+		assertThat(result.ranked()).hasSize(1);
+		assertThat(result.ranked().get(0).rateUsed().fraction())
+				.isCloseTo(new BigDecimal("0.0729927015"), within(TOLERANCE));
+		assertThat(result.ranked().get(0).warnings()).extracting(ValidationFlag::code)
+				.containsExactly(FlagCode.SHORT_YIELD_WINDOW);
+		assertThat(rankingReader.fundSeries(ASOF).values()).singleElement()
+				.satisfies(quotes -> assertThat(quotes).extracting(RankingReader.StoredQuote::quoteDate)
+						.containsExactly(ASOF, LocalDate.parse("2026-10-12")));
+		assertThat(rankingReader.fundSeries(ASOF.minusDays(21)).values()).isEmpty();
+	}
+
+	@Test
+	void staleNegativeAndInsufficientClassesKeepTheirReasons() {
+		// STALE: latest 10-06 is 8 days before asOf. NEGATIVE_RETURN: 7-day window 1000 -> 999. INSUFFICIENT_HISTORY:
+		// one valid quote.
+		seedFund("Fondo Viejo - Clase A", LocalDate.parse("2026-09-29"), "1000");
+		seedFund("Fondo Viejo - Clase A", LocalDate.parse("2026-10-06"), "1001");
+		seedFund("Fondo Cayendo - Clase A", LocalDate.parse("2026-10-07"), "1000");
+		seedFund("Fondo Cayendo - Clase A", ASOF, "999");
+		seedFund("Fondo Nuevo - Clase A", ASOF, "1000");
+
+		RankingResult result = service.rank(query(RankedKind.FUND));
+
+		assertThat(result.ranked()).isEmpty();
+		assertThat(result.excluded()).extracting(ExcludedEntry::name, ExcludedEntry::reason).containsExactlyInAnyOrder(
+				tuple("Fondo Viejo - Clase A", ExcludedReason.STALE),
+				tuple("Fondo Cayendo - Clase A", ExcludedReason.NEGATIVE_RETURN),
+				tuple("Fondo Nuevo - Clase A", ExcludedReason.INSUFFICIENT_HISTORY));
+	}
+
+	// T2d: the wallet's fund class is matched by a normalized key (case, accents, whitespace), plus aliases.
+	@Test
+	void fciBackedWalletMatchesItsClassIgnoringCaseAndWhitespace() {
+		seedFund("MERCADO  FONDO - clase a", LocalDate.parse("2026-10-13"), "1000");
+		seedFund("MERCADO  FONDO - clase a", ASOF, "1000.5");
+
+		RankingResult result = service.rank(query(RankedKind.WALLET));
+
+		assertThat(result.ranked()).extracting(RankedEntry::kind, RankedEntry::name)
+				.containsExactly(tuple(RankedKind.WALLET, "Mercado Pago"));
+		assertThat(result.excluded()).isEmpty();
+	}
+
+	@Test
+	void fciBackedWalletMatchesAnAliasOfItsClass() {
+		RankingService aliased = new RankingService(rankingReader, FciBackedWalletCatalog.fromJson(("""
+				{"wallets":[{"id":"mercado-pago","name":"Mercado Pago","fund":"Mercado Fondo - Clase A",
+				"aliases":["Mercado Fondo Ahorro - Clase Única"]}]}""").getBytes(StandardCharsets.UTF_8)));
+		seedFund("MERCADO FONDO AHORRO - clase única", LocalDate.parse("2026-10-13"), "1000");
+		seedFund("MERCADO FONDO AHORRO - clase única", ASOF, "1000.5");
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-13"), "1000");
+		seedFund("Fondo Test - Clase A", ASOF, "1000.4");
+
+		RankingResult result = aliased.rank(query(RankedKind.WALLET, RankedKind.FUND));
+
+		assertThat(result.ranked()).extracting(RankedEntry::kind, RankedEntry::name).containsExactly(
+				tuple(RankedKind.WALLET, "Mercado Pago"), tuple(RankedKind.FUND, "Fondo Test - Clase A"));
+		assertThat(result.excluded()).isEmpty();
+	}
+
+	@Test
+	void fciBackedWalletWhoseClassIsAbsentSaysSoInsteadOfInsufficientHistory() {
+		seedFund("Fondo Test - Clase A", LocalDate.parse("2026-10-13"), "1000");
+		seedFund("Fondo Test - Clase A", ASOF, "1000.4");
+
+		RankingResult result = service.rank(query(RankedKind.WALLET, RankedKind.FUND));
+
+		assertThat(result.excluded()).extracting(ExcludedEntry::kind, ExcludedEntry::name, ExcludedEntry::reason)
+				.containsExactly(tuple(RankedKind.WALLET, "Mercado Pago", ExcludedReason.FUND_CLASS_NOT_FOUND));
+		assertThat(result.ranked()).extracting(RankedEntry::name).containsExactly("Fondo Test - Clase A");
+	}
+
+	@Test
+	void fciBackedFundRowIsNotDuplicatedWhenItsNameDiffersInCase() {
+		seedFund("MERCADO FONDO - clase a", LocalDate.parse("2026-10-13"), "1000");
+		seedFund("MERCADO FONDO - clase a", ASOF, "1000.5");
+
+		RankingResult result = service.rank(query(RankedKind.WALLET, RankedKind.FUND));
+
+		assertThat(result.ranked()).extracting(RankedEntry::kind, RankedEntry::name)
+				.containsExactly(tuple(RankedKind.WALLET, "Mercado Pago"));
 		assertThat(result.totals()).isEqualTo(new RankingTotals(1, 0, 0));
 	}
 
@@ -600,9 +760,13 @@ class RankingServiceTest {
 	}
 
 	private void seedFund(String name, LocalDate quoteDate, String vcp) {
+		seedFund(name, quoteDate, vcp, List.of());
+	}
+
+	private void seedFund(String name, LocalDate quoteDate, String vcp, List<ValidationFlag> flags) {
 		FundQuote quote = new FundQuote(ArgentinaDatosFundAdapter.SOURCE, name, fundOf(name), shareClassOf(name),
 				"corto", Segment.SAVER, quoteDate, decimal(vcp), null, null, FETCHED,
-				Confidence.AGGREGATOR_AUTOMATIC, List.of());
+				Confidence.AGGREGATOR_AUTOMATIC, flags);
 		fundWriter.write(List.of(quote), quoteDate);
 	}
 

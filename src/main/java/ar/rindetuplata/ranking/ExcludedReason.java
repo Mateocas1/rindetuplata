@@ -13,5 +13,7 @@ public enum ExcludedReason {
 	/** A fund class whose latest quote is more than 7 days older than the query date. */
 	STALE,
 	/** A fund class whose cuotaparte fell: it has no TNA-equivalent and must not be ranked (T4 note). */
-	NEGATIVE_RETURN
+	NEGATIVE_RETURN,
+	/** The fund class an FCI-backed wallet maps to is absent from the fund quotes (the source has no class id). */
+	FUND_CLASS_NOT_FOUND
 }
