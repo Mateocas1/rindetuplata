@@ -83,5 +83,6 @@ class RankingFundGroupingApiTest extends RankingApiIntegrationTest {
 		fundWriter.write(List.of(new FundQuote(ArgentinaDatosFundAdapter.SOURCE, name, name.substring(0, separator),
 				name.substring(separator + 3), "corto", Segment.SAVER, date, new BigDecimal(vcp), null, null,
 				FETCHED, Confidence.AGGREGATOR_AUTOMATIC, List.of())), date);
+		recordIngestionRun();
 	}
 }

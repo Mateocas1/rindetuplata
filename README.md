@@ -104,7 +104,13 @@ flowchart LR
   and tiers, fund yield from cuotaparte deltas, REM horizon conversion, real return. `BigDecimal` with explicit
   `MathContext` and rounding, tested against hand-computed values.
 - **Read side** (`ranking`, `api`): turns stored snapshots into domain instruments and simulates them per
-  request; ProblemDetail errors; OpenAPI at `/v3/api-docs`.
+  request; ProblemDetail errors; OpenAPI at `/v3/api-docs`. `GET /api/v1/simulations` reads only the requested
+  instrument. `GET /api/v1/ranking` is cached in process (LRU, 64 entries by default) per data version and
+  resolved query. The data version is one aggregate read from the database on every request (`source_run`,
+  curated wallet rates and their audit, newest instrument), so the daily job, the startup ingestion, a backfill
+  and a curation save all invalidate it with no event bus. Both endpoints send a weak `ETag` (data version +
+  normalized request) and `Cache-Control: public, no-cache`; a matching `If-None-Match` is a `304` with no body
+  and no ranking work, and a new ingestion run or curated rate gives a new tag.
 - **Accounts and alerts** (`account`, `alert`, `curation`): Spring Security one-time-token login, JDBC sessions,
   CSRF for a cross-origin SPA, admin role; alert rules evaluated after each ingestion, written to an outbox in
   the same transaction and relayed to RabbitMQ with publisher confirms, an idempotent consumer and a
@@ -142,6 +148,77 @@ capture/test/capture_test.sh        # raw capture tests (bash + jq + python3, no
 The full local stack (API, site, PostgreSQL, RabbitMQ, Mailpit), the private preview
 (`deploy/preview.sh`: Compose overlay, Caddy with `noindex`, a sidecar that rebuilds the site after each ingestion,
 Tailscale Funnel on/off) and the VPS + CDN recipe are in [`docs/deploy.md`](docs/deploy.md).
+
+### Performance
+
+Load test of the public read API with [k6](https://k6.io) (v2.3.0): [`perf/read-api.js`](perf/read-api.js) mixes
+`GET /api/v1/ranking` (default, amount/days combinations, `kind` filters, `groupFunds=false`, `limit=200`),
+`GET /api/v1/simulations` (a ranked plazo fijo, fund class, wallet and crypto yield, with four amount/days shapes) and
+a revalidation scenario that repeats the default ranking with the `If-None-Match` of its first answer. Every request
+is tagged by endpoint and query shape; thresholds fail the run on any error, on a p95 above 10 s and on a single 429.
+
+```bash
+perf/run.sh after            # label of the result files; use `before` to repeat the baseline
+OUT_DIR=perf/results perf/run.sh after   # keep <label>.json (full k6 summary) and <label>.txt
+```
+
+`perf/run.sh` is self-contained and stops everything it starts, even on failure. It takes
+`/tmp/rindetuplata-maven.lock` for the whole run, builds the jar, starts PostgreSQL 18 (Docker, `127.0.0.1:55432`) and
+`perf/mock_sources.py` (a local stand-in for the external sources, `127.0.0.1:18081`), starts the jar with
+`RINDETUPLATA_INGEST_RUNONSTARTUP=true` so the application ingests "today" exactly as the daily job does, seeds the
+fund history ([`perf/seed-fund-history.sql`](perf/seed-fund-history.sql)) and runs k6 with fixed VUs and duration.
+No live HTTP is involved. Environment variables (`RANKING_VUS`, `SIMULATION_VUS`, `REVALIDATE_VUS`, `DURATION`,
+`FUND_CLASSES`, `DATA_DAY`, `JAVA_OPTS`) change the scenario; keep the defaults to compare runs.
+
+**Rate limit.** The read API answers 429 past 120 requests per address. The run starts the application with
+`RINDETUPLATA_API_RATELIMIT_BYPASSTOKEN` and k6 sends the same value as `X-Build-Token`, the bypass the static site
+build uses ([`docs/deploy.md`](docs/deploy.md), "Build token"). A 429 is never counted as a success: it is an error in
+the endpoint's rate and the run fails if there is one (0 in the baseline).
+
+**Data of the run** (what is recorded and what is synthetic, so the numbers can be judged):
+
+| Kind | Instruments | Origin |
+|---|---|---|
+| Plazo fijo, BCRA transparency | 694 | Recorded: `data` branch capture of 2026-10-31 |
+| Plazo fijo, ArgentinaDatos banks | 33 | Recorded: same capture |
+| Crypto and fintech yields | 64 | Recorded: same capture |
+| Wallets | 2 | Ualá from the hand-trimmed fixture page (not a recording); Naranja X from the curated rates that ship with the app |
+| Money-market fund classes | 620 | 32 recorded classes of the 2026-10-09 fixture (5 of them dead), re-dated to the last two business days, plus 588 synthetic classes (the source lists about 620 and no archive holds them) |
+| Fund quotes | 9,850 rows | 8,610 synthetic back-filled business days (21 days before each class's last quote, on the geometric curve through its two quotes); the other 1,240 are each class's latest and previous quote (synthetic for the 588 synthetic classes) |
+| Macro and dollar | | Recorded fixtures: REM 12-month expectation, INDEC monthly inflation, PSP benchmark, MEP dollar |
+
+The ingestion ran on 2026-11-01 (every snapshot has that capture date; fund quotes are dated 2026-10-29 and
+2026-10-30). `GET /api/v1/ranking` then returns 232 ranked rows with funds grouped (638 with `groupFunds=false`) and 14
+excluded. The 2026-10-14 snapshot in the section above is a different, live recording.
+
+**Before and after**. Before (baseline, no T3a): commit `19e19f0`, 8 ranking + 4 simulation + 2 revalidation virtual users for 60 s
+(14 concurrent users, no think time, so req/s is the capacity of the application), JVM `-Xms1g -Xmx1g`, AMD Ryzen 5 7600
+(6 cores, 12 threads), 14 GB RAM, Linux 7.2.8, Temurin 21.0.13, PostgreSQL 18 and the application on the same machine
+as k6 (a shared development machine: expect a few percent of run-to-run noise). After: commit `45b4f77` (T3a), the
+same data, machine, VUs, duration and command (`OUT_DIR=perf/results perf/run.sh after`).
+
+| Endpoint | Run | Requests | req/s | p50 | p95 | p99 | Errors |
+|---|---|---|---|---|---|---|---|
+| `GET /api/v1/ranking` | before | 4,856 | 80.7 | 108.1 ms | 138.8 ms | 161.4 ms | 0.00% |
+| | after (T3a) | 288,193 | 4,795.2 | 1.2 ms | 2.3 ms | 3.3 ms | 0.00% |
+| `GET /api/v1/simulations` | before | 2,355 | 39.1 | 99.1 ms | 128.4 ms | 151.1 ms | 0.00% |
+| | after (T3a) | 81,018 | 1,348.1 | 2.5 ms | 4.9 ms | 6.2 ms | 0.00% |
+| `GET /api/v1/ranking` with `If-None-Match` | before | 544 | 9.0 | 107.5 ms | 136.7 ms | 158.0 ms | 0.00% (0 of 544 answered 304: no ETag yet) |
+| | after (T3a) | 46,763 | 778.1 | 1.0 ms | 1.8 ms | 2.6 ms | 0.00% (46,763 of 46,763 answered 304) |
+| All requests | before | 7,759 | 128.9 | | | | 0.00%, 0 × 429 |
+| | after (T3a) | 415,978 | 6,921.4 | | | | 0.00%, 0 × 429 |
+
+Before T3a a single-instrument simulation cost as much as the whole ranking (99 ms against 108 ms at the median)
+because `simulate()` built the full ranking. After it, the simulation reads only its instrument and the ranking is
+served from the in-process cache after its first computation per data version and query, so the two endpoints went
+from about 100 ms to 1-3 ms at the median, and every revalidation was a `304`.
+
+Read these numbers as a best case. The ranking mix repeats 7 distinct queries, so almost every request after the first
+seven is a cache hit; a mix with many distinct queries (every user typing a different amount and term) would hit the
+cache far less and sit closer to the cost of one ranking, although the data-version read, the targeted simulation and
+the 304 path stay cheap. The load is closed-loop with no think time, so req/s is capacity on one machine shared with
+k6 and PostgreSQL, not a prediction for production traffic. The data version is still read from the database on every
+request (one aggregate query), so a cache hit is not free; that cost was not profiled separately.
 
 ## Disclaimer
 

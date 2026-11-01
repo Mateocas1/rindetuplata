@@ -134,10 +134,17 @@ public class RankingService {
 	 * not-found. {@code client} personalizes a bank with the user's client rate.
 	 */
 	public SimulationResult simulate(long instrumentId, Money amount, int days, boolean client) {
+		return simulate(instrumentId, amount, days, client, RankingQuery.today());
+	}
+
+	/**
+	 * The same simulation as of a given date, the way {@link #rank} resolves {@code asOf}. It reads only what the id
+	 * needs (T3a, L22; {@link #collectFor}) and answers what the full basket of every kind answers for that id.
+	 */
+	public SimulationResult simulate(long instrumentId, Money amount, int days, boolean client, LocalDate asOf) {
 		String id = String.valueOf(instrumentId);
-		LocalDate asOf = RankingQuery.today();
 		Set<Long> clientOf = client ? Set.of(instrumentId) : Set.of();
-		Basket basket = collect(EnumSet.allOf(RankedKind.class), asOf, clientOf, amount, days);
+		Basket basket = collectFor(instrumentId, asOf, clientOf, amount, days);
 
 		for (Candidate candidate : basket.candidates()) {
 			if (!candidate.id().equals(id)) {
@@ -159,6 +166,68 @@ public class RankingService {
 			}
 		}
 		throw new InstrumentNotFoundException(instrumentId);
+	}
+
+	/**
+	 * What {@link #collect} would hold for this id, without reading the other instruments (T3a, L22): the one stored
+	 * snapshot of a bank, wallet or crypto row, or the one series of a fund class. The collectors are the ones the
+	 * full basket uses, called in the same order, so the answer cannot drift from the ranking's. Two rules of the
+	 * full basket need more than the row itself, and only for the ids they touch:
+	 * <ul>
+	 * <li>a fund class whose name an FCI-backed wallet maps to is not a FUND entry; it is the wallet's entry, but
+	 * only if it is the first such class by id (a second class of the same name is hidden), which takes the class
+	 * names of the window, not their quotes;</li>
+	 * <li>a mapping that finds no class is an exclusion carrying the wallet id, which is the only way an id the
+	 * instrument table does not hold can be answered.</li>
+	 * </ul>
+	 */
+	private Basket collectFor(long instrumentId, LocalDate asOf, Set<Long> clientOf, Money amount, int days) {
+		List<Candidate> candidates = new ArrayList<>();
+		List<ExcludedEntry> excluded = new ArrayList<>();
+		InstrumentKind kind = reader.instrument(instrumentId).map(RankingReader.StoredInstrument::kind).orElse(null);
+		if (kind == InstrumentKind.PLAZO_FIJO_BANK) {
+			reader.latestRate(instrumentId, kind, asOf)
+					.ifPresent(row -> collectBank(row, clientOf, amount, days, candidates, excluded));
+		}
+		if (kind == InstrumentKind.WALLET) {
+			reader.latestRate(instrumentId, kind, asOf).ifPresent(row -> collectWallet(row, candidates, excluded));
+		}
+		List<RankingReader.StoredQuote> series = kind == InstrumentKind.FUND_CLASS
+				? reader.fundSeries(instrumentId, asOf) : List.of();
+		collectFciBackedFor(instrumentId, series, asOf, candidates, excluded);
+		if (!series.isEmpty() && fciWallets.mappings().stream()
+				.noneMatch(mapping -> mapping.matches(series.get(0).displayName()))) {
+			collectFund(instrumentId, series, asOf, candidates, excluded);
+		}
+		if (kind == InstrumentKind.CRYPTO_YIELD) {
+			reader.latestRate(instrumentId, kind, asOf).ifPresent(row -> collectCrypto(row, candidates, excluded));
+		}
+		return new Basket(candidates, excluded);
+	}
+
+	/** The FCI-backed wallet entries that can answer this id: its class's wallet, or a not-found mapping named so. */
+	private void collectFciBackedFor(long instrumentId, List<RankingReader.StoredQuote> series, LocalDate asOf,
+			List<Candidate> candidates, List<ExcludedEntry> excluded) {
+		List<RankingReader.FundClass> classes = null;
+		for (FciBackedWalletMapping mapping : fciWallets.mappings()) {
+			boolean byClass = !series.isEmpty() && mapping.matches(series.get(0).displayName());
+			boolean byWalletId = mapping.walletId().equals(String.valueOf(instrumentId));
+			if (!byClass && !byWalletId) {
+				continue;
+			}
+			if (classes == null) {
+				classes = reader.fundClasses(asOf);
+			}
+			Optional<RankingReader.FundClass> winner = classes.stream()
+					.filter(fundClass -> mapping.matches(fundClass.displayName()))
+					.findFirst();
+			if (winner.isEmpty()) {
+				collectFciBackedWallet(mapping, Map.of(), asOf, candidates, excluded);
+			}
+			else if (winner.get().instrumentId() == instrumentId) {
+				collectFciBackedWallet(mapping, Map.of(instrumentId, series), asOf, candidates, excluded);
+			}
+		}
 	}
 
 	private Basket collect(Set<RankedKind> kinds, LocalDate asOf, Set<Long> clientOf, Money amount, int days) {
