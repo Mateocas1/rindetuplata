@@ -3,5 +3,7 @@ package ar.rindetuplata.store;
 /** How a source produced its rows: fetched live, or replayed from the T9 raw archive. */
 public enum RunMode {
 	LIVE,
-	REPLAY
+	REPLAY,
+	/** History filled in by the backfill job, never replacing a live or replayed row. */
+	BACKFILL
 }

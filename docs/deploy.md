@@ -33,8 +33,12 @@ docker compose --profile stack up -d --wait
   `api:8080`, so the whole product is one origin, exactly like production.
 - The site is built *against* the running API: `build:api` refuses to run without `API_URL` and strips
   `WEB_FIXTURES`, so a fixture build can never be published by mistake.
-- The end-to-end smoke does all of the above and takes the stack down again:
-  `deploy/e2e.sh` (needs `cd web && npm ci && npx playwright install chromium` once).
+- The end-to-end smoke brings the same stack up and takes it down again: `deploy/e2e.sh`. It builds the site in
+  fixture mode (`WEB_FIXTURES=1 npm run build`), not with `build:api`: the fresh stack has ingested nothing, so the
+  build gate (below) would refuse it, and the smoke tests sign-in and alerts, not rankings. The browser still calls the
+  stack's own API through Caddy, because the account pages use `PUBLIC_API_URL`, which is unset (same origin). The gate
+  has no off-switch; `web/test/build-gate.test.ts` checks both halves. It needs
+  `cd web && npm ci && npx playwright install chromium` once.
 - Locally the database has no named volume on purpose: every `down` leaves a clean database, which is
   what makes the smoke repeatable. `./mvnw spring-boot:test-run` uses its own Testcontainers
   PostgreSQL and is unaffected.
@@ -44,6 +48,27 @@ docker compose --profile stack up -d --wait
   running with its data and its port. Only the site port and Mailpit's HTTP API are published, and the
   script refuses to start — naming the port — when one of those is already taken (finding R1 of
   `review-d018a62efca39d30`).
+
+## CI for the deploy files
+
+Three GitHub Actions workflows and Dependabot watch what the Java and web test workflows do not (T4e, S4):
+
+| Workflow | Runs when | What it proves |
+|---|---|---|
+| `.github/workflows/image-build.yml` | a PR or a push to `main` touches `Dockerfile`, `.dockerignore`, `src/**` or `pom.xml` | `docker build` of the API image succeeds. Nothing is pushed |
+| `.github/workflows/deploy-test.yml` | a PR or a push to `main` touches `deploy/**` or `compose.yaml` | every `deploy/test/*-test.sh` passes, `compose.yaml` renders, and `deploy/compose.vps.yaml` renders with fake env values and refuses an empty env file |
+
+- `deploy-test.yml` finds the scripts by the glob `deploy/test/*-test.sh`, so a new test is picked up without
+  editing the workflow. It installs Node 24 and runs `npm ci` in `web/` first, because `deploy/preview.sh up` (driven
+  by `preview-script-test.sh`) refuses to start without `web/node_modules`.
+- The fake values are written to a scratch env file inside the job. When the overlay gains a new
+  `${VAR:?...}` guard, add the variable to that file in the workflow, or the render step fails.
+- Run the same checks locally: `docker build -t rindetuplata-api:ci .`, then `for t in deploy/test/*-test.sh; do bash "$t"; done`
+  (after `cd web && npm ci`).
+- `.github/dependabot.yml` opens weekly update PRs for Maven (`/`), npm (`/web`), GitHub Actions and the base images
+  of both Dockerfiles (`/` and `/deploy/rebuilder`). Minor and patch updates of one ecosystem arrive as a single
+  grouped PR; a major update is its own PR. At most three PRs per ecosystem (two per Dockerfile) stay open. Every
+  action in the workflows is pinned by commit SHA with a version comment, and Dependabot bumps both together.
 
 ## Private preview (Tailscale Funnel)
 
@@ -212,15 +237,26 @@ production-shaped (every statement below was checked with `docker compose config
   events.
 - Every service carries `restart: unless-stopped`, so a reboot or an OOM brings the API and its
   dependencies back without anyone running `up` again.
+- **Memory limits and log rotation (T4c).** The overlay splits a 2 GB box: Postgres 512m, RabbitMQ 384m, the API
+  768m and Caddy 128m (1,792m in all, the rest is for the OS and Docker). The JVM keeps
+  `-XX:MaxRAMPercentage=75` and sizes its heap from the container limit, so the API heap is about 576m and it can no
+  longer starve the database or the broker; an overrun is killed (and restarted) inside its own container. Every
+  service also logs through `json-file` rotated at 10m x 3, so container logs cannot fill the disk. Both are
+  checked per service by `deploy/test/compose-limits-test.sh` (`docker compose config` with fake values). On a
+  bigger box raise the numbers in `deploy/compose.vps.yaml`, keeping the API at 75% of its limit or less for heap.
 - Mailpit and the local site server are dropped (`profiles: !override`), and a `caddy` service
-  terminates TLS for `api.<domain>` using `deploy/Caddyfile.vps`, which proxies only `/api/*` and
-  answers 404 for every other path (the site itself lives on the CDN).
+  terminates TLS for `api.<domain>` using `deploy/Caddyfile.vps`, which proxies only `/api/*`, `/v3/api-docs`, `/mcp`
+  and the two health URLs `/actuator/health` and `/actuator/health/ingestion` (the ones an external uptime monitor and
+  the post-restore check read; the rest of `/actuator/*` stays unreachable from outside) and answers 404 for every
+  other path (the site itself lives on the CDN). `deploy/test/caddy-routes-test.sh` checks this set in all three
+  Caddyfiles.
 - Every production value comes from an env file that is never committed. `--env-file` only feeds
   `${VAR}` substitution, so the overlay names each variable, and a missing one fails the command
   instead of silently starting with the local default (Mailpit on 1025).
 
 ```ini
-# /srv/rindetuplata/api.env — root-only, never committed
+# /srv/rindetuplata/api.env — root-only, never committed; deploy/vps.env.example is the template
+COMPOSE_PROFILES=stack           # loads api and caddy in every Compose command that reads this file; keep it
 POSTGRES_PASSWORD=...            # the database user stays `rindetuplata`
 RABBITMQ_DEFAULT_PASS=...        # the broker user stays `rindetuplata`
 SPRING_MAIL_HOST=smtp.example.com
@@ -235,10 +271,17 @@ RINDETUPLATA_INGEST_REBUILDHOOKURL=https://api.cloudflare.com/client/v4/pages/we
 
 ```bash
 cd /srv/rindetuplata                     # a checkout of this repository
-chmod 600 /srv/rindetuplata/api.env
+install -m 600 deploy/vps.env.example /srv/rindetuplata/api.env     # then fill every value
 docker compose -f compose.yaml -f deploy/compose.vps.yaml \
-  --profile stack --env-file /srv/rindetuplata/api.env up -d --wait
+  --env-file /srv/rindetuplata/api.env up -d --wait
 ```
+
+`COMPOSE_PROFILES=stack` in the env file is what puts `api` and `caddy` in the project: `compose.yaml` keeps `api` behind
+the `stack` profile and the overlay makes `caddy` depend on it, so a Compose command that reads the overlay without the
+profile (a restore, a `stop api`, the nightly backup's `exec`) is rejected with `service "caddy" depends on undefined
+service "api": invalid compose project`. `deploy/test/restore-drill-test.sh` runs every documented command of the drill
+with `--dry-run` against the template, and `backup.sh` and `restore.sh` with their defaults, and fails on that error.
+(An explicit `--profile` flag overrides `COMPOSE_PROFILES`, so do not mix them.)
 
 - The SMTP port defaults to 587 and STARTTLS is on; a provider on 465 wants
   `SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_ENABLE=true` instead. `RINDETUPLATA_MAIL_FROM` defaults to
@@ -246,6 +289,32 @@ docker compose -f compose.yaml -f deploy/compose.vps.yaml \
 - `RINDETUPLATA_AUTH_SECURECOOKIE=true` is set by the overlay and is mandatory once TLS terminates in
   front of the API: without it the session and the CSRF cookies travel in clear.
   `RINDETUPLATA_WEB_ALLOWEDORIGINS` must be the site's own origin, and nothing else.
+- **The `prod` profile (T4b).** The overlay sets `SPRING_PROFILES_ACTIVE=prod` on the API
+  (`application-prod.properties`). Under that profile the API **refuses to start**, and its error lists every
+  offending property at once, when any of these is still a development default:
+  `rindetuplata.auth.secure-cookie` is `false`; `rindetuplata.web.allowed-origins`,
+  `rindetuplata.auth.magic-link-url` or `rindetuplata.alert.manage-url` is blank, not `https`, or points at
+  `localhost` (also `*.localhost`, `127.x.x.x`, `::1`, `0.0.0.0`); `spring.mail.host` is blank or one of those local
+  hosts (the Mailpit default); `rindetuplata.auth.admin-emails` names nobody; `rindetuplata.api.rate-limit.bypass-token`
+  (`API_BUILD_TOKEN`) is set but, trimmed, shorter than 32 characters (blank keeps the bypass off). The check runs
+  before the database, the broker or Flyway are touched, reads the same environment variables the API binds, and never
+  prints a token. The profile also turns `secure-cookie` on by default. Without the profile (local development,
+  tests, the preview) nothing is checked. `deploy/test/prod-profile-test.sh` renders the overlay with fake values and
+  asserts the profile reaches the container.
+- **Ingestion freshness and monitoring (T4b).** The `ingestionFreshness` health contributor reads the newest
+  `source_run` row that is `LIVE` and `OK` or `DEGRADED` (both stored rows from a source that answered; `FAILED`
+  stored nothing, and `REPLAY` and backfill rows are old history that says nothing about today's fetch). Any source
+  counts, so check `source_run` itself for a single failing source. The data is fresh until
+  `RINDETUPLATA_INGEST_STALEAFTER` (default `36h`) after the run the cron was expected to make for that capture date
+  (19:30 `America/Argentina/Buenos_Aires`, so until 07:30 two days later: one missed run is tolerated, two are not);
+  past that, or with no successful run recorded at all, its status is the custom `STALE`, ordered between `DOWN` and
+  `UP`. `STALE` is HTTP **200** on `/actuator/health`, so Docker's `HEALTHCHECK`, `depends_on: service_healthy` and
+  Caddy keep working while the data is old (a stale site is better than no site); it is HTTP **503** on the group
+  `/actuator/health/ingestion`, the URL an external uptime monitor should watch. The group (public, like health) shows
+  `lastSuccessDate`, `lastSuccessAt`, `ageSeconds`, `staleAfter` and `staleAt`; the main endpoint shows the bare status.
+  (The contributor is `ingestionFreshness` and the group `ingestion`: Spring Boot refuses one name for both.) The
+  Micrometer gauge `rindetuplata.ingest.last.success.age` (base unit seconds, NaN when there is no success) carries the
+  same age for any registry added later; no metrics endpoint is exposed today.
 - Caddy needs ports 80 and 443 open and is the only published service; the API is reachable only from
   the Compose network. `JAVA_OPTS` (for example `JAVA_OPTS=-Xmx512m`) caps the heap on a small box.
 - **Rate limit of the public read API (optional settings).** `GET /api/v1/ranking`, `/api/v1/simulations`,
@@ -322,6 +391,9 @@ Cloudflare Pages (or any static host with a build pipeline), pointing at this re
 | Build-time env `API_URL` | `https://api.rindetuplata.ar` (the API the pages are built from) |
 | Build-time env `PUBLIC_API_URL` | `https://api.rindetuplata.ar` (the URL the browser island calls) |
 | Build-time env `API_BUILD_TOKEN` | optional: the API's rate-limit bypass token (see "VPS: the API"); never `PUBLIC_` |
+| Build-time env `API_TIMEOUT_MS` | optional: per-request deadline in ms (default `15000`) |
+| Build-time env `BUILD_MAX_DATA_AGE_DAYS` | optional: the freshness gate's limit (default `3`) |
+| Build-time env `BUILD_MIN_RANKED` | optional: the minimum-data gate's limit (default `20`) |
 | SPA fallback / routing | off: the site is fully prerendered, and `404.html` is the error page |
 
 `API_URL` and `PUBLIC_API_URL` are different on purpose: the first one is only read while building,
@@ -331,6 +403,43 @@ would make the browser call the CDN's own origin, where there is no API.
 Authenticated flows (`/ingresar`, `/alertas`, `/admin/tasas`) need the site and the API on the same
 registrable domain: the `SameSite=Lax` session cookie does not travel from a `*.pages.dev` preview
 domain to `api.rindetuplata.ar`. Test the login on the production domain, not on a preview URL.
+
+### Build gate and API client (T4d)
+
+The build used to publish whatever the API answered: an empty or days-old ranking became an empty or stale
+site, and Google indexed it. Now `astro build` runs a **gate** before it renders a single page
+(`web/src/lib/buildGate.ts`, wired as the `astro:build:start` hook of `web/astro.config.mjs`, so `build:api`,
+the private-preview rebuilder and a CDN that calls `astro build` all go through it). It fails the build,
+exit code non-zero, with a message that names each failed check, and the previous site keeps being served:
+
+| Check | Fails when |
+|---|---|
+| `data-age` | the newest capture date in the default ranking is more than `BUILD_MAX_DATA_AGE_DAYS` (default 3) Argentine calendar days old, or the ranking has no capture date |
+| `min-ranked` | the default ranking has fewer than `BUILD_MIN_RANKED` (default 20) ranked entries |
+| `category-rankings` | the ranking of any category page (`web/src/lib/categories.ts`) has no ranked entries; the message lists the empty categories |
+| `api-read` | the API could not be read after the retries below |
+
+With `WEB_FIXTURES=1` (CI and tests) only `data-age` is skipped: the recordings are old by nature, but a
+fixture set that is too small or has an empty category still fails. An unreadable setting (`BUILD_MIN_RANKED=many`)
+fails the build naming the variable.
+
+The build's HTTP client (`web/src/lib/fetchRetry.ts`, used by `data.ts`) gives every request a deadline
+(`API_TIMEOUT_MS`, default 15 s) and retries only network errors, timeouts, 5xx and 429: 3 attempts, waiting 1 s
+then 2 s, or the `Retry-After` the API sent (capped at 30 s). Any other 4xx fails at once. An identical request
+(same URL and headers) is sent **once per build** however many pages ask for it, so a build costs one fetch per
+distinct ranking and per instrument history instead of about thirty identical rankings. The gate reads the same
+requests the pages read, so it adds no fetch. Errors name the URL and the status or cause, never the headers
+(`API_BUILD_TOKEN` stays out of every message).
+
+## History backfill
+
+`POST /api/v1/admin/backfill?from=&to=` (admin session, CSRF) fills up to 366 days of fund, MEP and macro history from
+the public sources, insert-only, so a fresh deploy gets a real 7-day fund yield and a monthly report without waiting
+(T4a). It starts nothing by itself, writes `source_run` rows with mode `BACKFILL`, and neither evaluates alerts nor
+calls the rebuild hook below: trigger that by hand after a large backfill. The polite delay between the per-day fund
+calls is `RINDETUPLATA_BACKFILL_DELAY` (default `500ms`); the monthly report cache holds
+`RINDETUPLATA_REPORT_CACHEMAXENTRIES` reports (default 24). Full description, probes and limits in
+[`backfill.md`](backfill.md).
 
 ## Rebuild hook
 
@@ -344,45 +453,106 @@ at its own rebuild sidecar (`http://rebuilder:8787/`, see "Private preview" abov
 
 The database holds only what cannot be rebuilt: users and their alert rules, with what the rule types remember
 between evaluations (the stored best option and rate, the digests already sent; `docs/alerts.md`). The ranking and the
-history come from the sources and can be re-ingested.
+history come from the sources and can be re-ingested (the backfill job, `POST /api/v1/admin/backfill`).
+
+Three files do the work, all tested on a throwaway `postgres:18-alpine` by `deploy/test/backup-test.sh`:
+
+- `deploy/backup.sh` runs `pg_dump -Fc` inside the Compose `postgres` service, writes it to a temporary file and
+  renames it to `rindetuplata-YYYY-MM-DD.dump` only after pg_dump succeeded and produced something. On any failure it
+  removes the temporary file, exits non-zero and prunes nothing, so a bad night never deletes the older good dumps.
+  After a good dump it deletes the dumps older than the retention window (regular `rindetuplata-*.dump` files only).
+- `deploy/restore.sh --confirm <dump>` restores one dump. It refuses (exit 2, nothing changed) without `--confirm`,
+  without a dump name, or with a dump that does not exist; the restore itself is one transaction, so a dump that
+  fails half-way leaves the database as it was.
+- `deploy/systemd/rindetuplata-backup.service` + `.timer` run the backup every day at 03:30 local time;
+  `Persistent=true` runs a missed one as soon as the box is back.
+
+### Configuration
+
+All optional; the defaults match the VPS layout above (the checkout in `/srv/rindetuplata`).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `BACKUP_DIR` | `/var/backups/rindetuplata` | where dumps go (created `0700` if missing, dumps `0600`); outside the checkout on purpose, see below |
+| `BACKUP_RETENTION_DAYS` | `30` | dumps strictly older than this many days are deleted; a positive whole number |
+| `BACKUP_COPY_COMMAND` | unset | shell command run after a good dump, the dump's path is `"$1"` (see below) |
+| `BACKUP_COMPOSE_FILES` | `compose.yaml deploy/compose.vps.yaml` | space-separated Compose files, relative to the checkout |
+| `BACKUP_ENV_FILE` | `/srv/rindetuplata/api.env` | Compose `--env-file`; set it empty for none |
+| `BACKUP_SERVICE` | `postgres` | the Compose service running Postgres |
+| `BACKUP_DB_NAME`, `BACKUP_DB_USER` | `rindetuplata` | database and role |
+
+The default directory is outside the checkout on purpose: inside it, cleaning the checkout's untracked files would delete
+the dumps and every `docker build` would send them to the daemon as build context. If you override `BACKUP_DIR` to a
+`backups/` directory inside the checkout anyway, `.gitignore` and `.dockerignore` both exclude `backups/`. A dump holds
+the users' emails, so keep the directory `0700` and copy it off the box (below).
+
+Under systemd put overrides in `/srv/rindetuplata/backup.env`, one `KEY=value` per line (the unit reads it if it exists).
+`BACKUP_COMPOSE_FILES`, `BACKUP_SERVICE` and the two `BACKUP_DB_*` variables are what the test points at its throwaway
+container.
+
+### Install the timer
 
 ```bash
-#!/usr/bin/env bash
-# Daily dump next to the Compose project, 30 days kept; run it from cron.
-#
-# `set -euo pipefail` is the point of the recipe, not decoration: without it a failed
-# `docker compose exec` (box down, container restarting, volume missing) left a truncated dump and the
-# `find` below still ran, deleting the older dumps that were still good. The dump now lands in a
-# temporary file and only replaces the day's dump once it is non-empty, so pruning can never run on a
-# day whose dump failed (finding R4 of `review-d018a62efca39d30`).
-set -euo pipefail
+sudo install -m 0644 /srv/rindetuplata/deploy/systemd/rindetuplata-backup.service \
+                     /srv/rindetuplata/deploy/systemd/rindetuplata-backup.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now rindetuplata-backup.timer
 
-cd /srv/rindetuplata # the checkout; cron starts in the home directory
-compose=(docker compose -f compose.yaml -f deploy/compose.vps.yaml --env-file /srv/rindetuplata/api.env)
-backups=/srv/rindetuplata/backups
-dump="$backups/rindetuplata-$(date +%F).dump"
-
-mkdir -p "$backups"
-trap 'rm -f "$dump.tmp"' EXIT
-
-"${compose[@]}" exec -T postgres pg_dump -U rindetuplata -Fc rindetuplata > "$dump.tmp"
-
-if [ ! -s "$dump.tmp" ]; then
-  echo "pg_dump produced an empty file; keeping every existing dump" >&2
-  exit 1
-fi
-
-mv "$dump.tmp" "$dump"
-find "$backups" -name 'rindetuplata-*.dump' -mtime +30 -delete
-
-# Restore (a new or broken volume), same pgdata volume in place:
-docker compose -f compose.yaml -f deploy/compose.vps.yaml --env-file /srv/rindetuplata/api.env \
-  exec -T postgres pg_restore -U rindetuplata -d rindetuplata --clean \
-  < /srv/rindetuplata/backups/rindetuplata-YYYY-MM-DD.dump
+systemctl list-timers rindetuplata-backup.timer      # the next run, 03:30 local
+sudo systemctl start rindetuplata-backup.service     # run it now, once
+journalctl -u rindetuplata-backup.service -n 20      # "backup written: ..." or the reason it failed
 ```
 
-Copy the dumps off the box (object storage, `rclone`, or a second host): a backup on the same disk
-survives a bad deploy, not a lost VPS. The `pgdata` volume is the only stateful thing to preserve.
+The units assume the checkout at `/srv/rindetuplata` and a system service (root, which can reach Docker); edit
+`WorkingDirectory` and `ExecStart` in the `.service` if yours lives elsewhere. A failed run leaves the unit in the
+`failed` state (`systemctl --failed`), which is the signal to look at the journal.
+
+### Copy the dumps off the box
+
+A backup on the same disk survives a bad deploy, not a lost VPS. Where the copies go is the owner's choice (object
+storage, a second host); until then `BACKUP_COPY_COMMAND` stays unset and the dumps stay local. When it is set, the
+script runs it after each good dump with the dump's path as `$1`, for example in `backup.env`:
+
+```bash
+BACKUP_COPY_COMMAND='rclone copyto "$1" offsite:rindetuplata/"$(basename "$1")"'
+```
+
+(The single quotes matter: systemd must hand the text to the script untouched, `$1` and all.)
+
+If the command fails, the script exits non-zero (the unit fails) but keeps the local dump. It never runs after a
+failed dump.
+
+### Restore drill
+
+Do this once after installing the timer, and again whenever the schema or the host changes: an untested backup is not
+a backup. The drill restores into the live database, so schedule it, or do it on a second box.
+
+```bash
+cd /srv/rindetuplata
+ls -lh /var/backups/rindetuplata                                  # pick the dump
+compose=(docker compose -f compose.yaml -f deploy/compose.vps.yaml --env-file /srv/rindetuplata/api.env)
+
+"${compose[@]}" stop api                                          # its connections would block the DROPs
+deploy/restore.sh --confirm rindetuplata-YYYY-MM-DD.dump          # a name in BACKUP_DIR, or a full path
+"${compose[@]}" start api
+```
+
+Then check that the data is what the dump held:
+
+```bash
+"${compose[@]}" exec -T postgres psql -U rindetuplata -d rindetuplata -c 'select count(*) from app_user'
+"${compose[@]}" exec -T postgres psql -U rindetuplata -d rindetuplata -c 'select count(*) from alert_rule'
+curl -fsS https://api.<domain>/actuator/health
+```
+
+Without `--confirm` the script prints why it refused and changes nothing. Restoring into a new or empty volume works
+the same way: bring up `postgres` alone, run `restore.sh --confirm`, then start the rest:
+
+```bash
+"${compose[@]}" up -d --wait postgres
+deploy/restore.sh --confirm rindetuplata-YYYY-MM-DD.dump
+"${compose[@]}" up -d --wait
+```
 
 ## What the owner still has to decide
 

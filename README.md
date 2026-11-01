@@ -2,6 +2,8 @@
 
 [![Java tests](https://github.com/Mateocas1/rindetuplata/actions/workflows/java-test.yml/badge.svg)](https://github.com/Mateocas1/rindetuplata/actions/workflows/java-test.yml)
 [![Web tests](https://github.com/Mateocas1/rindetuplata/actions/workflows/web-test.yml/badge.svg)](https://github.com/Mateocas1/rindetuplata/actions/workflows/web-test.yml)
+[![Image build](https://github.com/Mateocas1/rindetuplata/actions/workflows/image-build.yml/badge.svg)](https://github.com/Mateocas1/rindetuplata/actions/workflows/image-build.yml)
+[![Deploy tests](https://github.com/Mateocas1/rindetuplata/actions/workflows/deploy-test.yml/badge.svg)](https://github.com/Mateocas1/rindetuplata/actions/workflows/deploy-test.yml)
 [![Capture tests](https://github.com/Mateocas1/rindetuplata/actions/workflows/capture-test.yml/badge.svg)](https://github.com/Mateocas1/rindetuplata/actions/workflows/capture-test.yml)
 [![Daily raw capture](https://github.com/Mateocas1/rindetuplata/actions/workflows/daily-capture.yml/badge.svg)](https://github.com/Mateocas1/rindetuplata/actions/workflows/daily-capture.yml)
 
@@ -151,6 +153,7 @@ Requires Java 21 and Docker (the Maven wrapper downloads Maven).
 (cd web && npm ci && npm test)      # frontend tests (Node 24)
 (cd web && WEB_FIXTURES=1 npm run build)  # build the site from the recorded fixtures
 capture/test/capture_test.sh        # raw capture tests (bash + jq + python3, no network)
+for t in deploy/test/*-test.sh; do bash "$t"; done  # deploy script tests (Docker, Node, python3; web/ deps installed)
 ```
 
 The full local stack (API, site, PostgreSQL, RabbitMQ, Mailpit), the private preview

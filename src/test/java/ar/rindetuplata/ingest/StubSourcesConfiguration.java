@@ -4,9 +4,15 @@ import ar.rindetuplata.source.SourceException;
 import ar.rindetuplata.source.SourceStatus;
 import ar.rindetuplata.source.crypto.ArgentinaDatosCryptoAdapter;
 import ar.rindetuplata.source.crypto.CryptoYieldSource;
+import ar.rindetuplata.source.dollar.DollarHistorySource;
 import ar.rindetuplata.source.dollar.DollarSource;
+import ar.rindetuplata.source.fund.ArgentinaDatosFundAdapter;
+import ar.rindetuplata.source.fund.FundHistorySource;
 import ar.rindetuplata.source.fund.FundQuote;
 import ar.rindetuplata.source.fund.FundSource;
+import ar.rindetuplata.source.macro.BcraMonetariasClient;
+import ar.rindetuplata.source.dollar.ArgentinaDatosDollarAdapter;
+import ar.rindetuplata.source.macro.MacroHistorySource;
 import ar.rindetuplata.source.macro.MacroObservation;
 import ar.rindetuplata.source.macro.MacroSource;
 import ar.rindetuplata.source.macro.MacroVariable;
@@ -20,6 +26,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 
 /**
  * Replaces every external port with a stub that answers the recorded fixtures, so a LIVE test never touches the
@@ -32,8 +39,8 @@ class StubSourcesConfiguration implements BeanDefinitionRegistryPostProcessor {
 	/** The real adapter beans this context must not instantiate: they fetch over HTTP. */
 	private static final List<String> REAL_SOURCE_BEANS = List.of("plazoFijoSource", "bcraPlazoFijoAdapter",
 			"argentinaDatosPlazoFijoAdapter", "macroSource", "bcraMonetariasClient", "argentinaDatosInflationAdapter",
-			"argentinaDatosFundAdapter", "argentinaDatosCryptoAdapter", "dolarApiAdapter", "ualaWalletAdapter",
-			"curatedWalletRateAdapter");
+			"argentinaDatosFundAdapter", "argentinaDatosCryptoAdapter", "dolarApiAdapter", "argentinaDatosDollarAdapter",
+			"ualaWalletAdapter", "curatedWalletRateAdapter");
 
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
@@ -126,5 +133,48 @@ class StubSourcesConfiguration implements BeanDefinitionRegistryPostProcessor {
 			StubSources.CURATED_CALLS.incrementAndGet();
 			return new ArrayList<>(IngestFixtures.curated());
 		};
+	}
+
+	@Bean
+	FundHistorySource stubFundHistorySource() {
+		return day -> {
+			StubSources.FUND_HISTORY_DAYS.add(day);
+			if (StubSources.FUND_HISTORY_FAILING_DAYS.contains(day)) {
+				throw new SourceException(ArgentinaDatosFundAdapter.SOURCE, "stub fund history is down", null);
+			}
+			if (StubSources.FUND_HISTORY_EMPTY_DAYS.contains(day)) {
+				return List.of();
+			}
+			return IngestFixtures.fundDay(day);
+		};
+	}
+
+	@Bean
+	DollarHistorySource stubDollarHistorySource() {
+		return () -> {
+			StubSources.DOLLAR_SERIES_CALLS.incrementAndGet();
+			if (StubSources.DOLLAR_SERIES_FAILS) {
+				throw new SourceException(ArgentinaDatosDollarAdapter.SOURCE, "stub MEP series is down", null);
+			}
+			return IngestFixtures.dollarSeries();
+		};
+	}
+
+	@Bean
+	MacroHistorySource stubMacroHistorySource() {
+		return (variable, from, to) -> {
+			StubSources.MACRO_RANGE_CALLS.add(variable + "|" + from + "|" + to);
+			if (StubSources.MACRO_RANGE_FAILING.contains(variable)) {
+				throw new SourceException(BcraMonetariasClient.SOURCE, "stub " + variable + " range is down", null);
+			}
+			return IngestFixtures.macroRange(variable, from, to);
+		};
+	}
+
+	/** The backfill never sleeps in tests: the delays it asked for are recorded instead. */
+	@Bean
+	@Primary
+	BackfillPause stubBackfillPause() {
+		return delay -> StubSources.PAUSES.add(delay);
 	}
 }

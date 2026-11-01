@@ -1,5 +1,6 @@
 package ar.rindetuplata.api;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
@@ -17,6 +18,7 @@ import ar.rindetuplata.source.plazofijo.ArgentinaDatosPlazoFijoAdapter;
 import ar.rindetuplata.source.wallet.UalaWalletAdapter;
 import ar.rindetuplata.store.InstrumentKind;
 import java.time.LocalDate;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -36,7 +38,55 @@ class ReportApiTest extends ApiIntegrationTest {
 	private static final String CRYPTO = ArgentinaDatosCryptoAdapter.SOURCE.id();
 	private static final String FUNDS = ArgentinaDatosFundAdapter.SOURCE.id();
 
+	/**
+	 * The month list and every month report are cached by the data version (T4a, L33 a), and the tests seed the tables
+	 * directly, so each test starts from a version no other test has used: a rolled-back test never leaves an answer
+	 * that a later one with the same row counts could hit.
+	 */
+	@BeforeEach
+	void startFromAFreshDataVersion() {
+		recordIngestionRun();
+	}
+
 	// --- the month list -------------------------------------------------------------------------------------------
+
+	@Test
+	void aCachedMonthListIsServedUntilTheDataVersionMovesAndThenShowsTheNewHistory() throws Exception {
+		seedSeptember();
+		recordIngestionRun();
+		mockMvc.perform(get("/api/v1/reports/monthly"))
+				.andExpect(jsonPath("$.months", hasSize(1)))
+				.andExpect(jsonPath("$.months[0].month").value("2026-09"));
+
+		// INDEC September disappears behind the cache's back: no writer recorded a run, so the version is the same
+		// and the cached list is still served (the cache is by version, not by content).
+		jdbc.sql("delete from macro_observation where observation_date = date '2026-09-30'").update();
+		mockMvc.perform(get("/api/v1/reports/monthly")).andExpect(jsonPath("$.months", hasSize(1)));
+
+		// A write that records a source run (the daily job, a backfill) moves the version: the next call recomputes.
+		recordIngestionRun();
+		mockMvc.perform(get("/api/v1/reports/monthly")).andExpect(jsonPath("$.months", hasSize(0)));
+	}
+
+	@Test
+	void aCachedMonthReportIsIdenticalToTheFreshOneAndRecomputedAfterAWrite() throws Exception {
+		seedSeptember();
+		recordIngestionRun();
+		String fresh = mockMvc.perform(get(SEPTEMBER)).andExpect(status().isOk()).andReturn().getResponse()
+				.getContentAsString();
+
+		String cached = mockMvc.perform(get(SEPTEMBER)).andExpect(status().isOk()).andReturn().getResponse()
+				.getContentAsString();
+
+		assertThat(cached).isEqualTo(fresh);
+
+		long extra = instrument(InstrumentKind.WALLET, UALA, "extra", "Extra Wallet", "Extra Entity");
+		rates(extra, "2026-08-29", "2026-09-30", "TNA", "0.365", null);
+		recordIngestionRun();
+
+		mockMvc.perform(get(SEPTEMBER)).andExpect(status().isOk())
+				.andExpect(jsonPath("$.rows[?(@.name=='Extra Wallet')]", hasSize(1)));
+	}
 
 	@Test
 	void withNoStoredHistoryThereAreNoMonths() throws Exception {

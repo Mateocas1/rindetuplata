@@ -1,0 +1,82 @@
+[
+  {
+    "fondo": "1810 Ahorro",
+    "horizonte": "corto",
+    "fecha": "2026-10-01",
+    "vcp": 240295.185,
+    "ccp": 6708715412,
+    "patrimonio": 1612072013271.54
+  },
+  {
+    "fondo": "Cocos Ahorro - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-10-01",
+    "vcp": 2405.749,
+    "ccp": 1533649897.91,
+    "patrimonio": 3689576670.03
+  },
+  {
+    "fondo": "Cocos Ahorro - Clase B",
+    "horizonte": "corto",
+    "fecha": "2026-10-01",
+    "vcp": 2438.717,
+    "ccp": 13355816482.89,
+    "patrimonio": 32571051338.95
+  },
+  {
+    "fondo": "Cocos Ahorro - Clase C",
+    "horizonte": "corto",
+    "fecha": "2026-10-01",
+    "vcp": 2034.419,
+    "ccp": 21212730140.9,
+    "patrimonio": 43155575219.71
+  },
+  {
+    "fondo": "Cocos Ahorro - Clase Ley N° 27.743",
+    "horizonte": "corto",
+    "fecha": "2026-10-01",
+    "vcp": 1593.912,
+    "ccp": 154839.79,
+    "patrimonio": 246801.07
+  },
+  {
+    "fondo": "Cocos Dólar Money Market - Clase A",
+    "horizonte": "largo",
+    "fecha": "2026-10-01",
+    "vcp": 1000.508,
+    "ccp": 0,
+    "patrimonio": 0
+  },
+  {
+    "fondo": "Cocos Dólar Money Market - Clase B",
+    "horizonte": "largo",
+    "fecha": "2026-10-01",
+    "vcp": 1002.25,
+    "ccp": 8354111.52,
+    "patrimonio": 8372906.69
+  },
+  {
+    "fondo": "Cocos Dólar Money Market - Clase C",
+    "horizonte": "largo",
+    "fecha": "2026-10-01",
+    "vcp": 1002.25,
+    "ccp": 50338444.28,
+    "patrimonio": 50451696.48
+  },
+  {
+    "fondo": "Delta Pesos - Clase X",
+    "horizonte": "corto",
+    "fecha": "2026-10-01",
+    "vcp": 5972.511,
+    "ccp": 66896752431.72,
+    "patrimonio": 399541616259.98
+  },
+  {
+    "fondo": "Mercado Fondo - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-10-01",
+    "vcp": 25830.224,
+    "ccp": 349360419576.0955,
+    "patrimonio": 9024057894384.53
+  }
+]

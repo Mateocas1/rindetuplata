@@ -9,8 +9,9 @@ import org.springframework.stereotype.Component;
  *
  * <p>It is one cheap aggregate over what writers leave behind: the {@code source_run} rows (the daily job, the
  * startup ingestion and any backfill record one per source and day, and re-recording a day replaces the row with a
- * later {@code recorded_at}), the curated wallet rates and their audit trail (a save or a confirm writes both and
- * publishes the rate snapshot), and the newest instrument id (a first-seen instrument). The ranking tables
+ * later {@code recorded_at}; a backfill (T4a) never replaces a live row, so it also records one row of its own per
+ * run, which keeps the version moving when it only fills gaps under days that already had a run), the curated wallet
+ * rates and their audit trail (a save or a confirm writes both and publishes the rate snapshot), and the newest instrument id (a first-seen instrument). The ranking tables
  * themselves are not scanned: they grow with every day and fund class, and the contract is that a writer of ranking
  * data records one of the above. The version is read before the ranking is computed, so a cache entry is never
  * labelled newer than the data it holds; a write that lands in between only makes the next request recompute.

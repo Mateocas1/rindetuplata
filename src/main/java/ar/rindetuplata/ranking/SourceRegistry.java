@@ -1,6 +1,7 @@
 package ar.rindetuplata.ranking;
 
 import ar.rindetuplata.source.crypto.ArgentinaDatosCryptoAdapter;
+import ar.rindetuplata.source.dollar.ArgentinaDatosDollarAdapter;
 import ar.rindetuplata.source.dollar.DolarApiAdapter;
 import ar.rindetuplata.source.fund.ArgentinaDatosFundAdapter;
 import ar.rindetuplata.source.macro.BcraMonetariasClient;
@@ -29,7 +30,8 @@ public final class SourceRegistry {
 			UalaWalletAdapter.SOURCE.id(), SourceView.of(UalaWalletAdapter.SOURCE),
 			CuratedWalletRateAdapter.SOURCE.id(), SourceView.of(CuratedWalletRateAdapter.SOURCE),
 			BcraMonetariasClient.SOURCE.id(), SourceView.of(BcraMonetariasClient.SOURCE),
-			DolarApiAdapter.SOURCE.id(), SourceView.of(DolarApiAdapter.SOURCE));
+			DolarApiAdapter.SOURCE.id(), SourceView.of(DolarApiAdapter.SOURCE),
+			ArgentinaDatosDollarAdapter.SOURCE.id(), SourceView.of(ArgentinaDatosDollarAdapter.SOURCE));
 
 	private SourceRegistry() {
 	}

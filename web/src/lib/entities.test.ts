@@ -18,6 +18,8 @@ import {
 const FIXTURES = { WEB_FIXTURES: '1' } as const;
 const REBA = 'reba-compania-financiera-s-a';
 
+const noSleep = async () => undefined;
+
 function okJson(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -65,6 +67,7 @@ describe('loadBankList', () => {
     const failure = loadBankList({
       env: { API_URL: 'http://api.test', API_BUILD_TOKEN: 's3cret' },
       fetch: doFetch,
+      sleep: noSleep,
     });
     await expect(failure).rejects.toThrow(/failed with 500.*boom/);
     await expect(failure).rejects.not.toThrow(/s3cret/);
@@ -195,5 +198,76 @@ describe('sourceName', () => {
   it('names the known source and falls back to the id', () => {
     expect(sourceName('argentinadatos-plazo-fijo')).toBe('ArgentinaDatos');
     expect(sourceName('some-new-source')).toBe('some-new-source');
+  });
+});
+
+describe('the build client on the bank loaders (T4d, L36a; F6)', () => {
+  const ENV = { API_URL: 'http://api.test' };
+  const BANK = {
+    slug: 'banco-x',
+    name: 'Banco X',
+    instrumentId: '7',
+    nonClientTna: 0.3,
+    clientTna: null,
+    captureDate: '2026-10-14',
+  };
+  const DETAIL = { ...BANK, from: '2026-07-17', to: '2026-10-14', series: [], bestDays: 0, observedDays: 0 };
+
+  function counting(respond: (call: number) => Response | Promise<Response>) {
+    const calls: string[] = [];
+    const doFetch = (async (input: RequestInfo | URL) => {
+      calls.push(String(input));
+      return respond(calls.length);
+    }) as unknown as typeof fetch;
+    return { fetch: doFetch, calls };
+  }
+
+  it('retries a 503 on the list and returns it', async () => {
+    const waits: number[] = [];
+    const { fetch, calls } = counting((call) => (call === 1 ? new Response('down', { status: 503 }) : okJson([BANK])));
+    const banks = await loadBankList({
+      env: ENV,
+      fetch,
+      sleep: async (ms) => {
+        waits.push(ms);
+      },
+    });
+    expect(banks.map((bank) => bank.slug)).toEqual(['banco-x']);
+    expect(calls).toHaveLength(2);
+    expect(waits).toEqual([1000]);
+  });
+
+  it('gives a hung list request a deadline (API_TIMEOUT_MS) and names the URL', async () => {
+    const { fetch, calls } = counting(() => new Promise<Response>(() => undefined));
+    const failure = loadBankList({ env: { ...ENV, API_TIMEOUT_MS: '20' }, fetch, sleep: noSleep });
+    await expect(failure).rejects.toThrow(/GET http:\/\/api\.test\/api\/v1\/entities\/banks failed after 3 attempts: timed out after 20 ms/);
+    expect(calls).toHaveLength(3);
+  });
+
+  it('retries a network error and a 429 on a bank detail, but never a 404', async () => {
+    let attempts = 0;
+    const flaky = counting(() => {
+      attempts += 1;
+      if (attempts === 1) throw new TypeError('fetch failed');
+      return attempts === 2 ? new Response('slow down', { status: 429 }) : okJson(DETAIL);
+    });
+    expect((await loadBankDetail('banco-x', { env: ENV, fetch: flaky.fetch, sleep: noSleep })).slug).toBe('banco-x');
+    expect(flaky.calls).toHaveLength(3);
+
+    const missing = counting(() => okJson({ detail: 'no such bank' }, 404));
+    await expect(loadBankDetail('banco-y', { env: ENV, fetch: missing.fetch, sleep: noSleep })).rejects.toThrow(
+      /failed with 404.*no such bank/,
+    );
+    expect(missing.calls).toHaveLength(1);
+  });
+
+  it('sends an identical request once per build: the list for the page and for every bank page', async () => {
+    const { fetch, calls } = counting((call) => okJson(call === 1 ? [BANK] : DETAIL));
+    const options = { env: ENV, fetch, sleep: noSleep };
+    await loadBankList(options);
+    await loadBankList(options);
+    await loadBankPages(options);
+    await loadBankDetail('banco-x', options);
+    expect(calls).toEqual(['http://api.test/api/v1/entities/banks', 'http://api.test/api/v1/entities/banks/banco-x']);
   });
 });

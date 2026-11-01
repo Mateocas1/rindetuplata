@@ -210,6 +210,46 @@
         }
       }
     },
+    "/api/v1/admin/backfill": {
+      "post": {
+        "tags": [
+          "backfill-controller"
+        ],
+        "operationId": "start",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackfillStarted"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/api-keys": {
       "get": {
         "tags": [
@@ -1072,6 +1112,23 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "BackfillStarted": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
           }
         }
       },

@@ -3,6 +3,7 @@ package ar.rindetuplata.ranking;
 import ar.rindetuplata.source.Confidence;
 import ar.rindetuplata.source.ValidationFlag;
 import ar.rindetuplata.source.ValidationRules;
+import ar.rindetuplata.source.dollar.DolarApiAdapter;
 import ar.rindetuplata.source.macro.BcraMonetariasClient;
 import ar.rindetuplata.source.macro.MacroVariable;
 import ar.rindetuplata.store.InstrumentKind;
@@ -213,18 +214,21 @@ class RankingReader {
 	}
 
 	/**
-	 * The latest usable dólar MEP quote at or before {@code asOf} (S5, L24 b): the newest capture date, ties broken by
-	 * source id. A quote with a non-positive price is skipped, since the break-even divides by it.
+	 * The latest usable dólar MEP quote at or before {@code asOf} (S5, L24 b), whatever the source (T4a, L33 a): the
+	 * newest capture date, and on the same date DolarApi (the live capture) before the ArgentinaDatos history, then the
+	 * source id so the answer is deterministic. A quote with a non-positive price is skipped, since the break-even
+	 * divides by it.
 	 */
 	Optional<MepQuote> latestDollarMep(LocalDate asOf) {
 		return jdbc.sql("""
 				select source_id, capture_date, buy, sell, updated_at
 				from dollar_quote
 				where capture_date <= :asOf and buy > 0 and sell > 0
-				order by capture_date desc, source_id
+				order by capture_date desc, (source_id = :preferred) desc, source_id
 				limit 1
 				""")
 				.param("asOf", asOf)
+				.param("preferred", DolarApiAdapter.SOURCE.id())
 				.query((rs, rowNum) -> {
 					OffsetDateTime updatedAt = rs.getObject("updated_at", OffsetDateTime.class);
 					return new MepQuote(SourceRegistry.of(rs.getString("source_id")),

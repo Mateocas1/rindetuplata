@@ -5,7 +5,7 @@
 #   deploy/e2e.sh
 #
 # It builds the API image, brings the `stack` profile up (postgres, rabbitmq, mailpit, api, web),
-# builds the site against that API, runs the Playwright spec through Caddy, and always takes the stack
+# builds the site in fixture mode, runs the Playwright spec through Caddy, and always takes the stack
 # down again — including when the smoke fails. Node dependencies and the Playwright browser have to be
 # installed already: `cd web && npm ci && npx playwright install chromium`.
 #
@@ -15,6 +15,13 @@
 # `deploy/compose.e2e.yaml` is the overlay that makes that possible without a port fight: it drops the
 # host publications of Postgres, RabbitMQ and Mailpit's SMTP port, so a local `up -d postgres` can keep
 # 5432 while the smoke runs. What is still published on the host is checked below and named when taken.
+#
+# The site is built from the recorded fixtures (`WEB_FIXTURES=1`), not against the stack's API: the stack is
+# freshly created and has ingested nothing, so the build gate (T4d: `min-ranked`, `category-rankings`) would
+# refuse a `build:api` build, rightly, and the smoke tests sign-in and alerts, not rankings. Fixture mode only
+# changes where the static pages get their data; the account pages in the browser call the API of their own
+# origin (`PUBLIC_API_URL` is unset, so Caddy proxies `/api/*` to this stack's API). The gate itself stays
+# whole: there is no switch that turns it off, and fixture mode skips only its age check.
 #
 # Environment (all optional; the defaults are the local stack):
 #   E2E_PROJECT   Compose project name of the throwaway stack     rindetuplata-e2e
@@ -89,8 +96,8 @@ compose --profile stack build api
 echo "== starting the stack (compose project '$E2E_PROJECT') =="
 compose --profile stack up -d --wait
 
-echo "== building the site against the API ($SITE_URL) =="
-(cd web && API_URL="$E2E_BASE_URL" SITE_URL="$SITE_URL" npm run build:api)
+echo "== building the site from the fixtures for $SITE_URL (the browser still talks to the stack's API) =="
+(cd web && WEB_FIXTURES=1 SITE_URL="$SITE_URL" npm run build)
 
 echo "== running the end-to-end smoke =="
 (cd web && npm run e2e)

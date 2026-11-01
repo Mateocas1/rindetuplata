@@ -12,6 +12,7 @@
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fixturesEnabled, type BuildDataOptions, type Env } from './data';
+import { buildApiGet } from './fetchRetry';
 
 export const REPORTS_FIXTURES_DIR_ENV = 'WEB_REPORTS_FIXTURES_DIR';
 
@@ -127,24 +128,6 @@ function requireApiUrl(env: Env): string {
   return baseUrl.replace(/\/+$/, '');
 }
 
-/** `API_BUILD_TOKEN`, when set, skips the API's per-address limit for this build; it never reaches an error. */
-function apiHeaders(env: Env): Record<string, string> {
-  const headers: Record<string, string> = { accept: 'application/json' };
-  const token = env.API_BUILD_TOKEN?.trim();
-  if (token) headers['x-build-token'] = token;
-  return headers;
-}
-
-async function apiGet(url: string, options: BuildDataOptions, env: Env): Promise<unknown> {
-  const doFetch = options.fetch ?? globalThis.fetch;
-  const response = await doFetch(url, { headers: apiHeaders(env) });
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`GET ${url} failed with ${response.status}: ${body.slice(0, 300)}`);
-  }
-  return response.json();
-}
-
 function reportsDirectory(options: BuildDataOptions, env: Env): string {
   const override = env[REPORTS_FIXTURES_DIR_ENV];
   if (override !== undefined && override !== '') return resolve(override);
@@ -184,7 +167,7 @@ export async function loadReportMonths(options: BuildDataOptions = {}): Promise<
     return assertList(JSON.parse(await readFile(file, 'utf8')), file);
   }
   const url = `${requireApiUrl(env)}/api/v1/reports/monthly`;
-  return assertList(await apiGet(url, options, env), url);
+  return assertList(await buildApiGet(url, options, env), url);
 }
 
 /** The report of one month. In fixture mode a month that is not recorded names the ones that are. */
@@ -210,7 +193,7 @@ export async function loadMonthlyReport(
     return assertReport(JSON.parse(raw), file);
   }
   const url = `${requireApiUrl(env)}/api/v1/reports/monthly/${month}`;
-  return assertReport(await apiGet(url, options, env), url);
+  return assertReport(await buildApiGet(url, options, env), url);
 }
 
 /** Every available month with its report, newest first: one static page each. */

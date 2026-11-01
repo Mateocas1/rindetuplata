@@ -1,0 +1,34 @@
+name: Image build
+
+# Builds the API image from the Dockerfile and never pushes it (T4e, S4, L36b). java-test.yml runs the
+# tests; this proves the image itself still builds, which nothing else in CI does.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "src/**"
+      - "pom.xml"
+      - ".github/workflows/image-build.yml"
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "src/**"
+      - "pom.xml"
+      - ".github/workflows/image-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Tests are skipped inside the Dockerfile (they need Testcontainers); java-test.yml covers them.
+      - name: Build the API image (no push)
+        run: docker build --tag rindetuplata-api:ci .
