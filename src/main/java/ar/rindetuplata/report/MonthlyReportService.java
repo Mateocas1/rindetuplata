@@ -4,6 +4,7 @@ import ar.rindetuplata.domain.MonthlyYield;
 import ar.rindetuplata.domain.MonthlyYield.Capture;
 import ar.rindetuplata.domain.MonthlyYield.Outcome;
 import ar.rindetuplata.domain.MonthlyYield.Realized;
+import ar.rindetuplata.ranking.DataVersion;
 import ar.rindetuplata.ranking.ExcludedReason;
 import ar.rindetuplata.ranking.FundClassRules;
 import ar.rindetuplata.ranking.RankedKind;
@@ -22,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -30,6 +32,13 @@ import org.springframework.stereotype.Service;
  * to be measured over the whole month. Each instrument's nominal return comes from {@link MonthlyYield}; the real
  * return is measured against the INDEC rate of the same month. Fund classes are grouped to their best class and an
  * FCI-backed wallet is reported once, as the wallet, the way the ranking does.
+ *
+ * <p>Building a month reads the stored history around it, which grows with every backfill, so the answers are cached
+ * (T4a, L33 a) in bounded in-process LRUs: the month list under the {@linkplain DataVersion data version} and
+ * today's date (a month closes at midnight), a month's report under the data version and the month (a closed month
+ * stays closed). The version is read once per call before anything is computed, so an entry is never labelled newer
+ * than the data it holds; a write that lands in between only makes the next call recompute. A failure is never
+ * cached, and concurrent misses of one key compute independently (the results are equal, the last write wins).
  */
 @Service
 public class MonthlyReportService {
@@ -55,15 +64,38 @@ public class MonthlyReportService {
 	private final MonthlyReportRepository repository;
 	private final FciBackedWalletCatalog fciWallets;
 	private final Clock clock;
+	private final DataVersion dataVersion;
+	private final LruCache<ListKey, List<MonthSummary>> monthLists;
+	private final LruCache<ReportKey, MonthlyReport> reports;
 
-	public MonthlyReportService(MonthlyReportRepository repository, FciBackedWalletCatalog fciWallets, Clock clock) {
+	private record ListKey(String dataVersion, LocalDate today) {
+	}
+
+	private record ReportKey(String dataVersion, YearMonth month) {
+	}
+
+	public MonthlyReportService(MonthlyReportRepository repository, FciBackedWalletCatalog fciWallets, Clock clock,
+			DataVersion dataVersion,
+			@Value("${rindetuplata.report.cache-max-entries}") int cacheMaxEntries) {
 		this.repository = repository;
 		this.fciWallets = fciWallets;
 		this.clock = clock;
+		this.dataVersion = dataVersion;
+		this.monthLists = new LruCache<>(cacheMaxEntries);
+		this.reports = new LruCache<>(cacheMaxEntries);
 	}
 
 	/** The reportable months, newest first. */
 	public List<MonthSummary> months() {
+		ListKey key = new ListKey(dataVersion.current(), LocalDate.now(clock));
+		return monthLists.get(key).orElseGet(() -> {
+			List<MonthSummary> built = List.copyOf(buildMonths());
+			monthLists.put(key, built);
+			return built;
+		});
+	}
+
+	private List<MonthSummary> buildMonths() {
 		Optional<LocalDate> earliest = repository.earliestHistory();
 		if (earliest.isEmpty()) {
 			return List.of();
@@ -85,6 +117,17 @@ public class MonthlyReportService {
 
 	/** The report of a month, or {@link MonthlyReportUnavailableException} saying which condition fails. */
 	public MonthlyReport report(YearMonth month) {
+		ReportKey key = new ReportKey(dataVersion.current(), month);
+		Optional<MonthlyReport> cached = reports.get(key);
+		if (cached.isPresent()) {
+			return cached.get();
+		}
+		MonthlyReport built = buildReport(month);
+		reports.put(key, built);
+		return built;
+	}
+
+	private MonthlyReport buildReport(YearMonth month) {
 		if (!isClosed(month)) {
 			throw new MonthlyReportUnavailableException(MonthlyReportUnavailableException.Reason.NOT_CLOSED,
 					"Month " + month + " is not a closed month: its report appears after it ends");

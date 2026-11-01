@@ -50,7 +50,7 @@ class SourceClientsTest {
     }
 
     private SourcesProperties properties(Duration readTimeout) {
-        return new SourcesProperties(Duration.ofSeconds(2), readTimeout, "rindetuplata-test", baseUrl, baseUrl, baseUrl,
+        return new SourcesProperties(Duration.ofSeconds(2), readTimeout, "rindetuplata-test", baseUrl, baseUrl, baseUrl, baseUrl,
                 baseUrl, baseUrl, 24);
     }
 

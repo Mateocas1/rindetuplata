@@ -20,10 +20,16 @@ import org.springframework.web.client.RestClient;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 
-/** BCRA monetary statistics v4: {@code GET /monetarias/{id}?limit=n}. Values arrive as percents. */
-public class BcraMonetariasClient implements MacroSource {
+/**
+ * BCRA monetary statistics v4: {@code GET /monetarias/{id}?limit=n} and, by date range,
+ * {@code ?desde=yyyy-MM-dd&hasta=yyyy-MM-dd&limit=3000}. Values arrive as percents.
+ */
+public class BcraMonetariasClient implements MacroSource, MacroHistorySource {
 
     public static final SourceRef SOURCE = new SourceRef("bcra-estadisticas-monetarias", "BCRA Statistics", true);
+
+    /** The largest {@code limit} the API accepts; 3001 is a 400 "El límite no puede superar los 3000 registros.". */
+    static final int MAX_LIMIT = 3000;
 
     private final RestClient client;
     private final Clock clock;
@@ -46,6 +52,22 @@ public class BcraMonetariasClient implements MacroSource {
         try {
             return parse(SourceHttp.get(client, SOURCE, "/monetarias/" + variable.bcraId() + "?limit=" + limit),
                     variable, fetchedAt);
+        } catch (SourceRequestException e) {
+            throw bcraError(e);
+        }
+    }
+
+    /**
+     * The observations of {@code variable} between {@code from} and {@code to}, both inclusive, in one call (T4a).
+     * The API takes {@code desde} and {@code hasta} and caps {@code limit} at {@value #MAX_LIMIT}, which a 366-day
+     * range of a daily series never reaches (probed 2026-11-01). An inverted range is the typed {@link BcraApiException}.
+     */
+    @Override
+    public List<MacroObservation> fetchRange(MacroVariable variable, LocalDate from, LocalDate to) {
+        Instant fetchedAt = clock.instant();
+        try {
+            return parse(SourceHttp.get(client, SOURCE, "/monetarias/" + variable.bcraId() + "?desde=" + from
+                    + "&hasta=" + to + "&limit=" + MAX_LIMIT), variable, fetchedAt);
         } catch (SourceRequestException e) {
             throw bcraError(e);
         }
