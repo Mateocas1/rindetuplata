@@ -58,7 +58,11 @@ Each spec quotes the accepted recommendation (L2) verbatim; the indented items q
 | T4c | S4 | Backup script + timer + tested restore; compose memory limits and log rotation (L33c) | worker | done | 818d6cc, cac1f93 |
 | T4d | S4 | Web build: freshness and minimum-data gate, one memoized ranking snapshot, fetch timeout and retry (L36a) | worker | done | 891a71b, cac1f93 |
 | T4e | S4 | CI: Dockerfile build, deploy script tests, Dependabot (L36b) | worker | done | 7c0c13d, cac1f93 |
-| T7 | S9 | Closing audit round 1 (`AGENTS.md`, Closing audit loop); a round with no qualifying finding ends the loop | parent + explorers | pending | |
+| T7 | S9 | Closing audit round 1 (`AGENTS.md`, Closing audit loop); a round with no qualifying finding ends the loop | parent + explorers | in_progress | |
+| T8a | S6, S9 | Wave T8 (audit round 1): a month is reportable only when the daily rate snapshots (plazo fijo, wallet, crypto) measure at least one instrument over it; a funds-only month (after a backfill) is not listed and its report is a 404 NO_COVERAGE (L38) | parent | pending | |
+| T8b | S1, S9 | Wave T8: the web's `days` limit and copy follow the API cap of 1825 (L38) | parent | pending | |
+| T8c | S4, S9 | Wave T8: Dependabot drops the docker entry for `/deploy/rebuilder` (no Dockerfile there) and `docs/deploy.md` says what is watched (L38) | parent | pending | |
+| T9 | S9 | Closing audit round 2, after wave T8 | parent + explorers | pending | |
 | T5a | S5 | More FCI-backed wallets, class names confirmed against live data (L24) | worker | done | 1c06ddb |
 | T5b | S5 | Dollar MEP break-even devaluation in the API and the UI (L24) | worker | done | 77c6c05 |
 | T6a | S6 | Monthly "who beat inflation" report page (L29) | worker | done | 973335e, ceefefb |
