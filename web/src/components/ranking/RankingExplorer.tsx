@@ -23,6 +23,7 @@ import { ApiProblem, api } from '../../lib/api';
 import { formatDays, formatInteger, formatMoney } from '../../lib/format';
 import { KIND_OPTIONS } from '../../lib/labels';
 import {
+  MAX_DAYS,
   parseRankingQuery,
   serializeRankingQuery,
   tryParseAmount,
@@ -95,7 +96,7 @@ export default function RankingExplorer({
   const amountError =
     amountTouched && parsedAmount === null ? 'Escribí un monto en pesos mayor a 0.' : null;
   const daysError =
-    daysTouched && parsedDays === null ? 'Escribí un plazo en días, entre 1 y 3650.' : null;
+    daysTouched && parsedDays === null ? `Escribí un plazo en días, entre 1 y ${MAX_DAYS}.` : null;
   const noKinds = checkedKinds.length === 0;
   const invalidSelection = noKinds || parsedAmount === null || parsedDays === null;
 
@@ -252,7 +253,7 @@ export default function RankingExplorer({
                   type="number"
                   inputMode="numeric"
                   min="1"
-                  max="3650"
+                  max={MAX_DAYS}
                   step="1"
                   value={daysText}
                   aria-invalid={daysError !== null}
