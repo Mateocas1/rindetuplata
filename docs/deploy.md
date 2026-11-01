@@ -259,7 +259,7 @@ docker compose -f compose.yaml -f deploy/compose.vps.yaml \
   IPv4 clients are counted per address. The API tracks at most
   `RINDETUPLATA_API_RATELIMIT_MAXTRACKEDADDRESSES` clients (default 100000): when the table is full it
   first drops the buckets that have refilled completely and, if it is still full, answers the same 429 to
-  any client it does not know yet, while the ones it already tracks keep being served. That fail-closed choice is a trade-off: a sustained flood from many addresses can keep new visitors out for as long as it lasts (each refused visitor gets a `Retry-After` of up to 60 s), while visitors already being served are unaffected. `days` is capped at 1825 and
+  any client it does not know yet, while the ones it already tracks keep being served. That fail-closed choice is a trade-off: a sustained flood from many addresses can keep new visitors out for as long as it lasts (each refused visitor gets a `Retry-After` of up to 60 s), while visitors already being served are unaffected. `clientOf` takes at most 100 ids (400 beyond that, repeats counted; the MCP tools refuse the same input), `POST /mcp` reads at most 64 KiB of body (413 beyond that), `days` is capped at 1825 and
   `amount` at 1000000000000 (a 400 naming the parameter), because the simulation cost grows with `days`.
 - **API keys and plans (T6d).** A request with a valid `X-Api-Key` on the public read API is limited by the plan of
   its key instead of its address: a bucket per key and a quota of counted requests per Argentine day

@@ -26,9 +26,21 @@ final class RankingRequest {
 
 	static RankingQuery query(BigDecimal amount, Integer days, List<Long> clientOf, List<RankedKind> kind,
 			LocalDate asOf, Integer limit, Boolean groupFunds, Clock clock) {
-		return new RankingQuery(amount(amount), days(days), clientOf == null ? Set.of() : Set.copyOf(clientOf),
+		return new RankingQuery(amount(amount), days(days), clientOf(clientOf),
 				kind == null ? Set.of() : Set.copyOf(kind), asOf == null ? LocalDate.now(clock) : asOf, limit(limit),
 				groupFunds == null || groupFunds);
+	}
+
+	/** The client banks as a set; the raw list is counted first, so repeated ids cannot get past the cap. */
+	static Set<Long> clientOf(List<Long> clientOf) {
+		if (clientOf == null) {
+			return Set.of();
+		}
+		if (clientOf.size() > RankingQuery.MAX_CLIENT_OF) {
+			throw ApiException.badRequest("clientOf", "Parameter 'clientOf' must have at most "
+					+ RankingQuery.MAX_CLIENT_OF + " values: " + clientOf.size());
+		}
+		return Set.copyOf(clientOf);
 	}
 
 	static Money amount(BigDecimal amount) {

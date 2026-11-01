@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -47,11 +49,20 @@ class McpArgumentEquivalenceApiTest extends McpIntegrationTest {
 		cases.add(new Case("kind", "PLAZO_FIJO", List.of("PLAZO_FIJO")));
 		cases.add(new Case("kind", "BOGUS", List.of("BOGUS")));
 		cases.add(new Case("kind", "plazo_fijo", List.of("plazo_fijo")));
+		cases.add(clientOf(RankingQuery.MAX_CLIENT_OF, false));
+		cases.add(clientOf(RankingQuery.MAX_CLIENT_OF + 1, false));
+		cases.add(clientOf(RankingQuery.MAX_CLIENT_OF + 1, true));
 		cases.add(Case.of("asOf", "2026-10-14"));
 		cases.add(Case.of("asOf", "2026-13-45"));
 		cases.add(Case.of("asOf", "14/10/2026"));
 		cases.add(Case.of("groupFunds", false));
 		return cases;
+	}
+
+	/** {@code values} client ids, all different or all the same: the cap counts the list as sent. */
+	private static Case clientOf(int values, boolean repeated) {
+		List<Integer> ids = IntStream.rangeClosed(1, values).map(i -> repeated ? 1 : i).boxed().toList();
+		return new Case("clientOf", ids.stream().map(String::valueOf).collect(Collectors.joining(",")), ids);
 	}
 
 	private static List<Case> simulationCases() {
@@ -79,6 +90,29 @@ class McpArgumentEquivalenceApiTest extends McpIntegrationTest {
 
 				assertSameVerdict("get_ranking " + argument, rest, tool);
 			}
+		}
+	}
+
+	@Test
+	void moreClientBanksThanTheCapAreRefusedByBothAndTheCapItselfIsAccepted() throws Exception {
+		try (McpSyncClient client = client()) {
+			client.initialize();
+			for (boolean repeated : new boolean[] { false, true }) {
+				Case over = clientOf(RankingQuery.MAX_CLIENT_OF + 1, repeated);
+				MockHttpServletResponse rest = mockMvc.perform(get("/api/v1/ranking").param("clientOf", over.value()))
+						.andReturn().getResponse();
+				CallToolResult tool = call(client, "get_ranking", Map.of("clientOf", over.json()));
+
+				assertThat(rest.getStatus()).isEqualTo(400);
+				assertThat(tool.isError()).isTrue();
+				assertThat(structured(tool).get("error").asString()).isEqualTo("invalid_argument");
+				assertThat(structured(tool).get("argument").asString()).isEqualTo("clientOf");
+				assertThat(text(tool)).hasSizeLessThan(400);
+			}
+			Case atCap = clientOf(RankingQuery.MAX_CLIENT_OF, false);
+			assertThat(mockMvc.perform(get("/api/v1/ranking").param("clientOf", atCap.value())).andReturn()
+					.getResponse().getStatus()).isEqualTo(200);
+			assertThat(call(client, "get_ranking", Map.of("clientOf", atCap.json())).isError()).isNotEqualTo(true);
 		}
 	}
 
