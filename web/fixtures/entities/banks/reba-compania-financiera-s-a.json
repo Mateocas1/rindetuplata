@@ -1,0 +1,28 @@
+{
+  "slug": "reba-compania-financiera-s-a",
+  "name": "REBA COMPAÑIA FINANCIERA S.A.",
+  "instrumentId": "29",
+  "sourceId": "argentinadatos-plazo-fijo",
+  "nonClientTna": 0.24,
+  "clientTna": 0.24,
+  "captureDate": "2026-10-14",
+  "dataDate": "2026-10-14",
+  "from": "2026-07-17",
+  "to": "2026-10-14",
+  "series": [
+    {
+      "captureDate": "2026-10-12",
+      "nonClientTna": 0.23
+    },
+    {
+      "captureDate": "2026-10-13",
+      "nonClientTna": 0.24
+    },
+    {
+      "captureDate": "2026-10-14",
+      "nonClientTna": 0.24
+    }
+  ],
+  "bestDays": 2,
+  "observedDays": 3
+}

@@ -1,0 +1,28 @@
+{
+  "slug": "banco-voii-s-a",
+  "name": "BANCO VOII S.A.",
+  "instrumentId": "26",
+  "sourceId": "argentinadatos-plazo-fijo",
+  "nonClientTna": 0.235,
+  "clientTna": null,
+  "captureDate": "2026-10-14",
+  "dataDate": "2026-10-14",
+  "from": "2026-07-17",
+  "to": "2026-10-14",
+  "series": [
+    {
+      "captureDate": "2026-10-12",
+      "nonClientTna": 0.235
+    },
+    {
+      "captureDate": "2026-10-13",
+      "nonClientTna": 0.235
+    },
+    {
+      "captureDate": "2026-10-14",
+      "nonClientTna": 0.235
+    }
+  ],
+  "bestDays": 1,
+  "observedDays": 3
+}

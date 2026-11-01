@@ -21,7 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The per-address limit of the public read endpoints (T1a, S1): {@code GET /api/v1/ranking},
- * {@code /api/v1/simulations}, {@code /api/v1/instruments} and {@code /api/v1/instruments/**}, the same paths the
+ * {@code /api/v1/simulations}, {@code /api/v1/instruments}, {@code /api/v1/instruments/**} and {@code /api/v1/entities/**}, the same paths the
  * security chain leaves open. It runs inside the security chain, after CORS so a refused browser call still carries
  * its CORS headers, and answers a 429 {@code ProblemDetail} with {@code Retry-After}, written by hand because no
  * {@code HandlerExceptionResolver} runs here. The address is Tomcat's remote address, resolved from
@@ -39,7 +39,9 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
 			PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/v1/ranking"),
 			PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/v1/simulations"),
 			PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/v1/instruments"),
-			PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/v1/instruments/**"));
+			PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/v1/instruments/**"),
+			PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/v1/entities"),
+			PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/api/v1/entities/**"));
 
 	private final ApiRateLimiter limiter;
 

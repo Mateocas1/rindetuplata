@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "banco-bbva-argentina-s-a",
+    "name": "BANCO BBVA ARGENTINA S.A.",
+    "instrumentId": "3",
+    "sourceId": "argentinadatos-plazo-fijo",
+    "nonClientTna": null,
+    "clientTna": 0.3,
+    "captureDate": "2026-10-14",
+    "dataDate": "2026-10-14"
+  },
+  {
+    "slug": "banco-bica-s-a",
+    "name": "BANCO BICA S.A.",
+    "instrumentId": "11",
+    "sourceId": "argentinadatos-plazo-fijo",
+    "nonClientTna": 0.23,
+    "clientTna": 0.21,
+    "captureDate": "2026-10-14",
+    "dataDate": "2026-10-14"
+  },
+  {
+    "slug": "banco-cmf-s-a",
+    "name": "BANCO CMF S.A.",
+    "instrumentId": "12",
+    "sourceId": "argentinadatos-plazo-fijo",
+    "nonClientTna": 0.235,
+    "clientTna": null,
+    "captureDate": "2026-10-14",
+    "dataDate": "2026-10-14"
+  },
+  {
+    "slug": "banco-de-galicia-y-buenos-aires-s-a",
+    "name": "BANCO DE GALICIA Y BUENOS AIRES S.A.",
+    "instrumentId": "2",
+    "sourceId": "argentinadatos-plazo-fijo",
+    "nonClientTna": null,
+    "clientTna": 0.29,
+    "captureDate": "2026-10-14",
+    "dataDate": "2026-10-14"
+  },
+  {
+    "slug": "banco-voii-s-a",
+    "name": "BANCO VOII S.A.",
+    "instrumentId": "26",
+    "sourceId": "argentinadatos-plazo-fijo",
+    "nonClientTna": 0.235,
+    "clientTna": null,
+    "captureDate": "2026-10-14",
+    "dataDate": "2026-10-14"
+  },
+  {
+    "slug": "reba-compania-financiera-s-a",
+    "name": "REBA COMPAÑIA FINANCIERA S.A.",
+    "instrumentId": "29",
+    "sourceId": "argentinadatos-plazo-fijo",
+    "nonClientTna": 0.24,
+    "clientTna": 0.24,
+    "captureDate": "2026-10-14",
+    "dataDate": "2026-10-14"
+  }
+]
