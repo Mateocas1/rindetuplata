@@ -1,0 +1,156 @@
+{
+  "month": "2026-10",
+  "from": "2026-10-01",
+  "to": "2026-10-31",
+  "inflation": {
+    "index": "INDEC_CPI_MONTHLY",
+    "value": 0.021,
+    "observationDate": "2026-10-31",
+    "confidence": "OFFICIAL_AUTOMATIC",
+    "source": {
+      "id": "bcra-estadisticas-monetarias",
+      "displayName": "BCRA Statistics",
+      "official": true
+    }
+  },
+  "rows": [
+    {
+      "id": "9001",
+      "kind": "CRYPTO",
+      "name": "Cripto de ejemplo",
+      "entity": "Plataforma de ejemplo",
+      "source": {
+        "id": "synthetic-crypto",
+        "displayName": "Fuente de ejemplo",
+        "official": false
+      },
+      "nominal": 0.035037,
+      "real": 0.013748,
+      "beatInflation": true,
+      "foldedClasses": 0,
+      "coverage": {
+        "days": 31,
+        "total": 31
+      }
+    },
+    {
+      "id": "9002",
+      "kind": "WALLET",
+      "name": "Billetera de ejemplo",
+      "entity": "Entidad de ejemplo",
+      "source": {
+        "id": "synthetic-wallets",
+        "displayName": "Fuente de ejemplo",
+        "official": false
+      },
+      "nominal": 0.03147,
+      "real": 0.010254,
+      "beatInflation": true,
+      "foldedClasses": 0,
+      "coverage": {
+        "days": 31,
+        "total": 31
+      }
+    },
+    {
+      "id": "9003",
+      "kind": "PLAZO_FIJO",
+      "name": "Banco de ejemplo",
+      "entity": "Banco de ejemplo",
+      "source": {
+        "id": "synthetic-banks",
+        "displayName": "Fuente de ejemplo",
+        "official": false
+      },
+      "nominal": 0.025479,
+      "real": 0.004387,
+      "beatInflation": true,
+      "foldedClasses": 0,
+      "coverage": {
+        "days": 31,
+        "total": 31
+      }
+    },
+    {
+      "id": "9004",
+      "kind": "FUND",
+      "name": "Fondo de ejemplo - Clase A",
+      "entity": "Fondo de ejemplo",
+      "source": {
+        "id": "synthetic-funds",
+        "displayName": "Fuente de ejemplo",
+        "official": false
+      },
+      "nominal": 0.0215,
+      "real": 0.00049,
+      "beatInflation": true,
+      "foldedClasses": 2,
+      "coverage": {
+        "days": 30,
+        "total": 31
+      }
+    },
+    {
+      "id": "9005",
+      "kind": "PLAZO_FIJO",
+      "name": "Otro banco de ejemplo",
+      "entity": "Otro banco de ejemplo",
+      "source": {
+        "id": "synthetic-banks",
+        "displayName": "Fuente de ejemplo",
+        "official": false
+      },
+      "nominal": 0.020384,
+      "real": -0.000604,
+      "beatInflation": false,
+      "foldedClasses": 0,
+      "coverage": {
+        "days": 31,
+        "total": 31
+      }
+    }
+  ],
+  "leftOut": [
+    {
+      "id": "9101",
+      "kind": "WALLET",
+      "name": "Billetera sin historial de ejemplo",
+      "entity": "Entidad de ejemplo",
+      "source": {
+        "id": "synthetic-wallets",
+        "displayName": "Fuente de ejemplo",
+        "official": false
+      },
+      "reason": "NOT_CAPTURED_AT_START"
+    },
+    {
+      "id": "9102",
+      "kind": "FUND",
+      "name": "Fondo con huecos de ejemplo - Clase A",
+      "entity": "Fondo con huecos de ejemplo",
+      "source": {
+        "id": "synthetic-funds",
+        "displayName": "Fuente de ejemplo",
+        "official": false
+      },
+      "reason": "MISSING_END_QUOTE"
+    },
+    {
+      "id": "9103",
+      "kind": "PLAZO_FIJO",
+      "name": "Banco de ejemplo tardío",
+      "entity": "Banco de ejemplo tardío",
+      "source": {
+        "id": "synthetic-banks",
+        "displayName": "Fuente de ejemplo",
+        "official": false
+      },
+      "reason": "NOT_CAPTURED_AT_START"
+    }
+  ],
+  "totals": {
+    "ranked": 5,
+    "beatInflation": 4,
+    "leftOut": 3
+  }
+}

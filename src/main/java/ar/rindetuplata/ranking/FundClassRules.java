@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
  * source publishes no currency or eligibility field (L7): classes in a foreign currency, whose cuotaparte is not
  * pesos, and the tax-regularization classes of Ley 27.743.
  */
-final class FundClassRules {
+public final class FundClassRules {
 
 	/** Whole words on a normalized key (lower case, no accents): USD, U$S, dolar, dolares. */
 	private static final Pattern FOREIGN_CURRENCY = Pattern
@@ -22,7 +22,7 @@ final class FundClassRules {
 	}
 
 	/** The reason this class is not ranked, if any. The currency is read from the fund name, not the class suffix. */
-	static Optional<ExcludedReason> exclusion(String className) {
+	public static Optional<ExcludedReason> exclusion(String className) {
 		if (FOREIGN_CURRENCY.matcher(FundClassKey.fundOf(className)).find()) {
 			return Optional.of(ExcludedReason.FOREIGN_CURRENCY);
 		}
