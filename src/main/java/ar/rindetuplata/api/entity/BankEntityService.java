@@ -39,9 +39,10 @@ public class BankEntityService {
 		List<BankRow> banks = repository.banks();
 		Map<Long, String> slugs = slugs(banks);
 		Map<Long, LatestRow> latest = latestById(today);
+		Map<String, LocalDate> newest = newestCaptureBySource(banks, latest);
 		return banks.stream()
 				.filter(bank -> latest.containsKey(bank.id()))
-				.map(bank -> rates(bank, slugs.get(bank.id()), latest.get(bank.id())))
+				.map(bank -> rates(bank, slugs.get(bank.id()), latest.get(bank.id()), newest))
 				.sorted(Comparator.comparing(BankRatesView::slug))
 				.toList();
 	}
@@ -65,15 +66,35 @@ public class BankEntityService {
 				.toList();
 
 		LatestRow row = latest.get(bank.id());
+		boolean current = isCurrent(bank, row, newestCaptureBySource(banks, latest));
 		return new BankDetailView(slug, bank.name(), Long.toString(bank.id()), bank.sourceId(),
 				JsonScales.rate(row.nonClientTna()), JsonScales.rate(row.clientTna()), row.captureDate(),
-				row.dataDate(), from, today, series, standing.bestDays(), standing.observedDays());
+				row.dataDate(), current, from, today, series, standing.bestDays(), standing.observedDays());
 	}
 
-	private static BankRatesView rates(BankRow bank, String slug, LatestRow row) {
+	private static BankRatesView rates(BankRow bank, String slug, LatestRow row, Map<String, LocalDate> newest) {
 		return new BankRatesView(slug, bank.name(), Long.toString(bank.id()), bank.sourceId(),
 				JsonScales.rate(row.nonClientTna()), JsonScales.rate(row.clientTna()), row.captureDate(),
-				row.dataDate());
+				row.dataDate(), isCurrent(bank, row, newest));
+	}
+
+	/**
+	 * The newest capture day among the shown snapshots of each source's banks: the day the source last reported,
+	 * as the ranking's latest rates are relative to the source's newest capture and not to today.
+	 */
+	private static Map<String, LocalDate> newestCaptureBySource(List<BankRow> banks, Map<Long, LatestRow> latest) {
+		Map<String, LocalDate> newest = new HashMap<>();
+		for (BankRow bank : banks) {
+			LatestRow row = latest.get(bank.id());
+			if (row != null) {
+				newest.merge(bank.sourceId(), row.captureDate(), (a, b) -> a.isAfter(b) ? a : b);
+			}
+		}
+		return newest;
+	}
+
+	private static boolean isCurrent(BankRow bank, LatestRow row, Map<String, LocalDate> newest) {
+		return row.captureDate().equals(newest.get(bank.sourceId()));
 	}
 
 	private static Map<Long, String> slugs(List<BankRow> banks) {

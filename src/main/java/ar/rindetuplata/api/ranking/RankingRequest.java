@@ -1,6 +1,7 @@
 package ar.rindetuplata.api.ranking;
 
 import ar.rindetuplata.api.ApiException;
+import ar.rindetuplata.api.SupportedDates;
 import ar.rindetuplata.domain.Money;
 import ar.rindetuplata.ranking.RankedKind;
 import ar.rindetuplata.ranking.RankingQuery;
@@ -27,7 +28,8 @@ final class RankingRequest {
 	static RankingQuery query(BigDecimal amount, Integer days, List<Long> clientOf, List<RankedKind> kind,
 			LocalDate asOf, Integer limit, Boolean groupFunds, Clock clock) {
 		return new RankingQuery(amount(amount), days(days), clientOf(clientOf),
-				kind == null ? Set.of() : Set.copyOf(kind), asOf == null ? LocalDate.now(clock) : asOf, limit(limit),
+				kind == null ? Set.of() : Set.copyOf(kind),
+				asOf == null ? LocalDate.now(clock) : SupportedDates.checked("asOf", asOf), limit(limit),
 				groupFunds == null || groupFunds);
 	}
 

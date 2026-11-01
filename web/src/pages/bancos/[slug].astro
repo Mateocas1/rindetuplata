@@ -1,6 +1,7 @@
 ---
 /**
- * Bank entity page (T6b, S6): today's non-client and client plazo fijo TNA, the 90-day chart (the instrument history
+ * Bank entity page (T6b, S6; T10a): today's (or, for a bank whose last rate is older than its source's newest
+ * capture, the last published) non-client and client plazo fijo TNA, the 90-day chart (the instrument history
  * chart, unchanged), how many of the days we saw the bank it paid the highest non-client TNA, and the source and
  * dates. Built at build time with no island; the bank's instrument page is linked only when one was built (D1).
  */
@@ -8,6 +9,7 @@ import HistoryChart from '../../components/instrument/HistoryChart.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { MissingHistoryRecording } from '../../lib/data';
 import {
+  bankPageCopy,
   bestRateSentence,
   loadBankHistory,
   loadBankPages,
@@ -49,7 +51,6 @@ try {
 const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(Astro.url.pathname, site);
 const source = sourceName(bank.sourceId);
-const nonClient = bank.nonClientTna === null ? null : formatPercent(bank.nonClientTna);
 const client = bank.clientTna === null ? null : formatPercent(bank.clientTna);
 const instrumentPage = instrumentSlugs.includes(instrumentSlug(bank.name, bank.instrumentId))
   ? `/instrumentos/${instrumentSlug(bank.name, bank.instrumentId)}/`
@@ -58,15 +59,7 @@ const provenance =
   `${source} · dato del ${formatDate(bank.dataDate)}` +
   (bank.captureDate === bank.dataDate ? '' : ` · captura del ${formatDate(bank.captureDate)}`);
 
-const title =
-  nonClient === null
-    ? `${bank.name}: plazo fijo, tasa para clientes | rindetuplata`
-    : `${bank.name}: plazo fijo ${nonClient} TNA hoy | rindetuplata`;
-const description =
-  (nonClient === null
-    ? `${bank.name} no ofrece plazo fijo a no clientes hoy${client === null ? '' : ` y paga ${client} TNA a sus clientes`}.`
-    : `Cuánto paga hoy ${bank.name} por un plazo fijo: ${nonClient} TNA para no clientes${client === null ? '' : ` y ${client} TNA para clientes`}.`) +
-  ` Mirá su tasa de los últimos 90 días y cuántas veces fue la mejor, según ${source}, dato del ${formatDate(bank.dataDate)}.`;
+const { title, description, headline } = bankPageCopy(bank);
 
 const jsonLd = breadcrumbJsonLd([
   { name: 'Inicio', url: new URL('/', site).href },
@@ -99,13 +92,7 @@ const linkClass =
       </div>
 
       <div class="card max-w-prose border-s-2 border-s-accent p-6">
-        {
-          nonClient !== null ? (
-            <p class="type-section">Hoy: {nonClient} TNA para no clientes</p>
-          ) : (
-            <p class="type-section">Hoy no ofrece plazo fijo a no clientes</p>
-          )
-        }
+        <p class="type-section">{headline}</p>
         {client !== null && <p class="type-body mt-2">{client} TNA para clientes del banco</p>}
         <p class="type-data text-muted mt-4">{provenance}</p>
       </div>

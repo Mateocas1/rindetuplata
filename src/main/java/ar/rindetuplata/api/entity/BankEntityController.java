@@ -27,7 +27,8 @@ public class BankEntityController {
 	@Operation(summary = "Banks with today's plazo fijo rates", description = """
 			Every bank that has a valid plazo fijo snapshot at or before today, sorted by slug, with its latest \
 			non-client and client TNA (fractions, scale 6) and the capture and data dates of that snapshot. \
-			A rate is null when the bank does not publish it.""")
+			A rate is null when the bank does not publish it. current is false when the source captured a later day \
+			without a valid rate for the bank: its rates are then the last published ones, not today's.""")
 	List<BankRatesView> list() {
 		return banks.banks();
 	}

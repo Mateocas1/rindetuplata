@@ -50,6 +50,30 @@ function visibleText(page: string): string {
     .replace(/\s+/g, ' ');
 }
 
+/** The inner HTML of the `<section>` labelled by `id`. */
+function section(page: string, id: string): string {
+  const match = new RegExp(`<section[^>]*aria-labelledby="${id}"[^>]*>([\\s\\S]*?)</section>`).exec(page);
+  expect(match, `section ${id}`).not.toBeNull();
+  return match![1];
+}
+
+function rowNames(fragment: string): string[] {
+  return [...fragment.matchAll(/<th[^>]*scope="row"[^>]*>([\s\S]*?)<\/th>/g)].map((match) =>
+    visibleText(match[1]).trim(),
+  );
+}
+
+/** Everything that says anything on a page: title, description, JSON-LD and the visible article. */
+function wordsOf(page: string): string {
+  const head = [
+    /<title>([\s\S]*?)<\/title>/.exec(page)?.[1] ?? '',
+    /<meta name="description" content="([^"]*)"/.exec(page)?.[1] ?? '',
+    ...[...page.matchAll(/<meta property="og:(?:title|description)" content="([^"]*)"/g)].map((match) => match[1]),
+    ...[...page.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((match) => match[1]),
+  ];
+  return [...head, visibleText(/<article[\s\S]*<\/article>/.exec(page)?.[0] ?? '')].join(' ');
+}
+
 function htmlFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const full = join(directory, entry.name);
@@ -90,16 +114,33 @@ describe('/bancos/', () => {
       expect(page, bank.slug).toContain(`href="/bancos/${bank.slug}/"`);
       expect(visibleText(page), bank.slug).toContain(bank.name);
     }
-    const rows = [...page.matchAll(/<th[^>]*scope="row"[^>]*>([\s\S]*?)<\/th>/g)].map((match) =>
-      visibleText(match[1]).trim(),
-    );
-    expect(rows).toHaveLength(banks.length);
-    // REBA pays 24,00% and leads; the two banks with no non-client rate come last.
+    const rows = rowNames(section(page, 'bancos-de-hoy'));
+    expect(rows).toHaveLength(banks.filter((bank) => bank.current).length);
+    // REBA pays 24,00% and leads; the two current banks with no non-client rate come last.
     expect(rows[0]).toContain('REBA COMPAÑIA FINANCIERA S.A.');
     expect(rows.slice(-2).join(' ')).toContain('BANCO BBVA ARGENTINA S.A.');
     expect(rows.slice(-2).join(' ')).toContain('BANCO DE GALICIA Y BUENOS AIRES S.A.');
     expect(visibleText(page)).toContain(formatPercent(0.24));
     expect(visibleText(page)).toContain('No ofrece a no clientes');
+  });
+
+  it('keeps a bank whose last rate is older apart from "Las tasas de hoy", after it, with its rate and date', () => {
+    const page = html('bancos/index.html');
+    const stale = banks.filter((bank) => !bank.current);
+    expect(stale.map((bank) => bank.slug)).toEqual(['banco-voii-s-a']);
+
+    const today = section(page, 'bancos-de-hoy');
+    expect(visibleText(today)).toContain('Las tasas de hoy');
+    expect(today).not.toContain('href="/bancos/banco-voii-s-a/"');
+    expect(visibleText(today)).not.toContain('BANCO VOII');
+
+    const apart = section(page, 'bancos-anteriores');
+    expect(page.indexOf('id="bancos-anteriores"')).toBeGreaterThan(page.indexOf('id="bancos-de-hoy"'));
+    expect(visibleText(apart)).not.toMatch(/\bhoy\b/i);
+    expect(rowNames(apart)).toEqual(['BANCO VOII S.A.']);
+    expect(apart).toContain('href="/bancos/banco-voii-s-a/"');
+    expect(visibleText(apart)).toContain(formatPercent(0.235));
+    expect(visibleText(apart)).toContain(formatDate('2026-10-12'));
   });
 
   it('states the source and the date, and links the methodology', () => {
@@ -131,7 +172,7 @@ describe('/bancos/<slug>/', () => {
   });
 
   it('has the bank name as H1, today\'s non-client rate, the client rate and the best-rate sentence', () => {
-    for (const detail of details.filter((bank) => bank.nonClientTna !== null)) {
+    for (const detail of details.filter((bank) => bank.nonClientTna !== null && bank.current)) {
       const page = html(`bancos/${detail.slug}/index.html`);
       const h1 = /<h1 class="type-display[^"]*">([\s\S]*?)<\/h1>/.exec(page);
       expect(h1, detail.slug).not.toBeNull();
@@ -150,6 +191,31 @@ describe('/bancos/<slug>/', () => {
     expect(visibleText(html('bancos/reba-compania-financiera-s-a/index.html'))).toContain(
       'Fue la mejor tasa 2 de los 3 días que la vimos en los últimos 90.',
     );
+  });
+
+  it('says "hoy" on a current bank page: title, description and headline', () => {
+    const page = html('bancos/reba-compania-financiera-s-a/index.html');
+    expect(page).toContain('<title>REBA COMPAÑIA FINANCIERA S.A.: plazo fijo 24,00% TNA hoy | rindetuplata</title>');
+    expect(wordsOf(page)).toContain('Cuánto paga hoy REBA COMPAÑIA FINANCIERA S.A.');
+    expect(visibleText(page)).toContain('Hoy: 24,00% TNA para no clientes');
+  });
+
+  it('shows the last published rate with its date on a bank that is not current, and never says "hoy"', () => {
+    const detail = details.find((bank) => bank.slug === 'banco-voii-s-a')!;
+    expect(detail.current).toBe(false);
+    const page = html('bancos/banco-voii-s-a/index.html');
+    const date = formatDate(detail.captureDate);
+    const text = visibleText(page);
+    expect(text).toContain(
+      `Última tasa publicada (${date}): ${formatPercent(detail.nonClientTna as number)} TNA para no clientes`,
+    );
+    expect(text).not.toContain('Hoy: ');
+    expect(wordsOf(page)).not.toMatch(/\bhoy\b/i);
+    expect(page).toContain(`<title>BANCO VOII S.A.: plazo fijo ${formatPercent(0.235)} TNA`);
+    expect(/<meta name="description" content="([^"]*)"/.exec(page)?.[1]).toContain(date);
+    // The page keeps its best-rate count and its chart.
+    expect(text).toContain(bestRateSentence(detail.bestDays, detail.observedDays));
+    expect(page).toContain('<svg');
   });
 
   it('says so when a bank does not offer a plazo fijo to non-clients, and shows its client rate', () => {

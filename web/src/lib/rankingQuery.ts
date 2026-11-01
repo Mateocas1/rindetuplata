@@ -17,7 +17,7 @@ export interface RankingQueryState {
 export const DEFAULT_AMOUNT = 1_000_000;
 export const DEFAULT_DAYS = 30;
 export const MIN_DAYS = 1;
-export const MAX_DAYS = 3650;
+export const MAX_DAYS = 1825;
 export const MAX_AMOUNT = 1_000_000_000_000;
 
 export const DEFAULT_RANKING_QUERY: RankingQueryState = {

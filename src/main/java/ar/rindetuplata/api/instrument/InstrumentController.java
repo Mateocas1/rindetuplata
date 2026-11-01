@@ -1,5 +1,6 @@
 package ar.rindetuplata.api.instrument;
 
+import ar.rindetuplata.api.SupportedDates;
 import ar.rindetuplata.store.InstrumentKind;
 import java.time.LocalDate;
 import java.util.List;
@@ -33,6 +34,6 @@ public class InstrumentController {
 	InstrumentHistory history(@PathVariable long id,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-		return instruments.history(id, from, to);
+		return instruments.history(id, SupportedDates.checked("from", from), SupportedDates.checked("to", to));
 	}
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_RANKING_QUERY,
+  MAX_DAYS,
   parseRankingQuery,
   serializeRankingQuery,
   toApiParams,
@@ -37,9 +38,14 @@ describe('parseRankingQuery', () => {
   });
 
   it('falls back to the default days when it is not a whole number in range', () => {
-    for (const raw of ['abc', '0', '-5', '7.5', '3651', '']) {
+    for (const raw of ['abc', '0', '-5', '7.5', '1826', '']) {
       expect(parseRankingQuery(`?dias=${raw}`).days).toBe(DEFAULT_RANKING_QUERY.days);
     }
+  });
+
+  it('keeps a shared link at the API cap and drops one above it', () => {
+    expect(parseRankingQuery('?dias=1825').days).toBe(1825);
+    expect(parseRankingQuery('?dias=1826').days).toBe(DEFAULT_RANKING_QUERY.days);
   });
 
   it('reads the kinds in the canonical order, upper case', () => {
@@ -128,7 +134,13 @@ describe('tryParseDays', () => {
   it('accepts a whole number of days inside the supported range', () => {
     expect(tryParseDays('30')).toBe(30);
     expect(tryParseDays('1')).toBe(1);
-    expect(tryParseDays('3650')).toBe(3650);
+    expect(tryParseDays('1825')).toBe(1825);
+  });
+
+  it('stops at the API cap of 1825 days', () => {
+    expect(MAX_DAYS).toBe(1825);
+    expect(tryParseDays('1826')).toBeNull();
+    expect(tryParseDays('3650')).toBeNull();
   });
 
   it('rejects anything else', () => {
