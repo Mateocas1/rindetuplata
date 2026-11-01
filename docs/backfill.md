@@ -29,7 +29,7 @@ A rejected request starts nothing and writes nothing. Watch a run with
 
 | Kind | Source | Call | Shape of the run |
 |---|---|---|---|
-| FCI money-market classes | ArgentinaDatos | `GET /v1/finanzas/fci/mercadoDinero/yyyy/MM/dd` | one call per day, waiting `rindetuplata.backfill.delay` (default 500 ms, `RINDETUPLATA_BACKFILL_DELAY`) between calls; one transaction per day and a cursor in the step's execution context, so a restart resumes at the next day |
+| FCI money-market classes | ArgentinaDatos | `GET /v1/finanzas/fci/mercadoDinero/yyyy/MM/dd` | one call per day, waiting `rindetuplata.backfill.delay` (default 500 ms, `RINDETUPLATA_BACKFILL_DELAY`) between calls; one transaction per day; every request starts a new run from `from`, so a stopped run is started again over the same range and refetches every day (stored rows are kept, nothing is duplicated) |
 | Dólar MEP | ArgentinaDatos, source id `argentinadatos-dolar-bolsa` | `GET /v1/cotizaciones/dolares/bolsa` | the whole series (one row per calendar day) once per run, only the days of the range are stored |
 | BCRA macro (INDEC monthly inflation 27, REM 29, PSP benchmark 1196) | BCRA statistics v4 | `GET /monetarias/{id}?desde=yyyy-MM-dd&hasta=yyyy-MM-dd&limit=3000` | one call per variable for the whole range |
 
@@ -85,4 +85,4 @@ Probed live on 2026-11-01, answers recorded under `src/test/resources/fixtures/`
 - One run at a time, at most 366 days, `to` no later than yesterday. For more history, run consecutive ranges.
 - A year of fund classes is on the order of 100,000 rows, written one transaction per day.
 - The 404-as-empty rule hides a source that starts answering 404 for every date: check `source_run` for runs of 0 rows.
-- The run is in the API process: restarting the API stops it. Run it again; stored days are skipped.
+- The run is in the API process: restarting the API stops it. Run it again over the same range: every day is fetched again (at the polite delay), and only the rows still missing are written.
