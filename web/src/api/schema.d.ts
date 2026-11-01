@@ -1187,6 +1187,7 @@ export interface operations {
             query?: {
                 amount?: number;
                 days?: number;
+                /** @description Instrument ids of the banks the user is a client of, to use their client rate. At most 100 values, counted as sent; more is a 400. */
                 clientOf?: number[];
                 kind?: ("PLAZO_FIJO" | "WALLET" | "FUND" | "CRYPTO")[];
                 asOf?: string;
