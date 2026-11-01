@@ -2085,15 +2085,6 @@
           "container": {
             "type": "boolean"
           },
-          "valueNode": {
-            "type": "boolean"
-          },
-          "missingNode": {
-            "type": "boolean"
-          },
-          "object": {
-            "type": "boolean"
-          },
           "nodeType": {
             "type": "string",
             "enum": [
@@ -2112,6 +2103,15 @@
             "type": "boolean"
           },
           "integralNumber": {
+            "type": "boolean"
+          },
+          "missingNode": {
+            "type": "boolean"
+          },
+          "valueNode": {
+            "type": "boolean"
+          },
+          "object": {
             "type": "boolean"
           },
           "pojo": {
