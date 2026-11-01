@@ -28,10 +28,13 @@ import org.springframework.stereotype.Service;
 
 /**
  * The monthly "who beat inflation" report (T6a, L29 a). A month is reportable only when it has ended (in the Argentine
- * day the injected clock reports), INDEC has published its inflation and at least one instrument has the stored data
- * to be measured over the whole month. Each instrument's nominal return comes from {@link MonthlyYield}; the real
- * return is measured against the INDEC rate of the same month. Fund classes are grouped to their best class and an
- * FCI-backed wallet is reported once, as the wallet, the way the ranking does.
+ * day the injected clock reports), INDEC has published its inflation and at least one instrument from the daily rate
+ * snapshots (plazo fijo, wallet or crypto) is measured over the whole month: a row, not a left-out entry (T8a, L38 a).
+ * Fund quotes alone do not make a month reportable, so a backfill of FCI history never lists a month that has no
+ * plazo fijo, rate wallet or crypto in it; fund rows still appear in a month the rate history covers. Each
+ * instrument's nominal return comes from {@link MonthlyYield}; the real return is measured against the INDEC rate
+ * of the same month. Fund classes are grouped to their best class and an FCI-backed wallet is reported once, as the
+ * wallet, the way the ranking does.
  *
  * <p>Building a month reads the stored history around it, which grows with every backfill, so the answers are cached
  * (T4a, L33 a) in bounded in-process LRUs: the month list under the {@linkplain DataVersion data version} and
@@ -106,10 +109,10 @@ public class MonthlyReportService {
 			if (!isClosed(month) || month.atEndOfMonth().isBefore(earliest.get())) {
 				continue;
 			}
-			MonthlyReport report = build(month, inflation.getValue());
-			if (!report.rows().isEmpty()) {
-				months.add(new MonthSummary(month, inflation.getValue(), report.rows().size(),
-						report.beatInflation()));
+			Built built = build(month, inflation.getValue());
+			if (built.rateRows() > 0) {
+				months.add(new MonthSummary(month, inflation.getValue(), built.report().rows().size(),
+						built.report().beatInflation()));
 			}
 		}
 		return months;
@@ -135,29 +138,34 @@ public class MonthlyReportService {
 		MonthlyInflation inflation = repository.inflation(month).orElseThrow(() -> new MonthlyReportUnavailableException(
 				MonthlyReportUnavailableException.Reason.NO_INFLATION,
 				"No INDEC monthly inflation is stored for " + month));
-		MonthlyReport report = build(month, inflation);
-		if (report.rows().isEmpty()) {
+		Built built = build(month, inflation);
+		if (built.rateRows() == 0) {
 			throw new MonthlyReportUnavailableException(MonthlyReportUnavailableException.Reason.NO_COVERAGE,
-					"The stored history does not cover " + month + ": no instrument has the data to be measured "
-							+ "over the whole month");
+					"The daily rate history does not cover " + month + ": no plazo fijo, wallet or crypto yield has "
+							+ "the data to be measured over the whole month");
 		}
-		return report;
+		return built.report();
 	}
 
 	private boolean isClosed(YearMonth month) {
 		return month.atEndOfMonth().isBefore(LocalDate.now(clock));
 	}
 
-	private MonthlyReport build(YearMonth month, MonthlyInflation inflation) {
+	/** A built report and how many of its rows come from the daily rate snapshots (not from fund quotes). */
+	private record Built(MonthlyReport report, int rateRows) {
+	}
+
+	private Built build(YearMonth month, MonthlyInflation inflation) {
 		List<ReportRow> rows = new ArrayList<>();
 		List<LeftOut> leftOut = new ArrayList<>();
 		for (RateSeries series : repository.rateSeries(month)) {
 			rateInstrument(series, month, inflation, rows, leftOut);
 		}
+		int rateRows = rows.size();
 		fundInstruments(repository.fundSeries(month), month, inflation, rows, leftOut);
 		rows.sort(BEST_REAL_FIRST);
 		leftOut.sort(BY_NAME);
-		return new MonthlyReport(month, inflation, rows, leftOut);
+		return new Built(new MonthlyReport(month, inflation, rows, leftOut), rateRows);
 	}
 
 	private void rateInstrument(RateSeries series, YearMonth month, MonthlyInflation inflation, List<ReportRow> rows,
