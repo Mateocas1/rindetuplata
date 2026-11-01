@@ -64,15 +64,17 @@ class RankingApiTest extends RankingApiIntegrationTest {
 				.andExpect(jsonPath("$.ranked[2].name").value("Banco C"))
 				.andExpect(jsonPath("$.ranked[2].finalAmount").value(1008219.18))
 				.andExpect(jsonPath("$.ineligible").value(empty()))
-				.andExpect(jsonPath("$.excluded", hasSize(1)))
+				.andExpect(jsonPath("$.excluded", hasSize(2)))
 				.andExpect(jsonPath("$.excluded[0].id").value("mercado-pago"))
 				.andExpect(jsonPath("$.excluded[0].kind").value("WALLET"))
 				.andExpect(jsonPath("$.excluded[0].name").value("Mercado Pago"))
 				// T2d: the fixture has no Mercado Fondo class, which is now FUND_CLASS_NOT_FOUND, not a short history.
 				.andExpect(jsonPath("$.excluded[0].reason").value("FUND_CLASS_NOT_FOUND"))
+				// T5a: nor a Delta Pesos - Clase X, the class of Personal Pay.
+				.andExpect(jsonPath("$.excluded[?(@.id=='personal-pay')].reason").value(contains("FUND_CLASS_NOT_FOUND")))
 				.andExpect(jsonPath("$.totals.ranked").value(3))
 				.andExpect(jsonPath("$.totals.ineligible").value(0))
-				.andExpect(jsonPath("$.totals.excluded").value(1))
+				.andExpect(jsonPath("$.totals.excluded").value(2))
 				.andExpect(content().string(containsString("\"amount\":1000000.00")))
 				.andExpect(content().string(containsString("\"finalAmount\":1024657.53")))
 				.andExpect(content().string(containsString("\"earned\":24657.53")))
@@ -105,7 +107,7 @@ class RankingApiTest extends RankingApiIntegrationTest {
 		mockMvc.perform(get("/api/v1/ranking"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.ranked").value(empty()))
-				.andExpect(jsonPath("$.excluded", hasSize(2)))
+				.andExpect(jsonPath("$.excluded", hasSize(3)))
 				.andExpect(jsonPath("$.excluded[0].id").value(String.valueOf(id)))
 				.andExpect(jsonPath("$.excluded[0].kind").value("PLAZO_FIJO"))
 				.andExpect(jsonPath("$.excluded[0].name").value("Banco Solo Clientes"))
@@ -116,8 +118,9 @@ class RankingApiTest extends RankingApiIntegrationTest {
 				.andExpect(jsonPath("$.excluded[0].flags").value(empty()))
 				// T2d: same missing Mercado Fondo class as above.
 				.andExpect(jsonPath("$.excluded[1].reason").value("FUND_CLASS_NOT_FOUND"))
+				.andExpect(jsonPath("$.excluded[?(@.id=='personal-pay')].reason").value(contains("FUND_CLASS_NOT_FOUND")))
 				.andExpect(jsonPath("$.totals.ranked").value(0))
-				.andExpect(jsonPath("$.totals.excluded").value(2));
+				.andExpect(jsonPath("$.totals.excluded").value(3));
 	}
 
 	@Test
@@ -158,7 +161,7 @@ class RankingApiTest extends RankingApiIntegrationTest {
 				.andExpect(jsonPath("$.ranked[1].name").value("Banco B"))
 				.andExpect(jsonPath("$.totals.ranked").value(3))
 				.andExpect(jsonPath("$.totals.ineligible").value(0))
-				.andExpect(jsonPath("$.totals.excluded").value(1));
+				.andExpect(jsonPath("$.totals.excluded").value(2));
 	}
 
 	@Test

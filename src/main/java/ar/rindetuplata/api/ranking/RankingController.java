@@ -45,7 +45,8 @@ public class RankingController {
 	}
 
 	@GetMapping
-	@Operation(summary = "Personalized ranking", description = ConditionalResponses.DESCRIPTION,
+	@Operation(summary = "Personalized ranking", description = ConditionalResponses.DESCRIPTION + " "
+					+ "Entries carry breakEvenMep and the response carries dollarMep. " + BreakEvenMepView.DESCRIPTION,
 			responses = {
 					@ApiResponse(responseCode = "200", description = "The ranking.", headers = {
 							@Header(name = "ETag", description = ConditionalResponses.ETAG_DESCRIPTION),

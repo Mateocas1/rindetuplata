@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -209,6 +210,29 @@ class RankingReader {
 						RankingJson.flags(rs.getString("flags")),
 						rs.getBoolean("invalid")))
 				.list();
+	}
+
+	/**
+	 * The latest usable dólar MEP quote at or before {@code asOf} (S5, L24 b): the newest capture date, ties broken by
+	 * source id. A quote with a non-positive price is skipped, since the break-even divides by it.
+	 */
+	Optional<MepQuote> latestDollarMep(LocalDate asOf) {
+		return jdbc.sql("""
+				select source_id, capture_date, buy, sell, updated_at
+				from dollar_quote
+				where capture_date <= :asOf and buy > 0 and sell > 0
+				order by capture_date desc, source_id
+				limit 1
+				""")
+				.param("asOf", asOf)
+				.query((rs, rowNum) -> {
+					OffsetDateTime updatedAt = rs.getObject("updated_at", OffsetDateTime.class);
+					return new MepQuote(SourceRegistry.of(rs.getString("source_id")),
+							rs.getObject("buy", BigDecimal.class), rs.getObject("sell", BigDecimal.class),
+							rs.getObject("capture_date", LocalDate.class),
+							updatedAt == null ? null : updatedAt.toInstant());
+				})
+				.optional();
 	}
 
 	/** The latest BCRA REM expected 12-month inflation at or before {@code asOf} (S10). */

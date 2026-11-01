@@ -57,6 +57,8 @@
         "tags": [
           "account-controller"
         ],
+        "summary": "Request a magic link",
+        "description": "Emails a one-time login link. A valid email always answers 202 with the same body, whether or not the account exists and even when the email already holds its maximum of unexpired tokens (then nothing is sent). An invalid email is a 400. Each remote address may make rindetuplata.auth.magic-link-per-ip-limit requests per rindetuplata.auth.magic-link-per-ip-window (fixed window, counted in memory by the single API instance, invalid emails included); beyond it the answer is a 429 with a Retry-After header in seconds, no token and no mail, for known and unknown emails alike.",
         "operationId": "requestMagicLink",
         "requestBody": {
           "content": {
@@ -213,6 +215,8 @@
         "tags": [
           "simulation-controller"
         ],
+        "summary": "Simulate one instrument",
+        "description": "Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.",
         "operationId": "simulate",
         "parameters": [
           {
@@ -253,7 +257,46 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "The simulation, ineligible or excluded status.",
+            "headers": {
+              "Cache-Control": {
+                "description": "public, no-cache: store, but revalidate with If-None-Match.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Weak entity tag of the data version and the request.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationResponse"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "If-None-Match matched the current ETag; the body is empty."
+          },
+          "400": {
+            "description": "A parameter is out of range.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No ranked instrument carries this id.",
             "content": {
               "*/*": {
                 "schema": {
@@ -270,6 +313,8 @@
         "tags": [
           "ranking-controller"
         ],
+        "summary": "Personalized ranking",
+        "description": "Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.",
         "operationId": "ranking",
         "parameters": [
           {
@@ -347,7 +392,36 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "The ranking.",
+            "headers": {
+              "Cache-Control": {
+                "description": "public, no-cache: store, but revalidate with If-None-Match.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "Weak entity tag of the data version and the request.",
+                "style": "simple",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingResponse"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "If-None-Match matched the current ETag; the body is empty."
+          },
+          "400": {
+            "description": "A parameter is out of range.",
             "content": {
               "*/*": {
                 "schema": {
@@ -772,6 +846,20 @@
           }
         }
       },
+      "BreakEvenMepView": {
+        "type": "object",
+        "description": "When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.",
+        "properties": {
+          "devaluation": {
+            "type": "number",
+            "description": "The highest rise of the MEP buy price, as a fraction at scale 6 (0.023100 is 2.31%), at which the instrument still beats the dollar over the requested days."
+          },
+          "price": {
+            "type": "number",
+            "description": "The break-even MEP buy price in ARS per USD at scale 2: (1 + nominalReturn) * sell. Above it at the end of the term the dollar wins; below it the instrument wins."
+          }
+        }
+      },
       "ExcludedView": {
         "type": "object",
         "properties": {
@@ -806,6 +894,33 @@
           },
           "detail": {
             "type": "string"
+          }
+        }
+      },
+      "MepQuoteView": {
+        "type": "object",
+        "description": "The dollar MEP quote every breakEvenMep of the response was computed from: the latest stored quote at or before the request's asOf. Null when no usable quote is stored.",
+        "properties": {
+          "buy": {
+            "type": "number",
+            "description": "ARS per USD the market pays for a dollar (the price you leave at), scale 2."
+          },
+          "sell": {
+            "type": "number",
+            "description": "ARS per USD the market charges for a dollar (the price you buy at), scale 2."
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceView"
+          },
+          "quoteDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The capture date the quote is stored under."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The instant the source reports for the quote; null when it gave none."
           }
         }
       },
@@ -869,6 +984,9 @@
           "foldedClasses": {
             "type": "integer",
             "format": "int32"
+          },
+          "breakEvenMep": {
+            "$ref": "#/components/schemas/BreakEvenMepView"
           }
         }
       },
@@ -891,6 +1009,9 @@
         "properties": {
           "status": {
             "type": "string"
+          },
+          "dollarMep": {
+            "$ref": "#/components/schemas/MepQuoteView"
           },
           "entry": {
             "$ref": "#/components/schemas/RankedEntryView"
@@ -1065,6 +1186,9 @@
           },
           "inflation": {
             "$ref": "#/components/schemas/InflationResponse"
+          },
+          "dollarMep": {
+            "$ref": "#/components/schemas/MepQuoteView"
           },
           "ranked": {
             "type": "array",
