@@ -27,4 +27,26 @@ class ApiDocumentationTest extends ApiIntegrationTest {
 				.andExpect(jsonPath("$.paths['/api/v1/ranking']").exists())
 				.andExpect(jsonPath("$.paths['/api/v1/simulations']").exists());
 	}
+
+	@Test
+	void theMepBreakEvenIsDocumentedOnItsSchemasAndOnBothEndpoints() throws Exception {
+		mockMvc.perform(get("/v3/api-docs"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.components.schemas.BreakEvenMepView.description")
+						.value(containsString("(1 + nominalReturn) * sell / buy - 1")))
+				.andExpect(jsonPath("$.components.schemas.BreakEvenMepView.properties.devaluation.description")
+						.value(containsString("fraction")))
+				.andExpect(jsonPath("$.components.schemas.BreakEvenMepView.properties.price.description")
+						.value(containsString("break-even")))
+				.andExpect(jsonPath("$.components.schemas.MepQuoteView.description")
+						.value(containsString("latest stored")))
+				.andExpect(jsonPath("$.components.schemas.MepQuoteView.properties.updatedAt.description")
+						.value(containsString("source reports")))
+				.andExpect(jsonPath("$.components.schemas.RankedEntryView.properties.breakEvenMep").exists())
+				.andExpect(jsonPath("$.components.schemas.RankingResponse.properties.dollarMep").exists())
+				.andExpect(jsonPath("$.components.schemas.SimulationResponse.properties.dollarMep").exists())
+				.andExpect(jsonPath("$.paths['/api/v1/ranking'].get.description").value(containsString("dollarMep")))
+				.andExpect(jsonPath("$.paths['/api/v1/simulations'].get.description")
+						.value(containsString("dollarMep")));
+	}
 }

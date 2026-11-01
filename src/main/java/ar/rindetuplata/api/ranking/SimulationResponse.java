@@ -6,25 +6,26 @@ import java.util.List;
 /**
  * The outcome of simulating one instrument by id (T5c): {@code status} is the discriminator, and exactly one of
  * {@code entry}, {@code ineligible} or {@code excluded} carries the payload. An unknown id never reaches here; the
- * controller maps it to a 404 instead.
+ * controller maps it to a 404 instead. {@code dollarMep} is the MEP quote {@code entry.breakEvenMep} used (S5,
+ * L24 b): present only with a SIMULATED entry, and null when no quote is stored.
  */
-public record SimulationResponse(String status, RankedEntryView entry, IneligibleView ineligible,
-		ExcludedView excluded) {
+public record SimulationResponse(String status, MepQuoteView dollarMep, RankedEntryView entry,
+		IneligibleView ineligible, ExcludedView excluded) {
 
 	public static final String SIMULATED = "SIMULATED";
 	public static final String INELIGIBLE = "INELIGIBLE";
 	public static final String EXCLUDED = "EXCLUDED";
 
-	public static SimulationResponse simulated(RankedEntryView entry) {
-		return new SimulationResponse(SIMULATED, entry, null, null);
+	public static SimulationResponse simulated(RankedEntryView entry, MepQuoteView dollarMep) {
+		return new SimulationResponse(SIMULATED, dollarMep, entry, null, null);
 	}
 
 	public static SimulationResponse ineligible(IneligibleView ineligible) {
-		return new SimulationResponse(INELIGIBLE, null, ineligible, null);
+		return new SimulationResponse(INELIGIBLE, null, null, ineligible, null);
 	}
 
 	public static SimulationResponse excluded(ExcludedView excluded) {
-		return new SimulationResponse(EXCLUDED, null, null, excluded);
+		return new SimulationResponse(EXCLUDED, null, null, null, excluded);
 	}
 
 	/** Why the requested amount or term does not reach the instrument. */

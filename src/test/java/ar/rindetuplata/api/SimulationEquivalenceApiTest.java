@@ -154,7 +154,7 @@ class SimulationEquivalenceApiTest extends RankingApiIntegrationTest {
 				new SimulationResult.ExcludedInstrument(entry.id(), entry.name(), entry.reason(), entry.flags())));
 		result.ineligible().forEach(entry -> byId.put(entry.id(),
 				new SimulationResult.IneligibleInstrument(entry.id(), entry.name(), entry.ineligible())));
-		result.ranked().forEach(entry -> byId.put(entry.id(), new SimulationResult.Simulated(entry)));
+		result.ranked().forEach(entry -> byId.put(entry.id(), new SimulationResult.Simulated(entry, result.dollarMep())));
 		return byId;
 	}
 

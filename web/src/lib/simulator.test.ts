@@ -64,6 +64,22 @@ describe('simulationOutcome', () => {
     expect(outcome.entry.earned).toBe(19726.03);
   });
 
+  it('carries the MEP quote the break-even used, or null without one', () => {
+    const quote = {
+      buy: 1534.2,
+      sell: 1539.4,
+      source: { id: 'dolarapi-bolsa', displayName: 'DolarApi', official: false },
+      quoteDate: '2026-10-14',
+      updatedAt: '2026-10-13T20:57:00Z',
+    };
+
+    const withQuote = simulationOutcome({ ...simulated, dollarMep: quote }, { amount: 500_000, days: 60 });
+    const without = simulationOutcome(simulated, { amount: 500_000, days: 60 });
+
+    expect(withQuote.status === 'simulated' && withQuote.dollarMep).toEqual(quote);
+    expect(without.status === 'simulated' && without.dollarMep).toBeNull();
+  });
+
   it('explains an ineligible simulation with the reader amount and term in Spanish', () => {
     const outcome = simulationOutcome(ineligible, { amount: 500_000, days: 20 });
     expect(outcome.status).toBe('ineligible');

@@ -39,6 +39,26 @@ export interface UpTo {
   finalAmount: number;
 }
 
+/**
+ * When an instrument beats the dólar MEP (S5, L24 b): it wins if the MEP buy price rises less than `devaluation`
+ * (a fraction); `price` is the break-even MEP buy price in ARS per USD.
+ */
+export interface BreakEvenMep {
+  devaluation: number;
+  price: number;
+}
+
+/** The dólar MEP quote the break-evens of a response were computed from, in ARS per USD. */
+export interface MepQuote {
+  buy: number;
+  sell: number;
+  source: SourceRef;
+  /** The capture date the quote is stored under. */
+  quoteDate: string;
+  /** The instant the source reports; null when it gave none. */
+  updatedAt: string | null;
+}
+
 export interface RankedEntry {
   id: string;
   kind: RankedKind;
@@ -61,6 +81,11 @@ export interface RankedEntry {
    * Optional because the recorded fixtures predate the field (L16): read it as `foldedClasses ?? 0`.
    */
   foldedClasses?: number;
+  /**
+   * Optional like `foldedClasses`: the recorded fixtures predate it (L16), and the API sends null when no MEP
+   * quote is stored.
+   */
+  breakEvenMep?: BreakEvenMep | null;
 }
 
 export interface IneligibleEntry {
@@ -110,6 +135,8 @@ export interface RankingTotals {
 export interface Ranking {
   request: RankingRequest;
   inflation: Inflation | null;
+  /** The MEP quote every `breakEvenMep` used; absent in the recorded fixtures, null without a stored quote. */
+  dollarMep?: MepQuote | null;
   ranked: RankedEntry[];
   ineligible: IneligibleEntry[];
   excluded: ExcludedEntry[];
@@ -186,6 +213,8 @@ export interface ExcludedSimulation {
 /** `GET /api/v1/simulations`: exactly one of entry / ineligible / excluded. */
 export interface Simulation {
   status: string;
+  /** The MEP quote `entry.breakEvenMep` used; null (or absent in older payloads) without a stored quote. */
+  dollarMep?: MepQuote | null;
   entry: RankedEntry | null;
   ineligible: IneligibleSimulation | null;
   excluded: ExcludedSimulation | null;
@@ -219,6 +248,8 @@ type _FundQuotePoint = AssertKnown<KeysAreKnown<FundQuotePoint, Schema['FundQuot
 type _MonthlyInflationPoint = AssertKnown<
   KeysAreKnown<MonthlyInflationPoint, Schema['MonthlyInflationPoint']>
 >;
+type _BreakEvenMep = AssertKnown<KeysAreKnown<BreakEvenMep, Schema['BreakEvenMepView']>>;
+type _MepQuote = AssertKnown<KeysAreKnown<MepQuote, Schema['MepQuoteView']>>;
 type _Simulation = AssertKnown<KeysAreKnown<Simulation, Schema['SimulationResponse']>>;
 type _IneligibleSimulation = AssertKnown<KeysAreKnown<IneligibleSimulation, Schema['IneligibleView']>>;
 type _ExcludedSimulation = AssertKnown<KeysAreKnown<ExcludedSimulation, Schema['ExcludedView']>>;
@@ -240,6 +271,8 @@ export type TypeGuards = [
   _SnapshotPoint,
   _FundQuotePoint,
   _MonthlyInflationPoint,
+  _BreakEvenMep,
+  _MepQuote,
   _Simulation,
   _IneligibleSimulation,
   _ExcludedSimulation,

@@ -17,7 +17,8 @@ import {
   tryParseDays,
 } from '../../lib/rankingQuery';
 import { problemMessage, simulationOutcome, type SimulationOutcome } from '../../lib/simulator';
-import type { Simulation } from '../../lib/types';
+import type { MepQuote, Simulation } from '../../lib/types';
+import BreakEvenNote from '../ranking/BreakEvenNote';
 
 export interface Props {
   instrumentId: string;
@@ -36,13 +37,16 @@ function realReturnTone(value: number | null): string {
   return value > 0 ? 'text-gain' : 'text-loss';
 }
 
-function SimulatedResult({
+export function SimulatedResult({
   entry,
+  dollarMep,
   amount,
   days,
   inflationIndexLabel,
 }: {
   entry: Extract<SimulationOutcome, { status: 'simulated' }>['entry'];
+  /** The MEP quote `entry.breakEvenMep` used; the dollar line is hidden without it (S5, L24 b). */
+  dollarMep?: MepQuote | null;
   amount: number;
   days: number;
   inflationIndexLabel: string;
@@ -83,6 +87,7 @@ function SimulatedResult({
         {formatDate(entry.dataDate)} · {confidenceLabel(entry.confidence)}
         {entry.verifiedAt !== null ? ` · verificada el ${formatDate(entry.verifiedAt)}` : ''}
       </p>
+      <BreakEvenNote breakEven={entry.breakEvenMep} quote={dollarMep} days={days} />
       {entry.upTo !== null && (
         <p className="type-data text-warning">
           Hasta {formatMoney(entry.upTo.finalAmount)} {entry.upTo.condition}.
@@ -211,6 +216,7 @@ export default function SimulatorIsland({
         {!loading && outcome?.status === 'simulated' && (
           <SimulatedResult
             entry={outcome.entry}
+            dollarMep={outcome.dollarMep}
             amount={submitted?.amount ?? defaultAmount}
             days={submitted?.days ?? defaultDays}
             inflationIndexLabel={inflationIndexLabel}

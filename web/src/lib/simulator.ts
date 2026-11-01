@@ -7,10 +7,10 @@
  * API's English `detail` never reaches the page (L52).
  */
 import { excludedReasonLabel, ineligibleExplanation } from './labels';
-import type { RankedEntry, Simulation } from './types';
+import type { MepQuote, RankedEntry, Simulation } from './types';
 
 export type SimulationOutcome =
-  | { status: 'simulated'; entry: RankedEntry }
+  | { status: 'simulated'; entry: RankedEntry; dollarMep: MepQuote | null }
   | { status: 'ineligible'; reason: string; message: string }
   | { status: 'excluded'; reason: string; message: string }
   | { status: 'unknown'; message: string };
@@ -33,7 +33,7 @@ export function simulationOutcome(
   context: SimulationContext,
 ): SimulationOutcome {
   if (simulation.status === 'SIMULATED' && simulation.entry !== null) {
-    return { status: 'simulated', entry: simulation.entry };
+    return { status: 'simulated', entry: simulation.entry, dollarMep: simulation.dollarMep ?? null };
   }
   if (simulation.status === 'INELIGIBLE' && simulation.ineligible !== null) {
     const { reason } = simulation.ineligible;

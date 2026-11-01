@@ -12,7 +12,8 @@ import java.util.List;
  * with the rate actually used, the dates and source of the datum, its confidence and its WARNING flags.
  * {@code realReturn} and {@code upTo} are null when the caller has to show "no data" instead of inventing one.
  * {@code foldedClasses} is how many sibling classes of the same fund a grouped ranking folded into this row; 0 for
- * every other row and when {@code groupFunds=false}.
+ * every other row and when {@code groupFunds=false}. {@code breakEvenMep} says when the entry beats the dólar MEP
+ * (S5, L24 b); it is null, never invented, when no MEP quote is stored.
  */
 public record RankedEntryView(
 		String id,
@@ -31,5 +32,6 @@ public record RankedEntryView(
 		BigDecimal realReturn,
 		UpToView upTo,
 		List<ValidationFlagView> warnings,
-		int foldedClasses) {
+		int foldedClasses,
+		BreakEvenMepView breakEvenMep) {
 }
