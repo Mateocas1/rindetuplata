@@ -14,7 +14,7 @@ import java.util.Set;
  * Turns the raw request parameters of the ranking endpoints into a validated {@link RankingQuery} (T5c). A value
  * the caller got wrong becomes an {@link ApiException} naming the parameter, so the shared advice answers a 400
  * {@code ProblemDetail} that says exactly which one to fix. Missing values take the S15 defaults: $1.000.000, 30
- * days, 50 rows, today in the injected clock's zone.
+ * days, 50 rows, fund classes grouped, today in the injected clock's zone.
  */
 final class RankingRequest {
 
@@ -25,9 +25,10 @@ final class RankingRequest {
 	}
 
 	static RankingQuery query(BigDecimal amount, Integer days, List<Long> clientOf, List<RankedKind> kind,
-			LocalDate asOf, Integer limit, Clock clock) {
+			LocalDate asOf, Integer limit, Boolean groupFunds, Clock clock) {
 		return new RankingQuery(amount(amount), days(days), clientOf == null ? Set.of() : Set.copyOf(clientOf),
-				kind == null ? Set.of() : Set.copyOf(kind), asOf == null ? LocalDate.now(clock) : asOf, limit(limit));
+				kind == null ? Set.of() : Set.copyOf(kind), asOf == null ? LocalDate.now(clock) : asOf, limit(limit),
+				groupFunds == null || groupFunds);
 	}
 
 	static Money amount(BigDecimal amount) {

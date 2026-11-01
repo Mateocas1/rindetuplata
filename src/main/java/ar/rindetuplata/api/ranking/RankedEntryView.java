@@ -11,6 +11,8 @@ import java.util.List;
  * ({@code finalAmount}, {@code earned}, {@code nominalReturn} and, when a REM observation exists, {@code realReturn})
  * with the rate actually used, the dates and source of the datum, its confidence and its WARNING flags.
  * {@code realReturn} and {@code upTo} are null when the caller has to show "no data" instead of inventing one.
+ * {@code foldedClasses} is how many sibling classes of the same fund a grouped ranking folded into this row; 0 for
+ * every other row and when {@code groupFunds=false}.
  */
 public record RankedEntryView(
 		String id,
@@ -28,5 +30,6 @@ public record RankedEntryView(
 		BigDecimal nominalReturn,
 		BigDecimal realReturn,
 		UpToView upTo,
-		List<ValidationFlagView> warnings) {
+		List<ValidationFlagView> warnings,
+		int foldedClasses) {
 }

@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,20 +54,27 @@ public class RankingService {
 		this.fciWallets = fciWallets;
 	}
 
-	/** The personalized ranking: every eligible instrument simulated for the query, sorted by final amount. */
+	/**
+	 * The personalized ranking: every eligible instrument simulated for the query, sorted by final amount. Unless
+	 * {@link RankingQuery#groupFunds()} is off, the FUND entries are grouped to one row per fund (the class with the
+	 * highest final amount, with the number of folded sibling classes) before the page limit is applied.
+	 * {@code totals().ranked()} counts the rows this ranking holds: funds, not classes, when grouping is on. Excluded
+	 * and ineligible entries are never grouped.
+	 */
 	public RankingResult rank(RankingQuery query) {
-		return rank(query, query.limit());
+		return rank(query, query.limit(), query.groupFunds());
 	}
 
 	/**
 	 * The same ranking for internal callers (the alert evaluation): {@code ranked} holds every ranked entry, not the
-	 * first {@code query.limit()}. The public page cap stays in {@link RankingQuery#MAX_LIMIT}.
+	 * first {@code query.limit()}. The public page cap stays in {@link RankingQuery#MAX_LIMIT}. Fund classes are never
+	 * grouped here: an alert rule targets a specific class id.
 	 */
 	public RankingResult rankAll(RankingQuery query) {
-		return rank(query, Integer.MAX_VALUE);
+		return rank(query, Integer.MAX_VALUE, false);
 	}
 
-	private RankingResult rank(RankingQuery query, int pageSize) {
+	private RankingResult rank(RankingQuery query, int pageSize, boolean groupFunds) {
 		Basket basket = collect(query.kinds(), query.asOf(), query.clientOf(), query.amount(), query.days());
 		RankingReader.StoredInflation rem = reader.latestExpectedInflation(query.asOf()).orElse(null);
 		Ranking domain = Ranking.of(instruments(basket), query.amount(), query.days(),
@@ -77,6 +85,9 @@ public class RankingService {
 		for (Ranking.Entry entry : domain.ranked()) {
 			ranked.add(entry(byInstrument.get(entry.instrument()), entry.simulation(),
 					rem == null ? null : entry.realReturn()));
+		}
+		if (groupFunds) {
+			ranked = groupFunds(ranked);
 		}
 		List<IneligibleEntry> ineligible = new ArrayList<>(domain.ineligible().size());
 		for (Ranking.Rejected rejected : domain.ineligible()) {
@@ -91,6 +102,30 @@ public class RankingService {
 				rem.observationDate(), domain.inflationOverHorizon());
 		return new RankingResult(query, inflation, page, ineligible, excluded,
 				new RankingTotals(total, ineligible.size(), excluded.size()));
+	}
+
+	/**
+	 * One row per fund: the ranked list is already sorted by final amount, so the first class met of each fund is the
+	 * best one; it keeps its position and counts the siblings that follow. Only FUND entries are grouped.
+	 */
+	private static List<RankedEntry> groupFunds(List<RankedEntry> ranked) {
+		Map<String, Integer> firstOfFund = new HashMap<>();
+		List<RankedEntry> grouped = new ArrayList<>(ranked.size());
+		for (RankedEntry entry : ranked) {
+			if (entry.kind() != RankedKind.FUND) {
+				grouped.add(entry);
+				continue;
+			}
+			Integer first = firstOfFund.putIfAbsent(FundClassKey.fundOf(entry.name()), grouped.size());
+			if (first == null) {
+				grouped.add(entry);
+			}
+			else {
+				RankedEntry best = grouped.get(first);
+				grouped.set(first, best.withFoldedClasses(best.foldedClasses() + 1));
+			}
+		}
+		return grouped;
 	}
 
 	/**
@@ -245,6 +280,13 @@ public class RankingService {
 			List<Candidate> candidates, List<ExcludedEntry> excluded) {
 		String id = String.valueOf(instrumentId);
 		RankingReader.StoredQuote latest = quotes.get(0);
+		Optional<ExcludedReason> unavailable = FundClassRules.exclusion(latest.displayName());
+		if (unavailable.isPresent()) {
+			excluded.add(new ExcludedEntry(id, RankedKind.FUND, latest.displayName(),
+					SourceRegistry.of(latest.sourceId()), latest.quoteDate(), latest.quoteDate(), unavailable.get(),
+					List.of()));
+			return;
+		}
 		FundEvaluator.FundEvaluation evaluation = FundEvaluator.evaluate(quotes, asOf);
 		if (!evaluation.eligible()) {
 			excluded.add(new ExcludedEntry(id, RankedKind.FUND, latest.displayName(),
@@ -315,7 +357,7 @@ public class RankingService {
 				SourceRegistry.of(candidate.sourceId()), candidate.confidence(), candidate.verifiedAt(),
 				candidate.captureDate(), candidate.dataDate(), candidate.rateUsed(), simulation.finalAmount(),
 				simulation.earned(), simulation.nominalReturn(), realReturn, simulation.conditional().orElse(null),
-				candidate.warnings());
+				candidate.warnings(), 0);
 	}
 
 	private static IneligibleEntry ineligible(Candidate candidate, Ineligible ineligible) {

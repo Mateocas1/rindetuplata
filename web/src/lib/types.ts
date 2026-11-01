@@ -56,6 +56,11 @@ export interface RankedEntry {
   realReturn: number | null;
   upTo: UpTo | null;
   warnings: ValidationFlag[];
+  /**
+   * Sibling classes of the same fund folded into this row (best class for the request); 0 for other kinds.
+   * Optional because the recorded fixtures predate the field (L16): read it as `foldedClasses ?? 0`.
+   */
+  foldedClasses?: number;
 }
 
 export interface IneligibleEntry {

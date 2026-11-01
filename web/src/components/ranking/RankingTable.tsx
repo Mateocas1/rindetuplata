@@ -150,6 +150,7 @@ export default function RankingTable({
                 const href = instrumentPageHref(pages, entry);
                 const entity =
                   entry.entity !== null && entry.entity !== entry.name ? entry.entity : null;
+                const folded = entry.foldedClasses ?? 0;
                 return (
                   <tr key={entry.id} className="group hover:bg-subtle-surface">
                     <th
@@ -182,6 +183,17 @@ export default function RankingTable({
                           <span className="mt-1 block type-data text-muted">
                             {kindLabel(entry.kind)}
                             {entity === null ? '' : ` · ${entity}`}
+                            {folded > 0 && (
+                              <>
+                                {' · '}
+                                <span>
+                                  {`+${formatInteger(folded)} ${folded === 1 ? 'clase' : 'clases'}`}
+                                  <span className="sr-only">
+                                    {' más del mismo fondo: se muestra la de mayor rendimiento para tu monto y plazo'}
+                                  </span>
+                                </span>
+                              </>
+                            )}
                           </span>
                           {/* The first column is the only one on screen below md
                               (T13e): the row's protagonist figure lives here too. */}

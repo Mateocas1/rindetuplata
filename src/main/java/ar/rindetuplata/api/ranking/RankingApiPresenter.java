@@ -76,7 +76,8 @@ final class RankingApiPresenter {
 				entry.upTo() == null ? null
 						: new UpToView(entry.upTo().condition(),
 								JsonScales.money(entry.upTo().finalAmount().presented())),
-				flags(entry.warnings()));
+				flags(entry.warnings()),
+				entry.foldedClasses());
 	}
 
 	private static IneligibleEntryView ineligible(IneligibleEntry entry) {

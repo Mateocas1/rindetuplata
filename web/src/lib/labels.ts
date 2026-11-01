@@ -44,6 +44,8 @@ export const EXCLUDED_REASON_LABELS: Record<string, string> = {
   NEGATIVE_RETURN: 'Rendimiento negativo',
   INVALID_DATA: 'Datos inválidos',
   FUND_CLASS_NOT_FOUND: 'Clase de fondo no encontrada',
+  FOREIGN_CURRENCY: 'Fondo en dólares: no se compara contra la inflación en pesos',
+  RESTRICTED_CLASS: 'Clase exclusiva del régimen de regularización (Ley 27.743)',
 };
 
 export const INELIGIBLE_REASON_LABELS: Record<string, string> = {

@@ -64,9 +64,17 @@ describe('excluded and ineligible reasons', () => {
       'NEGATIVE_RETURN',
       'INVALID_DATA',
       'FUND_CLASS_NOT_FOUND',
+      'FOREIGN_CURRENCY',
+      'RESTRICTED_CLASS',
     ]) {
       expect(excludedReasonLabel(reason)).not.toBe(reason);
     }
+    expect(excludedReasonLabel('FOREIGN_CURRENCY')).toBe(
+      'Fondo en dólares: no se compara contra la inflación en pesos',
+    );
+    expect(excludedReasonLabel('RESTRICTED_CLASS')).toBe(
+      'Clase exclusiva del régimen de regularización (Ley 27.743)',
+    );
     for (const reason of ['MINIMUM_TERM', 'MINIMUM_AMOUNT']) {
       expect(ineligibleReasonLabel(reason)).not.toBe(reason);
     }
