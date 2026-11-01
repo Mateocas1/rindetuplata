@@ -10,6 +10,7 @@ Real responses recorded on 2026-10-14, trimmed to keep edge cases. Tests never c
 | `argentinadatos/plazo-fijo.json` | `https://api.argentinadatos.com/v1/finanzas/tasas/plazoFijo` | T9 archive, complete (32 institutions) |
 | `argentinadatos/rendimientos.json` | `https://api.argentinadatos.com/v1/finanzas/rendimientos` | T9 archive, complete (13 platforms) |
 | `argentinadatos/fci-mercado-dinero-{ultimo,penultimo}.json` | `https://api.argentinadatos.com/v1/finanzas/fci/mercadoDinero/{ultimo,penultimo}` | Live, 32 of 621 classes incl. Mercado Fondo, Ualintec, Cocos and two dead classes dated 2020 |
+| `argentinadatos/fci-mercado-dinero-wallet-classes-2026-11-01.json` | `https://api.argentinadatos.com/v1/finanzas/fci/mercadoDinero/ultimo` (fetched 2026-11-01) | Live excerpt: only the rows of the classes FCI-backed wallets map to (Mercado Fondo - Clase A, Delta Pesos - Clase X), verbatim (T5a) |
 | `argentinadatos/inflacion.json` | `https://api.argentinadatos.com/v1/finanzas/indices/inflacion` | Live, last 24 months |
 | `dolarapi/dolar-bolsa.json` | `https://dolarapi.com/v1/dolares/bolsa` | Live |
 | `uala/cuenta-remunerada-extract.json` | T9 `html-rate` extract of `https://www.uala.com.ar/inversiones/cuenta-remunerada` | T9 archive |

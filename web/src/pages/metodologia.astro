@@ -41,8 +41,9 @@ const sources = [
   },
   {
     data: 'Billeteras remuneradas',
-    source: 'Sitio público de cada entidad y carga manual verificada',
-    detail: 'Ninguna entidad publica estas tasas por API; el detalle está más abajo.',
+    source: 'Sitio público de cada entidad y carga manual verificada; ArgentinaDatos para las que invierten en un fondo',
+    detail:
+      'Ninguna entidad publica estas tasas por API; el detalle está más abajo. Mercado Pago y Personal Pay invierten el saldo en una clase de fondo money market (Mercado Fondo - Clase A y Delta Pesos - Clase X): su rendimiento sale de la cuotaparte de esa clase, igual que el de los fondos, y la clase aparece una sola vez, como billetera. Si ArgentinaDatos deja de publicar esa clase, la billetera figura aparte como clase de fondo no encontrada.',
   },
   {
     data: 'Fondos money market',
