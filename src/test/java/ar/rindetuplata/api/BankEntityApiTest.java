@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import ar.rindetuplata.source.Confidence;
 import ar.rindetuplata.source.FlagCode;
+import ar.rindetuplata.source.SourceRef;
 import ar.rindetuplata.source.Severity;
 import ar.rindetuplata.source.ValidationFlag;
 import ar.rindetuplata.source.plazofijo.ArgentinaDatosPlazoFijoAdapter;
@@ -65,8 +66,13 @@ class BankEntityApiTest extends ApiIntegrationTest {
 
 	private static BankPlazoFijoRate bank(String date, String name, String nonClient, String client,
 			List<ValidationFlag> flags) {
+		return bank(ArgentinaDatosPlazoFijoAdapter.SOURCE, date, name, nonClient, client, flags);
+	}
+
+	private static BankPlazoFijoRate bank(SourceRef source, String date, String name, String nonClient,
+			String client, List<ValidationFlag> flags) {
 		LocalDate day = LocalDate.parse(date);
-		return new BankPlazoFijoRate(ArgentinaDatosPlazoFijoAdapter.SOURCE, name,
+		return new BankPlazoFijoRate(source, name,
 				client == null ? null : new BigDecimal(client), nonClient == null ? null : new BigDecimal(nonClient),
 				List.of(), day, day.atStartOfDay().toInstant(ZoneOffset.UTC), Confidence.AGGREGATOR_AUTOMATIC, flags);
 	}
@@ -105,6 +111,88 @@ class BankEntityApiTest extends ApiIntegrationTest {
 				.andExpect(jsonPath("$", hasSize(1)))
 				.andExpect(jsonPath("$[0].nonClientTna").value(0.30))
 				.andExpect(jsonPath("$[0].captureDate").value("2026-10-13"));
+	}
+
+	@Test
+	void aBankNotCapturedOnTheNewestDayOfItsSourceIsListedAsNotCurrentWithItsOwnCaptureDate() throws Exception {
+		capture("2026-10-18", bank("2026-10-18", "BANCO DOS", "0.31", null));
+		capture("2026-10-20", bank("2026-10-20", "BANCO UNO", "0.30", "0.33"));
+
+		read(LIST)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(2)))
+				.andExpect(jsonPath("$[0].slug").value("banco-dos"))
+				.andExpect(jsonPath("$[0].current").value(false))
+				.andExpect(jsonPath("$[0].captureDate").value("2026-10-18"))
+				.andExpect(jsonPath("$[0].nonClientTna").value(0.31))
+				.andExpect(jsonPath("$[1].slug").value("banco-uno"))
+				.andExpect(jsonPath("$[1].current").value(true))
+				.andExpect(jsonPath("$[1].captureDate").value("2026-10-20"));
+
+		// The bank page stays: same rate, same series, only flagged.
+		read(LIST + "/banco-dos")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.current").value(false))
+				.andExpect(jsonPath("$.captureDate").value("2026-10-18"))
+				.andExpect(jsonPath("$.series[0].captureDate").value("2026-10-18"));
+		read(LIST + "/banco-uno").andExpect(status().isOk()).andExpect(jsonPath("$.current").value(true));
+	}
+
+	@Test
+	void currentIsRelativeToTheNewestCaptureOfTheSourceNotToToday() throws Exception {
+		capture("2026-10-14", bank("2026-10-14", "BANCO UNO", "0.30", "0.33"),
+				bank("2026-10-14", "BANCO DOS", "0.31", null));
+
+		read(LIST)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].current").value(true))
+				.andExpect(jsonPath("$[1].current").value(true));
+		read(LIST + "/banco-uno").andExpect(jsonPath("$.current").value(true));
+	}
+
+	@Test
+	void eachSourceHasItsOwnNewestCapture() throws Exception {
+		SourceRef other = new SourceRef("other-plazo-fijo", "Other", false);
+		capture("2026-10-20", bank("2026-10-20", "BANCO UNO", "0.30", "0.33"));
+		bankWriter.write(List.of(bank(other, "2026-10-17", "BANCO DOS", "0.31", null, List.of())),
+				LocalDate.parse("2026-10-17"));
+
+		read(LIST)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(2)))
+				.andExpect(jsonPath("$[0].slug").value("banco-dos"))
+				.andExpect(jsonPath("$[0].current").value(true))
+				.andExpect(jsonPath("$[1].slug").value("banco-uno"))
+				.andExpect(jsonPath("$[1].current").value(true));
+	}
+
+	@Test
+	void currentIsJudgedOnTheValidSnapshotActuallyShown() throws Exception {
+		capture("2026-10-13", bank("2026-10-13", "BANCO UNO", "0.30", "0.33"));
+		capture("2026-10-14", invalidBank("2026-10-14", "BANCO UNO", "0.99", "0.99"),
+				bank("2026-10-14", "BANCO DOS", "0.31", null));
+
+		read(LIST)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[1].slug").value("banco-uno"))
+				.andExpect(jsonPath("$[1].captureDate").value("2026-10-13"))
+				.andExpect(jsonPath("$[1].current").value(false))
+				.andExpect(jsonPath("$[0].slug").value("banco-dos"))
+				.andExpect(jsonPath("$[0].current").value(true));
+		read(LIST + "/banco-uno").andExpect(jsonPath("$.current").value(false))
+				.andExpect(jsonPath("$.captureDate").value("2026-10-13"));
+	}
+
+	@Test
+	void aFutureCaptureDoesNotMakeEveryoneElseNotCurrent() throws Exception {
+		capture("2026-10-19", bank("2026-10-19", "BANCO UNO", "0.30", "0.33"));
+		capture("2026-10-25", bank("2026-10-25", "BANCO DOS", "0.31", null));
+
+		read(LIST)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1)))
+				.andExpect(jsonPath("$[0].slug").value("banco-uno"))
+				.andExpect(jsonPath("$[0].current").value(true));
 	}
 
 	@Test

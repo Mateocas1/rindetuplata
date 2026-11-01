@@ -23,6 +23,10 @@ public record BankDetailView(
 		BigDecimal clientTna,
 		@Schema(description = "The day the latest rates were captured.") LocalDate captureDate,
 		@Schema(description = "The date the source says the latest rates are about.") LocalDate dataDate,
+		@Schema(description = "True when this is the newest capture of the bank's source among the banks (at or "
+				+ "before today); false when the source captured a later day without a valid rate for this bank, so "
+				+ "the rates are its last published ones and must not be called today's.")
+		boolean current,
 		@Schema(description = "First day of the window.") LocalDate from,
 		@Schema(description = "Last day of the window (today).") LocalDate to,
 		@Schema(description = "Non-client TNA per capture day inside the window, oldest first.")
