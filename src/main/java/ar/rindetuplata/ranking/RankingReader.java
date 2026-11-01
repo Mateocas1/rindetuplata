@@ -2,6 +2,7 @@ package ar.rindetuplata.ranking;
 
 import ar.rindetuplata.source.Confidence;
 import ar.rindetuplata.source.ValidationFlag;
+import ar.rindetuplata.source.ValidationRules;
 import ar.rindetuplata.source.macro.BcraMonetariasClient;
 import ar.rindetuplata.source.macro.MacroVariable;
 import ar.rindetuplata.store.InstrumentKind;
@@ -93,7 +94,14 @@ class RankingReader {
 		return rates;
 	}
 
-	/** Every fund class whose quotes are at or before {@code asOf}, newest quote first per class. */
+	/**
+	 * The recent quotes of every fund class, newest first per class: those dated in
+	 * {@code [asOf - FUND_QUOTE_LOOKBACK_DAYS, asOf]}. {@link FundEvaluator} needs the latest valid quote (stale when
+	 * older than {@code FUND_STALE_DAYS}), a base at least {@code FUND_YIELD_WINDOW_DAYS} before it, and a margin of
+	 * the same size for the weekends and holidays that can sit between the two, so 21 days reach every quote it can
+	 * pick. The bound keeps the read independent of how much history is stored; a class whose newest quote is older
+	 * than the bound is absent, the same as one that was never ingested.
+	 */
 	Map<Long, List<StoredQuote>> fundSeries(LocalDate asOf) {
 		List<StoredQuote> quotes = jdbc.sql("""
 				select i.id as instrument_id, i.source_id as source_id, i.display_name as display_name,
@@ -101,10 +109,11 @@ class RankingReader {
 				       f.confidence as confidence, f.flags as flags, f.invalid as invalid
 				from fund_quote f
 				join instrument i on i.id = f.instrument_id
-				where i.kind = :kind and f.quote_date <= :asOf
+				where i.kind = :kind and f.quote_date between :from and :asOf
 				order by i.id, f.quote_date desc
 				""")
 				.param("kind", InstrumentKind.FUND_CLASS.name())
+				.param("from", asOf.minusDays(ValidationRules.FUND_QUOTE_LOOKBACK_DAYS))
 				.param("asOf", asOf)
 				.query((rs, rowNum) -> new StoredQuote(
 						rs.getLong("instrument_id"),

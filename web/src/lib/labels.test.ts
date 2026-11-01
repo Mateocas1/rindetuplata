@@ -63,6 +63,7 @@ describe('excluded and ineligible reasons', () => {
       'INSUFFICIENT_HISTORY',
       'NEGATIVE_RETURN',
       'INVALID_DATA',
+      'FUND_CLASS_NOT_FOUND',
     ]) {
       expect(excludedReasonLabel(reason)).not.toBe(reason);
     }
@@ -79,7 +80,13 @@ describe('excluded and ineligible reasons', () => {
 
 describe('flagLabel', () => {
   it('names every validation flag the pipeline emits', () => {
-    for (const code of ['STALE', 'INVALID', 'MISSING_VALUE', 'TERM_CODE_UNDOCUMENTED']) {
+    for (const code of [
+      'STALE',
+      'INVALID',
+      'MISSING_VALUE',
+      'TERM_CODE_UNDOCUMENTED',
+      'SHORT_YIELD_WINDOW',
+    ]) {
       expect(flagLabel(code)).not.toBe(code);
     }
   });

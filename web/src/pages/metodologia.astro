@@ -47,7 +47,8 @@ const sources = [
   {
     data: 'Fondos money market',
     source: 'ArgentinaDatos (cuotapartes diarias)',
-    detail: 'El rendimiento se calcula con la variación del valor de cuotaparte entre dos días.',
+    detail:
+      'El rendimiento se calcula con la variación del valor de cuotaparte de los últimos 7 días. Si un fondo tiene menos de 7 días de historia, usamos los días que hay y lo avisamos.',
   },
   {
     data: 'Rendimientos en cripto y fintech',
