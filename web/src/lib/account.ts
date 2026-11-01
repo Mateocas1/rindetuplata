@@ -178,10 +178,8 @@ type KeysAreKnown<Mine, Generated> = keyof Mine extends keyof Generated ? true :
 type AssertKnown<Value extends true> = Value;
 
 type _MagicLink = AssertKnown<KeysAreKnown<MagicLinkResponse, Schema['MagicLinkResponse']>>;
-// `type` (T6c, L32 a) is not in the committed OpenAPI snapshot until it is regenerated from the running API; drop
-// the `Omit`s then, so the guard covers the new field too.
-type _AlertRule = AssertKnown<KeysAreKnown<Omit<AlertRule, 'type'>, Schema['AlertResponse']>>;
-type _AlertInput = AssertKnown<KeysAreKnown<Omit<AlertInput, 'type'>, Schema['AlertRequest']>>;
+type _AlertRule = AssertKnown<KeysAreKnown<AlertRule, Schema['AlertResponse']>>;
+type _AlertInput = AssertKnown<KeysAreKnown<AlertInput, Schema['AlertRequest']>>;
 type _Instrument = AssertKnown<KeysAreKnown<InstrumentSummary, Schema['InstrumentSummary']>>;
 type _WalletTier = AssertKnown<
   KeysAreKnown<WalletTier, Schema['TierView']> & KeysAreKnown<WalletTier, Schema['TierRequest']>

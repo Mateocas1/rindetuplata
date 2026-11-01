@@ -3,9 +3,9 @@
  *
  * They go through the shared client in `api.ts`, so the session cookie, the CSRF token before unsafe methods and the
  * ProblemDetail -> `ApiProblem` mapping are handled once. The shapes follow `ApiKeyResponse` and
- * `CreatedApiKeyResponse` of the API; they are not checked against the OpenAPI snapshot yet because the snapshot is
- * regenerated once per wave, after the API changes are integrated.
+ * `CreatedApiKeyResponse` of the API, checked against the generated schema at the bottom of the file.
  */
+import type { components } from '../api/schema';
 import { api, type ApiClient } from './api';
 
 /** The API's cap of active keys per user (`ApiKeyService.MAX_ACTIVE_KEYS`). */
@@ -69,6 +69,22 @@ export function createApiKeysApi(client: ApiClient = api): ApiKeysApi {
 
 /** Client for the deployed site, on the shared fetch client. */
 export const apiKeysApi: ApiKeysApi = createApiKeysApi();
+
+// Compile-time guard against the committed OpenAPI snapshot (same idea as account.ts): a field rename in the API
+// breaks the build instead of rendering `undefined`.
+type Schema = components['schemas'];
+
+type KeysAreKnown<Mine, Generated> = keyof Mine extends keyof Generated ? true : false;
+
+type AssertKnown<Value extends true> = Value;
+
+type _ApiKey = AssertKnown<KeysAreKnown<ApiKey, Schema['ApiKeyResponse']>>;
+type _CreatedApiKey = AssertKnown<KeysAreKnown<CreatedApiKey, Schema['CreatedApiKeyResponse']>>;
+type _KeyRequest = AssertKnown<
+  KeysAreKnown<ReturnType<typeof keyRequestBody>, Schema['CreateApiKeyRequest']>
+>;
+
+export type ApiKeyTypeGuards = [_ApiKey, _CreatedApiKey, _KeyRequest];
 
 /** A message for a label the API would refuse, or `null` when it is fine. */
 export function validateKeyName(name: string): string | null {
