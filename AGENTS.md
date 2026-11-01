@@ -90,6 +90,24 @@ Pane prompt checklist (learned in T4 with DeepSeek v4 flash; each item cost an a
 - **What works well:** allowed edit surfaces are respected; asking for "deviations from the notes" gets honest,
   useful reports.
 
+## Session handoff (owner directive, `odd/tasks/post-mvp.md` S8)
+
+The orchestrating session works autonomously through the pending tasks and hands off to a fresh session at about
+40% of its context window, always at the end of a wave of tasks (no worker running, everything integrated, checks
+green, feature document and Engram mirror updated), never in the middle; the hard ceiling is 60%. Hand-off recipe
+(inside herdr, `HERDR_ENV=1`):
+
+```bash
+pane=$(herdr pane split --current --direction right --cwd "$PWD" --no-focus | jq -r .result.pane.pane_id)
+herdr pane send-text "$pane" "gentle-shell -- --model claude-bridge/claude-opus-5-5:high" && herdr pane send-keys "$pane" enter
+# wait until the pi prompt is ready, then send the handoff prompt (file below) and press enter
+herdr pane send-text "$pane" "$(cat /tmp/rindetuplata-handoff.md)" && herdr pane send-keys "$pane" enter
+```
+
+The handoff prompt names the feature document, the next task, this section, and repeats the directive verbatim so
+the new session hands off the same way. Before sending it, save `mem_session_summary` and confirm the new pane is
+working (read its tail). The old session then stops starting work.
+
 ## Conventions
 
 - Money and rates are `BigDecimal`, never `double`/`float`. State rounding mode and scale explicitly.
