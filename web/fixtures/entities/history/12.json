@@ -1,0 +1,69 @@
+{
+  "id": "12",
+  "kind": "PLAZO_FIJO_BANK",
+  "displayName": "BANCO CMF S.A.",
+  "entityName": "BANCO CMF S.A.",
+  "segment": null,
+  "sourceId": "argentinadatos-plazo-fijo",
+  "from": "2026-07-17",
+  "to": "2026-10-14",
+  "points": [
+    {
+      "captureDate": "2026-10-12",
+      "dataDate": "2026-10-12",
+      "basis": "TNA",
+      "rate": 0.235,
+      "clientRate": null,
+      "invalid": false,
+      "flags": [],
+      "tea": 0.262078
+    },
+    {
+      "captureDate": "2026-10-13",
+      "dataDate": "2026-10-13",
+      "basis": "TNA",
+      "rate": 0.235,
+      "clientRate": null,
+      "invalid": false,
+      "flags": [],
+      "tea": 0.262078
+    },
+    {
+      "captureDate": "2026-10-14",
+      "dataDate": "2026-10-14",
+      "basis": "TNA",
+      "rate": 0.235,
+      "clientRate": null,
+      "invalid": false,
+      "flags": [],
+      "tea": 0.262078
+    }
+  ],
+  "quotes": [],
+  "monthlyInflation": [
+    {
+      "index": "INDEC_CPI_MONTHLY",
+      "observationDate": "2026-07-31",
+      "value": 0.021,
+      "confidence": "OFFICIAL_AUTOMATIC",
+      "sourceId": "bcra-estadisticas-monetarias",
+      "annualized": 0.283243
+    },
+    {
+      "index": "INDEC_CPI_MONTHLY",
+      "observationDate": "2026-08-31",
+      "value": 0.017,
+      "confidence": "OFFICIAL_AUTOMATIC",
+      "sourceId": "bcra-estadisticas-monetarias",
+      "annualized": 0.224197
+    },
+    {
+      "index": "INDEC_CPI_MONTHLY",
+      "observationDate": "2026-09-30",
+      "value": 0.019,
+      "confidence": "OFFICIAL_AUTOMATIC",
+      "sourceId": "bcra-estadisticas-monetarias",
+      "annualized": 0.253401
+    }
+  ]
+}

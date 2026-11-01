@@ -15,7 +15,7 @@ import java.util.Map;
  * official flag. The declaration lives with the adapter, so it is never duplicated; an id with no adapter here
  * falls back to itself, never invented as official.
  */
-final class SourceRegistry {
+public final class SourceRegistry {
 
 	/** The classpath wallet-to-fund mapping: its id matches {@code FciBackedWalletCatalog.SOURCE}. */
 	static final SourceView FCI_BACKED_WALLETS = new SourceView("fci-backed-wallets", "FCI-backed wallet mapping",
@@ -34,7 +34,7 @@ final class SourceRegistry {
 	private SourceRegistry() {
 	}
 
-	static SourceView of(String sourceId) {
+	public static SourceView of(String sourceId) {
 		return SOURCES.getOrDefault(sourceId, new SourceView(sourceId, sourceId, false));
 	}
 }

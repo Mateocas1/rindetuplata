@@ -1,0 +1,104 @@
+---
+/**
+ * Monthly reports index (T6a, S6, L29 a): the closed months that have a "who beat inflation" report, newest first.
+ * While none does (the history starts 2026-10-14, so the first full month is November 2026 and its report needs
+ * INDEC's November figure), the page says so with the dates instead of showing an empty list.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatDate, formatPercent } from '../../lib/format';
+import {
+  FIRST_FULL_MONTH,
+  HISTORY_START,
+  loadReportMonths,
+  monthLabel,
+  reportPath,
+  type ReportMonthSummary,
+} from '../../lib/reports';
+import { breadcrumbJsonLd } from '../../lib/seo';
+
+const months = await loadReportMonths();
+
+const site = Astro.site ?? new URL('http://localhost:4321');
+const canonical = new URL(Astro.url.pathname, site);
+const jsonLd = breadcrumbJsonLd([
+  { name: 'Inicio', url: new URL('/', site).href },
+  { name: 'Informes', url: canonical.href },
+]);
+
+const linkClass =
+  'text-text underline decoration-border-strong underline-offset-2 hover:decoration-text';
+
+/** "Le ganaron a la inflación 4 de 5 opciones", with the singular and the none-at-all cases. */
+function verdict(month: ReportMonthSummary): string {
+  const options = month.ranked === 1 ? 'opción' : 'opciones';
+  if (month.beatInflation === 0) {
+    return `Ninguna de las ${month.ranked} ${options} le ganó a la inflación`;
+  }
+  return `${month.beatInflation === 1 ? 'Le ganó' : 'Le ganaron'} a la inflación ${month.beatInflation} de ${month.ranked} ${options}`;
+}
+---
+
+<BaseLayout
+  title="Quién le ganó a la inflación, mes a mes | rindetuplata"
+  description="Un informe por mes con lo que rindió cada plazo fijo, billetera, fondo y cripto contra la inflación oficial del INDEC, armado con el historial que guardamos día a día."
+  jsonLd={jsonLd}
+>
+  <div class="flex flex-col gap-section py-section">
+    <header class="flex max-w-prose flex-col gap-block">
+      <nav aria-label="Ubicación" class="type-label">
+        <ol class="flex flex-wrap items-center gap-x-2">
+          <li>
+            <a class={linkClass} href="/">Inicio</a>
+          </li>
+          <li aria-current="page"><span aria-hidden="true">/</span> Informes</li>
+        </ol>
+      </nav>
+      <h1 class="type-display">Quién le ganó a la inflación</h1>
+      <p class="type-body text-lead text-muted">
+        Cada mes cerrado, con las tasas y cotizaciones que guardamos día a día y la inflación oficial
+        del INDEC, medimos cuánto rindió cada opción y si le ganó a los precios.
+      </p>
+    </header>
+
+    {
+      months.length === 0 ? (
+        <section class="card max-w-prose p-6" aria-labelledby="sin-informes">
+          <h2 id="sin-informes" class="type-section">Todavía no hay ningún informe</h2>
+          <p class="type-body mt-3">
+            Empezamos a guardar las tasas el {formatDate(HISTORY_START)}, así que el primer mes completo
+            que podemos medir es {monthLabel(FIRST_FULL_MONTH)}. Su informe aparece cuando el INDEC
+            publique la inflación de {monthLabel(FIRST_FULL_MONTH).split(' de ')[0]}, a mediados de
+            diciembre.
+          </p>
+          <p class="type-body mt-3 text-muted">
+            Un mes a medias no se compara contra la inflación de un mes entero: por eso esperamos a tener
+            todos sus días.
+          </p>
+        </section>
+      ) : (
+        <section class="flex flex-col gap-block" aria-labelledby="meses">
+          <h2 id="meses" class="type-section">Informes disponibles</h2>
+          <ul class="grid gap-block sm:grid-cols-2">
+            {months.map((month) => (
+              <li class="card p-6">
+                <a class={`${linkClass} type-section`} href={reportPath(month.month)}>
+                  {monthLabel(month.month)}
+                </a>
+                <p class="type-data mt-3">{verdict(month)}</p>
+                <p class="type-data mt-1 text-muted">
+                  Inflación del INDEC: {formatPercent(month.monthlyInflation)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <p class="type-data max-w-prose text-muted">
+      Mirá{' '}
+      <a class={linkClass} href="/metodologia/">cómo se calcula cada número</a>. Es información, no
+      asesoramiento financiero.
+    </p>
+  </div>
+</BaseLayout>

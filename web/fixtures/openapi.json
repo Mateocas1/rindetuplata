@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:18080",
+      "url": "http://localhost:18091",
       "description": "Generated server url"
     }
   ],
@@ -216,7 +216,7 @@
           "simulation-controller"
         ],
         "summary": "Simulate one instrument",
-        "description": "Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.",
+        "description": "Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. The dollar MEP break-even of the instrument over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.",
         "operationId": "simulate",
         "parameters": [
           {
@@ -308,13 +308,88 @@
         }
       }
     },
+    "/api/v1/reports/monthly": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "Months with a report",
+        "description": "The closed months that have a report, newest first. A month is listed only when it has ended, INDEC has published its inflation and the stored history covers it; until then the list is empty. Each instrument's nominal return is what it delivered over the closed month, from the stored history. Wallets and crypto compound daily at the latest known rate of each calendar day (a day whose latest capture is more than 3 days old disqualifies the instrument); a plazo fijo locks the non-client TNA of its first capture of the month, which must be dated on or before the first business day, as one term over the month's days (TNA * days / 365); a fund is the ratio of its last quote on or before the month end to its last quote on or before the previous month end, each at most 4 days before that end, and the classes of one fund are grouped to the best one. The real return is (1 + nominal) / (1 + inflation) - 1 against the INDEC monthly inflation of the same month.",
+        "operationId": "months",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlyReportListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/monthly/{month}": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "Who beat inflation in a closed month",
+        "description": "Each instrument's nominal return is what it delivered over the closed month, from the stored history. Wallets and crypto compound daily at the latest known rate of each calendar day (a day whose latest capture is more than 3 days old disqualifies the instrument); a plazo fijo locks the non-client TNA of its first capture of the month, which must be dated on or before the first business day, as one term over the month's days (TNA * days / 365); a fund is the ratio of its last quote on or before the month end to its last quote on or before the previous month end, each at most 4 days before that end, and the classes of one fund are grouped to the best one. The real return is (1 + nominal) / (1 + inflation) - 1 against the INDEC monthly inflation of the same month. Rows are sorted by real return, best first; instruments that could not be measured are returned apart with their reason.",
+        "operationId": "month",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "description": "The month as yyyy-MM, for example 2026-10.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The report of the month.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlyReportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The month is not a valid yyyy-MM.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlyReportResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The month is not closed yet, INDEC has not published its inflation, or the stored history does not cover it.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlyReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/ranking": {
       "get": {
         "tags": [
           "ranking-controller"
         ],
         "summary": "Personalized ranking",
-        "description": "Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.",
+        "description": "Cacheable by validation. The response carries a weak ETag derived from the version of the stored data and the normalized request, and Cache-Control: public, no-cache. Send the ETag back in If-None-Match to get a 304 with no body while the data and the request are the same; a new ingestion run or a curated-rate change produces a new ETag. Entries carry breakEvenMep and the response carries dollarMep. The dollar MEP break-even of the instrument over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.",
         "operationId": "ranking",
         "parameters": [
           {
@@ -542,6 +617,73 @@
         }
       }
     },
+    "/api/v1/entities/banks": {
+      "get": {
+        "tags": [
+          "bank-entity-controller"
+        ],
+        "summary": "Banks with today's plazo fijo rates",
+        "description": "Every bank that has a valid plazo fijo snapshot at or before today, sorted by slug, with its latest non-client and client TNA (fractions, scale 6) and the capture and data dates of that snapshot. A rate is null when the bank does not publish it.",
+        "operationId": "list_2",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BankRatesView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entities/banks/{slug}": {
+      "get": {
+        "tags": [
+          "bank-entity-controller"
+        ],
+        "summary": "One bank: rates, 90-day series and best-rate days",
+        "description": "The bank's latest rates, its non-client TNA per capture day over the last 90 calendar days ending today (inclusive, America/Argentina/Buenos_Aires, oldest first) and bestDays/observedDays: among the capture days of that window on which the bank had a valid non-client TNA (observedDays), the days on which it was the highest among all banks (bestDays). A tie counts for each bank tied; invalid snapshots and days the bank was not captured are left out.",
+        "operationId": "bank",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The bank.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankDetailView"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No bank has this slug.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankDetailView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/csrf": {
       "get": {
         "tags": [
@@ -569,7 +711,7 @@
         "tags": [
           "curation-controller"
         ],
-        "operationId": "list_2",
+        "operationId": "list_3",
         "responses": {
           "200": {
             "description": "OK",
@@ -848,7 +990,7 @@
       },
       "BreakEvenMepView": {
         "type": "object",
-        "description": "When the instrument beats the dollar MEP over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.",
+        "description": "The dollar MEP break-even of the instrument over the requested days. A saver buys dollars at the MEP sell price today and leaves them at the MEP buy price at the end, so the instrument wins when the MEP buy price rises less than devaluation = (1 + nominalReturn) * sell / buy - 1; the spread is part of the answer. Computed from the quote in dollarMep; null (never invented) when no MEP quote is stored.",
         "properties": {
           "devaluation": {
             "type": "number",
@@ -1060,6 +1202,188 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "MonthlyReportListResponse": {
+        "type": "object",
+        "properties": {
+          "months": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportMonthView"
+            }
+          }
+        }
+      },
+      "ReportMonthView": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string"
+          },
+          "monthlyInflation": {
+            "type": "number"
+          },
+          "ranked": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "beatInflation": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MonthlyReportResponse": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "inflation": {
+            "$ref": "#/components/schemas/ReportInflationView"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportRowView"
+            }
+          },
+          "leftOut": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportLeftOutView"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ReportTotalsView"
+          }
+        }
+      },
+      "ReportCoverageView": {
+        "type": "object",
+        "description": "The days of the month the nominal return was measured over, out of the days of the month. Wallets, crypto and plazo fijo cover the whole month by construction; a fund covers the days from the previous month end to its last quote (at least the month minus 4 days).",
+        "properties": {
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ReportInflationView": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number",
+            "description": "The month's inflation as a fraction (1.9% is 0.019), scale 6."
+          },
+          "observationDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The date the observation is stored under: the last day of the month it measures."
+          },
+          "confidence": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceView"
+          }
+        }
+      },
+      "ReportLeftOutView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceView"
+          },
+          "reason": {
+            "type": "string",
+            "description": "NOT_CAPTURED_AT_START, GAP_IN_CAPTURES, MISSING_BASE_QUOTE, MISSING_END_QUOTE, NOT_OFFERED_TO_NON_CLIENTS, INVALID_DATA, FOREIGN_CURRENCY, RESTRICTED_CLASS or FUND_CLASS_NOT_FOUND."
+          }
+        }
+      },
+      "ReportRowView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "description": "PLAZO_FIJO, WALLET, FUND or CRYPTO."
+          },
+          "name": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceView"
+          },
+          "nominal": {
+            "type": "number",
+            "description": "The return the instrument delivered over the month, as a fraction (2% is 0.02)."
+          },
+          "real": {
+            "type": "number",
+            "description": "(1 + nominal) / (1 + inflation) - 1 against the INDEC rate of the month."
+          },
+          "beatInflation": {
+            "type": "boolean",
+            "description": "True when the real return, as published, is above zero."
+          },
+          "foldedClasses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/ReportCoverageView"
+          }
+        }
+      },
+      "ReportTotalsView": {
+        "type": "object",
+        "properties": {
+          "ranked": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "beatInflation": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "leftOut": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -1414,6 +1738,122 @@
             }
           },
           "tea": {
+            "type": "number"
+          }
+        }
+      },
+      "BankRatesView": {
+        "type": "object",
+        "description": "A bank with the latest valid plazo fijo rates stored at or before today.",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "URL-safe identifier derived from the bank name: lowercase, accents stripped, non-alphanumerics as dashes. Stable; a name collision takes a numeric suffix in instrument id order."
+          },
+          "name": {
+            "type": "string"
+          },
+          "instrumentId": {
+            "type": "string",
+            "description": "Id of the bank's instrument, usable with /api/v1/instruments/{id}/history."
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "Source of the rates."
+          },
+          "nonClientTna": {
+            "type": "number",
+            "description": "Non-client TNA as a fraction, scale 6; null when the bank offers none."
+          },
+          "clientTna": {
+            "type": "number",
+            "description": "Client TNA as a fraction, scale 6; null when the bank publishes none."
+          },
+          "captureDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The day the rates were captured."
+          },
+          "dataDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The date the source says the rates are about."
+          }
+        }
+      },
+      "BankDetailView": {
+        "type": "object",
+        "description": "A bank's latest plazo fijo rates, its 90-day non-client TNA series and bestDays/observedDays.",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "instrumentId": {
+            "type": "string",
+            "description": "Id of the bank's instrument, usable with /api/v1/instruments/{id}/history."
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "nonClientTna": {
+            "type": "number",
+            "description": "Non-client TNA as a fraction, scale 6; null when the bank offers none."
+          },
+          "clientTna": {
+            "type": "number",
+            "description": "Client TNA as a fraction, scale 6; null when the bank publishes none."
+          },
+          "captureDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The day the latest rates were captured."
+          },
+          "dataDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The date the source says the latest rates are about."
+          },
+          "from": {
+            "type": "string",
+            "format": "date",
+            "description": "First day of the window."
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "description": "Last day of the window (today)."
+          },
+          "series": {
+            "type": "array",
+            "description": "Non-client TNA per capture day inside the window, oldest first.",
+            "items": {
+              "$ref": "#/components/schemas/BankSeriesPoint"
+            }
+          },
+          "bestDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Capture days in the window on which this bank's non-client TNA was the highest among banks; a tie counts for every bank tied."
+          },
+          "observedDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Capture days in the window on which this bank had a valid non-client TNA: the denominator of bestDays."
+          }
+        }
+      },
+      "BankSeriesPoint": {
+        "type": "object",
+        "description": "A capture day and the bank's non-client TNA (fraction, scale 6) captured that day.",
+        "properties": {
+          "captureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "nonClientTna": {
             "type": "number"
           }
         }

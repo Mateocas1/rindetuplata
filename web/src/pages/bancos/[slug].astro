@@ -1,0 +1,158 @@
+---
+/**
+ * Bank entity page (T6b, S6): today's non-client and client plazo fijo TNA, the 90-day chart (the instrument history
+ * chart, unchanged), how many of the days we saw the bank it paid the highest non-client TNA, and the source and
+ * dates. Built at build time with no island; the bank's instrument page is linked only when one was built (D1).
+ */
+import HistoryChart from '../../components/instrument/HistoryChart.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { MissingHistoryRecording } from '../../lib/data';
+import {
+  bestRateSentence,
+  loadBankHistory,
+  loadBankPages,
+  sourceName,
+  type BankDetail,
+} from '../../lib/entities';
+import { formatDate, formatPercent } from '../../lib/format';
+import { loadInstrumentPages } from '../../lib/pages';
+import { breadcrumbJsonLd } from '../../lib/seo';
+import { instrumentSlug } from '../../lib/slug';
+import type { InstrumentHistory } from '../../lib/types';
+
+interface PageProps {
+  bank: BankDetail;
+  /** Slugs of the instrument pages that were built, to link the bank's own only when it exists. */
+  instrumentSlugs: string[];
+}
+
+export async function getStaticPaths() {
+  const banks = await loadBankPages();
+  const { slugs } = await loadInstrumentPages();
+  return banks.map((bank) => ({
+    params: { slug: bank.slug },
+    props: { bank, instrumentSlugs: slugs },
+  }));
+}
+
+const { bank, instrumentSlugs } = Astro.props as PageProps;
+
+// A bank with no recorded history (a client-rate-only bank in fixture mode) renders the chart's empty state; any
+// other read error stops the build.
+let history: InstrumentHistory | null = null;
+try {
+  history = await loadBankHistory(bank);
+} catch (error) {
+  if (!(error instanceof MissingHistoryRecording)) throw error;
+}
+
+const site = Astro.site ?? new URL('http://localhost:4321');
+const canonical = new URL(Astro.url.pathname, site);
+const source = sourceName(bank.sourceId);
+const nonClient = bank.nonClientTna === null ? null : formatPercent(bank.nonClientTna);
+const client = bank.clientTna === null ? null : formatPercent(bank.clientTna);
+const instrumentPage = instrumentSlugs.includes(instrumentSlug(bank.name, bank.instrumentId))
+  ? `/instrumentos/${instrumentSlug(bank.name, bank.instrumentId)}/`
+  : null;
+const provenance =
+  `${source} · dato del ${formatDate(bank.dataDate)}` +
+  (bank.captureDate === bank.dataDate ? '' : ` · captura del ${formatDate(bank.captureDate)}`);
+
+const title =
+  nonClient === null
+    ? `${bank.name}: plazo fijo, tasa para clientes | rindetuplata`
+    : `${bank.name}: plazo fijo ${nonClient} TNA hoy | rindetuplata`;
+const description =
+  (nonClient === null
+    ? `${bank.name} no ofrece plazo fijo a no clientes hoy${client === null ? '' : ` y paga ${client} TNA a sus clientes`}.`
+    : `Cuánto paga hoy ${bank.name} por un plazo fijo: ${nonClient} TNA para no clientes${client === null ? '' : ` y ${client} TNA para clientes`}.`) +
+  ` Mirá su tasa de los últimos 90 días y cuántas veces fue la mejor, según ${source}, dato del ${formatDate(bank.dataDate)}.`;
+
+const jsonLd = breadcrumbJsonLd([
+  { name: 'Inicio', url: new URL('/', site).href },
+  { name: 'Bancos', url: new URL('/bancos/', site).href },
+  { name: bank.name, url: canonical.href },
+]);
+
+const linkClass =
+  'text-text underline decoration-border-strong underline-offset-2 hover:decoration-text';
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <article class="flex flex-col gap-section py-section">
+    <header class="flex max-w-prose flex-col gap-block">
+      <nav aria-label="Ubicación" class="type-label">
+        <ol class="flex flex-wrap gap-x-2">
+          <li>
+            <a class={linkClass} href="/">Inicio</a>
+          </li>
+          <li>
+            <span aria-hidden="true">/</span>{' '}
+            <a class={linkClass} href="/bancos/">Bancos</a>
+          </li>
+          <li aria-current="page"><span aria-hidden="true">/</span> {bank.name}</li>
+        </ol>
+      </nav>
+      <div class="flex flex-col gap-block">
+        <p class="type-label">Plazo fijo</p>
+        <h1 class="type-display max-w-prose">{bank.name}</h1>
+      </div>
+
+      <div class="card max-w-prose border-s-2 border-s-accent p-6">
+        {
+          nonClient !== null ? (
+            <p class="type-section">Hoy: {nonClient} TNA para no clientes</p>
+          ) : (
+            <p class="type-section">Hoy no ofrece plazo fijo a no clientes</p>
+          )
+        }
+        {client !== null && <p class="type-body mt-2">{client} TNA para clientes del banco</p>}
+        <p class="type-data text-muted mt-4">{provenance}</p>
+      </div>
+    </header>
+
+    <section class="flex max-w-prose flex-col gap-block" aria-labelledby="mejor-tasa">
+      <h2 id="mejor-tasa" class="type-section">¿Cuántas veces fue la mejor?</h2>
+      <p class="type-body">{bestRateSentence(bank.bestDays, bank.observedDays)}</p>
+      <p class="type-data text-muted">
+        Contamos los días en que capturamos la tasa para no clientes del banco, entre el{' '}
+        {formatDate(bank.from)} y el {formatDate(bank.to)}. Si dos bancos empatan, los dos cuentan
+        como la mejor; un día sin captura no cuenta.
+      </p>
+    </section>
+
+    <section class="flex flex-col gap-block" aria-labelledby="historial">
+      <div class="flex flex-col gap-2">
+        <h2 id="historial" class="type-section">Cómo viene rindiendo</h2>
+        <p class="type-data text-muted">Tasa efectiva anual contra inflación anualizada del INDEC</p>
+      </div>
+      <HistoryChart history={history} />
+    </section>
+
+    <footer class="flex max-w-prose flex-col gap-2 border-t border-border pt-block">
+      <p class="type-body">
+        {
+          instrumentPage !== null && (
+            <>
+              <a class={linkClass} href={instrumentPage}>
+                Simulá con tu monto y tu plazo
+              </a>{' '}
+              ·{' '}
+            </>
+          )
+        }
+        <a class={linkClass} href="/bancos/">
+          Todos los bancos
+        </a>{' '}
+        ·{' '}
+        <a class={linkClass} href="/metodologia/">
+          Cómo se calcula cada número
+        </a>
+      </p>
+      <p class="type-data text-muted">
+        Es información, no asesoramiento financiero. rindetuplata no recibe dinero de las entidades
+        que compara.
+      </p>
+    </footer>
+  </article>
+</BaseLayout>

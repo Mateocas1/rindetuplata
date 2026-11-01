@@ -328,3 +328,177 @@ describe('stylesheet', () => {
     }
   });
 });
+
+/**
+ * Monthly report pages (T6a, S6, L29 a). The fixture build reads the synthetic month in
+ * `fixtures/reports/`: `/informes/` lists it and `/informes/2026-10/` renders its table. The empty state is checked by
+ * `reports-empty-smoke.test.ts`, which builds with an empty month list.
+ */
+const report = JSON.parse(readFileSync(join(webRoot, 'fixtures/reports/2026-10.json'), 'utf8')) as {
+  inflation: { value: number };
+  rows: Array<{ name: string; nominal: number; real: number; beatInflation: boolean }>;
+  leftOut: Array<{ name: string; reason: string }>;
+};
+
+describe('prerendered report index', () => {
+  it('lists the available month with a link to its page, its inflation and how many beat it', () => {
+    const page = html('informes/index.html');
+    const text = renderedText(page).replace(/\s+/g, ' ');
+
+    expect(text).toContain('Quién le ganó a la inflación');
+    expect(page).toContain('href="/informes/2026-10/"');
+    expect(text).toContain('octubre de 2026');
+    expect(text).toContain('2,10%');
+    expect(text).toContain('4 de 5');
+    expect(text).not.toContain('todavía no hay');
+  });
+
+  it('carries its canonical link and the breadcrumb JSON-LD', () => {
+    const page = html('informes/index.html');
+
+    expect(page).toContain(`rel="canonical" href="${SITE_URL}/informes/"`);
+    expect(page).toContain('"@type":"BreadcrumbList"');
+  });
+});
+
+describe('prerendered month report', () => {
+  it('has one page per available month and no more', () => {
+    const months = readdirSync(join(dist, 'informes'), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+
+    expect(months).toEqual(['2026-10']);
+  });
+
+  it('answers the question of the month in its heading and states the INDEC source and date', () => {
+    const page = html('informes/2026-10/index.html');
+    const text = renderedText(page).replace(/\s+/g, ' ');
+    const h1 = /<h1[^>]*>([\s\S]*?)<\/h1>/.exec(page);
+
+    expect(h1, 'the month H1').not.toBeNull();
+    expect(renderedText(h1![1]).replace(/\s+/g, ' ').trim()).toBe(
+      'Quién le ganó a la inflación en octubre de 2026',
+    );
+    expect(text).toContain('INDEC');
+    expect(text).toContain('2,10%');
+    expect(text).toContain('31/10/2026');
+    expect(text).toContain('BCRA Statistics');
+    expect(page).toContain(`rel="canonical" href="${SITE_URL}/informes/2026-10/"`);
+  });
+
+  it('renders the table in the API order with nominal, real, a verdict in words and coverage', () => {
+    const page = html('informes/2026-10/index.html');
+    const headers = rowHeaderTexts(page);
+
+    expect(headers).toHaveLength(report.rows.length);
+    for (const [index, row] of report.rows.entries()) {
+      expect(headers[index], `row ${index + 1}`).toContain(row.name);
+    }
+    const text = renderedText(page).replace(/\s+/g, ' ');
+    expect(text).toContain('3,50%');
+    expect(text).toContain('+1,37%');
+    expect(text).toContain('−0,06%');
+    expect(text).toContain('Le ganó');
+    expect(text).toContain('No le ganó');
+    // The fund covers 30 of the 31 days and folds two sibling classes.
+    expect(text).toContain('30 de 31 días');
+    expect(text).toContain('+2 clases');
+    for (const row of report.rows) {
+      expect(page, row.name).toContain(row.beatInflation ? 'Le ganó' : 'No le ganó');
+    }
+  });
+
+  it('names the options left out with their reason in Spanish', () => {
+    const text = renderedText(html('informes/2026-10/index.html')).replace(/\s+/g, ' ');
+
+    for (const left of report.leftOut) {
+      expect(text, left.name).toContain(left.name);
+    }
+    expect(text).toContain('No teníamos su tasa al empezar el mes');
+    expect(text).toContain('Sin cotización cerca del cierre del mes');
+  });
+
+  it('explains the method in two sentences and links the methodology', () => {
+    const page = html('informes/2026-10/index.html');
+
+    expect(page).toContain('href="/metodologia/"');
+    expect(renderedText(page)).toContain('Cómo medimos');
+    expect(renderedText(page)).toContain('no es asesoramiento financiero');
+  });
+
+  it('ships no island: the report is static markup', () => {
+    const page = html('informes/2026-10/index.html');
+
+    expect(page).not.toContain('astro-island');
+  });
+
+  it('is in the sitemap together with the index', () => {
+    const sitemaps = readdirSync(dist)
+      .filter((file) => /^sitemap-\d+\.xml$/.test(file))
+      .map((file) => readFileSync(join(dist, file), 'utf8'))
+      .join('\n');
+
+    expect(sitemaps).toContain(`${SITE_URL}/informes/`);
+    expect(sitemaps).toContain(`${SITE_URL}/informes/2026-10/`);
+  });
+});
+
+describe('site header', () => {
+  it('links the reports from every page and marks the section inside /informes/', () => {
+    for (const path of ['index.html', 'metodologia/index.html', 'plazo-fijo/index.html']) {
+      expect(html(path), path).toMatch(/<a href="\/informes\/"[^>]*>\s*Informes/);
+    }
+    // The index is the current page; a month inside it marks the section (`true`), and the breadcrumb names the page.
+    expect(html('informes/index.html')).toMatch(/<a href="\/informes\/" aria-current="page"/);
+    expect(html('informes/2026-10/index.html')).toMatch(/<a href="\/informes\/" aria-current="true"/);
+    expect(html('index.html')).not.toMatch(/<a href="\/informes\/" aria-current=/);
+  });
+
+  it('keeps the other sections of the header', () => {
+    const page = html('index.html');
+
+    for (const href of ['/', '/plazo-fijo/', '/billeteras/', '/fondos/', '/cripto/', '/metodologia/']) {
+      expect(page, href).toContain(`href="${href}"`);
+    }
+  });
+});
+
+describe('internal links', () => {
+  /** Every `<a href="/...">` of every built page, with the page it appears on. */
+  function internalLinks(): Array<{ page: string; href: string }> {
+    return htmlFiles(dist).flatMap((file) =>
+      [...readFileSync(file, 'utf8').matchAll(/<a\b[^>]*?\shref="(\/[^"]*)"/g)]
+        .map((match) => match[1])
+        .filter((href) => !href.startsWith('//'))
+        .map((href) => ({ page: relative(dist, file), href })),
+    );
+  }
+
+  /** The built file a path serves: a directory index, or the file itself when it has an extension. */
+  function resolves(href: string): boolean {
+    const path = href.split(/[?#]/)[0];
+    if (path.endsWith('/')) return existsSync(join(dist, path, 'index.html'));
+    return (
+      existsSync(join(dist, path)) &&
+      !(path.split('/').pop() ?? '').match(/^[^.]*$/) /* has an extension */
+    ) || existsSync(join(dist, `${path}/index.html`)) || existsSync(join(dist, `${path}.html`));
+  }
+
+  it('resolves to a built file on every page, the reports included', () => {
+    const links = internalLinks();
+    const missing = links.filter(({ href }) => !resolves(href)).map(({ page, href }) => `${page} -> ${href}`);
+
+    expect(links.length).toBeGreaterThan(100);
+    expect(missing).toEqual([]);
+  });
+
+  it('includes the links between the index, the month page and the methodology', () => {
+    const hrefs = internalLinks()
+      .filter(({ page }) => page.startsWith('informes'))
+      .map(({ page, href }) => `${page} -> ${href}`);
+
+    expect(hrefs).toContain('informes/index.html -> /informes/2026-10/');
+    expect(hrefs).toContain('informes/2026-10/index.html -> /informes/');
+    expect(hrefs).toContain('informes/2026-10/index.html -> /metodologia/');
+  });
+});
