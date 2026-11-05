@@ -17,6 +17,13 @@ const percent = new Intl.NumberFormat('es-AR', {
 
 const integer = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
 
+const moneyWhole = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
 const shortDate = new Intl.DateTimeFormat('es-AR', {
   day: '2-digit',
   month: '2-digit',
@@ -54,6 +61,15 @@ function withTypographicMinus(value: string): string {
 /** "$ 1.019.726,03" */
 export function formatMoney(amount: number): string {
   return withTypographicMinus(money.format(amount));
+}
+
+/**
+ * Whole pesos, for a difference read at a glance (ui-clarity D6, D8): "$ 3.806".
+ * The sign goes before the currency symbol: "−$ 2.402".
+ */
+export function formatMoneyWhole(amount: number): string {
+  const formatted = moneyWhole.format(Math.abs(amount));
+  return Math.round(amount) < 0 ? `${MINUS}${formatted}` : formatted;
 }
 
 /** Fraction to percent with two decimals: 0.24 → "24,00%" */
