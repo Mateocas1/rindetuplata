@@ -1,7 +1,35 @@
 # rindetuplata UI clarity pass
 
 A design pass over the static site (`web/`) after the owner read a design critique of the T13 "Cobalto Cristal" rollout
-(2026-11-05). Branch `ccr-36134cd3-lj3f49` from `origin/main` (326b872). Read every section until `## Log` before working
+(2026-11-05). Branch `ccr-36134cd3-lj3f49` from `origin/main` (326b872). Read every section until `## Owner review (read this first)
+
+Everything above is built, tested and pushed on `ccr-36134cd3-lj3f49`; no pull request was opened (open one when you
+want it reviewed). Final state: web `astro check` 0/0/0, vitest 799/799, fixture build 249 pages; Maven 905/0/0.
+Three review rounds; the third found nothing that met the bar (L9).
+
+Decisions that change something you decided earlier, or that you may want to flip (each is one revertable commit):
+
+1. **D1 (fbdadc6) undoes two gestures you picked in L80:** the serif italic "plata" and the glass card. If you want
+   them back, revert that commit's markup and recipe hunks; the rest of T1 (one family, sentence-case labels) stands
+   on its own.
+2. **D18 keeps your S11 rule** (source and date on every row) instead of the critique's "one caption": the column is
+   gone, the facts moved to each row's secondary line.
+3. **D20 adds "Alertas" to the header and moves "Claves API" to the footer:** no page linked the alerts before.
+4. **D5 shows liquidity per row but no deposit-guarantee chip:** the BCRA cap and its rate-based exclusion change, so
+   the methodology explains it and links the BCRA text instead of a per-row claim.
+5. **D4 adds `realEarned` to the public API** (REST, simulations and MCP); the web fixtures carry it derived by
+   `web/scripts/derive-real-earned.mjs`, documented in `web/fixtures/README.md`. Re-recording the fixtures from a live
+   stack would replace the derived values with real ones.
+6. **The ranking switches from cards to the table at `md` (768px), not `sm`** (L5): narrower, the name column was
+   ~130px wide.
+
+Not pursued (reviewers' notes below the bar, kept for a later pass): the methodology table of contents starts 68px
+right of the header's left edge at 1440; the real-result line wraps to three lines in the table at 768; the mobile
+menu panel has no shadow; the report and "Última tasa publicada" tables scroll inside their box at 320; after a failed
+query the "quedaron afuera" list keeps the previous query's data; at 320 the "$" of a hero figure wraps above the
+number.
+
+## Log` before working
 on a task.
 
 ## Specs
@@ -46,7 +74,9 @@ on a task.
 | T3b | S3 | Parent between waves: shared `RealResult` line (D19, 42c42a0) and es-AR amount input helpers (D16, b59c610) | parent | done | 42c42a0, b59c610 |
 | T7 | S3 | Independent design review against S3 (base build vs new, light/dark, 320/390/1280/1440, contrast, focus); "no findings" is a valid result | Opus reviewer | done | L6 |
 | T8 | S3 | Review round 1 fixes: instrument grid one shrinkable column below lg; conditional "hasta" offers read as earnings; curated source named in Spanish | parent | done | 4c11e7e |
-| T9 | S3 | Review round 2 (fresh eyes on the fixed branch) | Sonnet reviewer | in progress | |
+| T9 | S3 | Review round 2 (fresh eyes on the fixed branch) | Sonnet reviewer | done | L8 |
+| T10 | S3 | Review round 2 fixes: the instrument hero figure never breaks inside the number; the simulator names a curated load once | parent | done | 54e5ee4 |
+| T11 | S3 | Review round 3 (closing) | Sonnet reviewer | done | L9 (loop ended: no qualifying finding) |
 
 Waves: T1, T2 and T3 run in parallel (disjoint files, own worktrees); T4, T5 and T6 run in parallel on top of them
 (disjoint surfaces); T7 reviews the integrated branch; a fix round follows only for findings that pass the AGENTS.md
@@ -118,6 +148,34 @@ finding bar.
   parent always verifies pane output and makes the commit"). The Engram mirror is not reachable from this cloud
   session; this document is the record.
 
+## Owner review (read this first)
+
+Everything above is built, tested and pushed on `ccr-36134cd3-lj3f49`; no pull request was opened (open one when you
+want it reviewed). Final state: web `astro check` 0/0/0, vitest 799/799, fixture build 249 pages; Maven 905/0/0.
+Three review rounds; the third found nothing that met the bar (L9).
+
+Decisions that change something you decided earlier, or that you may want to flip (each is one revertable commit):
+
+1. **D1 (fbdadc6) undoes two gestures you picked in L80:** the serif italic "plata" and the glass card. If you want
+   them back, revert that commit's markup and recipe hunks; the rest of T1 (one family, sentence-case labels) stands
+   on its own.
+2. **D18 keeps your S11 rule** (source and date on every row) instead of the critique's "one caption": the column is
+   gone, the facts moved to each row's secondary line.
+3. **D20 adds "Alertas" to the header and moves "Claves API" to the footer:** no page linked the alerts before.
+4. **D5 shows liquidity per row but no deposit-guarantee chip:** the BCRA cap and its rate-based exclusion change, so
+   the methodology explains it and links the BCRA text instead of a per-row claim.
+5. **D4 adds `realEarned` to the public API** (REST, simulations and MCP); the web fixtures carry it derived by
+   `web/scripts/derive-real-earned.mjs`, documented in `web/fixtures/README.md`. Re-recording the fixtures from a live
+   stack would replace the derived values with real ones.
+6. **The ranking switches from cards to the table at `md` (768px), not `sm`** (L5): narrower, the name column was
+   ~130px wide.
+
+Not pursued (reviewers' notes below the bar, kept for a later pass): the methodology table of contents starts 68px
+right of the header's left edge at 1440; the real-result line wraps to three lines in the table at 768; the mobile
+menu panel has no shadow; the report and "Última tasa publicada" tables scroll inside their box at 320; after a failed
+query the "quedaron afuera" list keeps the previous query's data; at 320 the "$" of a hero figure wraps above the
+number.
+
 ## Log
 
 - **L1** (2026-11-05, owner): S1 and S2 verbatim above; routing left to the orchestrator ("Delega la cantidad que
@@ -168,4 +226,16 @@ finding bar.
   instrument page and the simulator (one rule, four views). Retro: the T5 worker's screenshots of instrument pages
   were of fiwind (no chart) at desktop widths for the grid tweak; a layout change gets re-measured on a page that has
   every block (chart included) at the narrowest width.
+- **L8** (evidence, T9 round 2): Sonnet reviewer, read-only, ~8 min, 107k. Round 1 fixes PASS: scrollWidth on all 249
+  pages at 320 and 390 (498 measurements) never exceeds the viewport; the Ualá row, hero and simulator read
+  "Hasta $ 19.915,26"; no English on curated pages; contrast clean on 14 pages × 3 widths × 2 appearances; 7,033
+  internal hrefs resolve. Qualifying (both low-medium): the instrument hero figure broke inside the number at 320
+  (`break-words`); the simulator caption said "Carga manual verificada" twice. T10 fixed both test-first (RED 2 →
+  GREEN 799/799); measured at 320: the number spans x=45..252 inside a card ending at 300, page width 320.
+- **L9** (evidence, T11 round 3, closing): Sonnet reviewer at medium effort, ~4 min. CLEAN: both fixes verified on four
+  instrument pages at 320/390 light and dark (number on one line inside its card, no overflow, the curated load named
+  once); regression pass over six pages at 320/1280 without overflow, English or wrong figures. Loop ended by the
+  AGENTS.md rule: a round without a qualifying finding. Context check at wave end (AGENTS.md handoff rule): this
+  orchestrating session stayed well under the 40% mark through all three waves, so no handoff was needed; the work is
+  complete, nothing is left running.
 
