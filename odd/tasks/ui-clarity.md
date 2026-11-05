@@ -106,6 +106,11 @@ finding bar.
   A curated or stale rate keeps its flag in that line. The table caption states the common source and date once.
 - **D19 One shared real-result component.** `web/src/components/ui/RealResult.tsx` (parent, between waves) renders D6's
   line for the ranking, the best option and the instrument page, so the three never drift.
+- **D20 Navigation by audience.** No page linked to `/alertas` (only the login panel redirected there), so the alerts
+  of MVP S3/S13 were unreachable from the site. The header keeps the eight reading sections and adds "Alertas" as its
+  one right-aligned action; "Claves API" (a developer page) moves to the footer links.
+- **D21 Worktrees start from `origin/main`**, not from this branch: every worker first resets its own worktree branch to
+  `origin/ccr-36134cd3-lj3f49`, which the parent pushes before each wave.
 - **D17 Workers leave their changes uncommitted in their worktrees; the parent verifies and commits** (AGENTS.md "The
   parent always verifies pane output and makes the commit"). The Engram mirror is not reachable from this cloud
   session; this document is the record.
