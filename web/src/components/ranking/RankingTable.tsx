@@ -15,7 +15,7 @@
  * wide copy is hidden there: the protagonist figure of the row is on screen
  * from 320 up without a sideways drag, and is never announced twice (T13e).
  * Row 01 carries the cobalt rail and the "Mejor" chip: the rail is the one
- * accent, doing the one job it shares with the headline and the glass card
+ * accent, doing the one job it shares with the best-option card
  * (T13e: the chip itself is ink).
  *
  * The sticky cells stay at `z-0`: they must cover their own scrolled siblings,

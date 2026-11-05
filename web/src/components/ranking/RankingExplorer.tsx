@@ -9,7 +9,7 @@
  *
  * T13b: the hero of the page is this island's first band — the two capsule
  * segmented controls (the prototype's amounts and terms) on one side and the
- * one frosted-glass card with the best option of the current query on the
+ * one card with the best option of the current query on the
  * other. The presets are shortcuts over the same query state as the free
  * inputs: picking one goes through `applyAmountPreset` / `applyDaysPreset` and
  * re-queries, and the reader's own value simply leaves the control unselected.
