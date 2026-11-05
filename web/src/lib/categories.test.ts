@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CATEGORIES, categoryForKind } from './categories';
+import { CATEGORIES, categoryForKind, liquidityForKind } from './categories';
 import { RANKING_KINDS } from './types';
 
 /**
@@ -40,5 +40,20 @@ describe('categories', () => {
     expect(categoryForKind('PLAZO_FIJO')?.slug).toBe('plazo-fijo');
     expect(categoryForKind('PLAZO_FIJO_OFFICIAL')).toBeNull();
     expect(categoryForKind('')).toBeNull();
+  });
+
+  it('gives every kind its liquidity copy (D5)', () => {
+    expect(Object.fromEntries(CATEGORIES.map((category) => [category.kind, category.liquidity]))).toEqual({
+      PLAZO_FIJO: 'Al vencimiento',
+      WALLET: 'Disponible al instante',
+      FUND: 'Rescate en el día',
+      CRYPTO: 'Disponible al instante',
+    });
+  });
+
+  it('looks up the liquidity of a kind and returns null for anything else', () => {
+    expect(liquidityForKind('FUND')).toBe('Rescate en el día');
+    expect(liquidityForKind('PLAZO_FIJO_OFFICIAL')).toBeNull();
+    expect(liquidityForKind('')).toBeNull();
   });
 });
