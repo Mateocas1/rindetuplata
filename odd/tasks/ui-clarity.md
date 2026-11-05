@@ -44,7 +44,9 @@ on a task.
 | T5 | S3 | Detail pages: instrument (two columns, live simulator, signed real result), banks and bank, monthly report, methodology (liquidity and guarantee section, TOC), 404; display names; rail only for the best (D12-D14) | Sonnet worker | done | de3b77a |
 | T6 | S3 | Chrome and account: mobile menu, footer trimmed to one disclaimer, account pages (ingresar, alertas, claves-api, admin) aligned to the new recipes (D10, D11) | Sonnet worker | done | 2eec290 |
 | T3b | S3 | Parent between waves: shared `RealResult` line (D19, 42c42a0) and es-AR amount input helpers (D16, b59c610) | parent | done | 42c42a0, b59c610 |
-| T7 | S3 | Independent design review against S3 (base build vs new, light/dark, 320/390/1280/1440, contrast, focus); "no findings" is a valid result | Opus reviewer | pending | |
+| T7 | S3 | Independent design review against S3 (base build vs new, light/dark, 320/390/1280/1440, contrast, focus); "no findings" is a valid result | Opus reviewer | done | L6 |
+| T8 | S3 | Review round 1 fixes: instrument grid one shrinkable column below lg; conditional "hasta" offers read as earnings; curated source named in Spanish | parent | done | 4c11e7e |
+| T9 | S3 | Review round 2 (fresh eyes on the fixed branch) | Sonnet reviewer | in progress | |
 
 Waves: T1, T2 and T3 run in parallel (disjoint files, own worktrees); T4, T5 and T6 run in parallel on top of them
 (disjoint surfaces); T7 reviews the integrated branch; a fix round follows only for findings that pass the AGENTS.md
@@ -149,4 +151,21 @@ finding bar.
   instead of the API's English source name, the answer sentence hides on a failed query like the best-option card.
   Retro: a staged deletion (`git rm`) in a worker's worktree is missed by `git diff`; the parent checks
   `git diff --cached` too before applying.
+- **L6** (evidence, T7 round 1): Opus reviewer, read-only, ~17 min, 182k tokens; base 326b872 vs 87a9af7 built side by
+  side, 340 full-page shots (17 pages × 5 widths × light/dark × base/new), overflow on all 250 pages at 320/390/768,
+  contrast on 18 pages, Tab walk, reduced motion, 7,509 internal hrefs (0 broken). S3 scorecard: every point fixed
+  except mobile (partly). Qualifying: (1) severe, introduced by T5: 201 of 229 instrument pages 694px wide at 320/390
+  (`instrumentos/[slug].astro` grid had no template below lg; the chart's fixed width grew the implicit column);
+  (2) medium, made visible by D8: Ualá's "Hasta $ 1.019.915,26" (a final balance) beside 30-day earnings. Not pursued
+  (below the bar): methodology TOC left edge at 264 vs 196, the real-result line wrapping to three lines at 768, the
+  menu panel without a separator, the "Última tasa publicada" table scrolling in its box at 320, the error state
+  keeping the previous excluded list, the cripto caption naming the newest date. Lowest measured contrast: muted on
+  subtle surface 5.51:1, gain on raised 5.66:1.
+- **L7** (evidence, T8): parent, test-first (RED 6: grid class, hasta as earnings in row/hero, curated label in the
+  provenance and meta, `earnedFrom`, `sourceLabel`) → GREEN 797/797, astro check 0/0/0. Rendered check: scrollWidth 390 at
+  390 on the REBA and Ualá instrument pages, `/billeteras/` and `/`. Also fixed while there: the simulator repeated the
+  same final-balance "Hasta" and the English curated source. `sourceLabel` now serves the table, the best option, the
+  instrument page and the simulator (one rule, four views). Retro: the T5 worker's screenshots of instrument pages
+  were of fiwind (no chart) at desktop widths for the grid tweak; a layout change gets re-measured on a page that has
+  every block (chart included) at the narrowest width.
 
