@@ -120,3 +120,19 @@ describe.each(PAGES)('account page $label', ({ path, h1, mount, logout }) => {
     expect(page).not.toContain(FIXTURE_INSTRUMENT);
   });
 });
+
+describe('the login page copy', () => {
+  it('states the one-use link and the 15 minutes only in the island hint, not in the lead', () => {
+    const main = /<main[\s\S]*<\/main>/.exec(html('ingresar/index.html'))?.[0] ?? '';
+
+    expect(main).not.toMatch(/contraseñas|un solo uso|15 minutos/);
+  });
+});
+
+describe('the account pages', () => {
+  it.each(PAGES)('$label keeps off the retired type and the loose sizing classes', ({ path }) => {
+    const main = /<main[\s\S]*<\/main>/.exec(html(path))?.[0] ?? '';
+
+    expect(main).not.toMatch(/\buppercase\b|\btracking-|\bfont-mono\b/);
+  });
+});

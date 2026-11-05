@@ -1,20 +1,25 @@
 ---
 /**
- * Site chrome: a sticky header with the wordmark and the public pages (the
- * ranking, the four category landings and the methodology page) and, last, the
- * API-keys page, which asks for a login itself. The height
- * (3.5rem) must stay in sync with `scroll-padding-block-start` in global.css so
- * anchors and focused elements never land under it. On narrow screens the nav
- * scrolls sideways rather than wrapping, so the header height never changes; its
- * trailing edge fades as a scroll cue, and its links draw an inset focus ring the
- * scroller cannot clip.
+ * Site chrome: a sticky 3.5rem header with the wordmark, the eight reading
+ * sections (the ranking, the four category landings, the banks, the monthly
+ * reports and the methodology) and, as its one action, "Alertas" (D20). The
+ * height must stay in sync with `scroll-padding-block-start` in global.css so
+ * anchors and focused elements never land under it.
  *
- * Cobalto Cristal: the wordmark is set in the display family, the nav is
- * the mono caps `type-label` role separated by whitespace and one hairline under
- * the band, and the current page is marked twice — `aria-current` for assistive
- * technology and an ink bar under the link (a shape, so the state never depends
- * on colour alone). The bar is ink, not cobalt: on this site cobalt marks the
- * day's leader and the serif "plata" of the headline, one job per viewport.
+ * From `lg` up the sections sit inline after the wordmark and "Alertas" is the
+ * right-aligned action. Below `lg` nothing scrolls sideways (D10): the
+ * wordmark, "Alertas" and a zero-JS disclosure menu (the shared `disclosure`
+ * recipe, whose CSS-drawn chevron is its icon) fit one row, and the menu
+ * panel lists the same eight sections vertically, full width under the band,
+ * every link at least 44px tall. The inline list and the panel are the same
+ * links twice; the hidden copy is `display: none`, so assistive technology
+ * reads one of them.
+ *
+ * The action is a compact bordered link in ink: cobalt belongs to the best
+ * option of a view, never to chrome. The current page is marked twice,
+ * `aria-current` for assistive technology and a shape (an ink bar under the
+ * inline link, an ink bar at the start of the menu row), so the state never
+ * depends on colour alone.
  */
 import { CATEGORIES } from '../lib/categories';
 
@@ -30,8 +35,8 @@ const links = [
   { href: '/bancos/', label: 'Bancos' },
   { href: '/informes/', label: 'Informes' },
   { href: '/metodologia/', label: 'Cómo se calcula' },
-  { href: '/claves-api/', label: 'Claves API' },
 ];
+const ACTION = { href: '/alertas/', label: 'Alertas' };
 
 /** `page` on the page itself, `true` on the section link while a page inside it is open (the monthly reports). */
 function currentState(href: string): 'page' | 'true' | undefined {
@@ -39,39 +44,31 @@ function currentState(href: string): 'page' | 'true' | undefined {
   if (current === path) return 'page';
   return path !== '/' && current.startsWith(`${path}/`) ? 'true' : undefined;
 }
+
+const actionState = currentState(ACTION.href);
 ---
 
 <header class="sticky top-0 z-10 border-b border-border bg-surface">
-  <div
-    class="mx-auto flex h-14 w-full max-w-page items-center gap-4 px-gutter"
-  >
-    <a
-      href="/"
-      class="shrink-0 wordmark text-text no-underline"
-    >
-      rindetuplata
-    </a>
-    <nav
-      aria-label="Secciones"
-      class="min-w-0 flex-1 overflow-x-auto [mask-image:linear-gradient(to_left,transparent,black_2rem)] sm:[mask-image:none]"
-    >
-      <ul class="flex items-center gap-2 pe-8 whitespace-nowrap sm:gap-4 sm:pe-0">
+  <div class="mx-auto flex h-14 w-full max-w-page items-center gap-5 px-gutter">
+    <a href="/" class="shrink-0 wordmark text-text no-underline"> rindetuplata </a>
+
+    <nav aria-label="Secciones" class="hidden min-w-0 flex-1 lg:block">
+      <ul class="flex items-center gap-5">
         {
           links.map((link) => {
             const state = currentState(link.href);
-            const active = state !== undefined;
             return (
               <li>
                 <a
                   href={link.href}
                   aria-current={state}
                   class:list={[
-                    'type-label relative block py-2 no-underline focus-visible:-outline-offset-2',
-                    active ? 'text-text' : 'hover:text-text',
+                    'type-label relative block py-2 whitespace-nowrap no-underline',
+                    state !== undefined ? 'text-text' : 'hover:text-text',
                   ]}
                 >
                   {link.label}
-                  {active && (
+                  {state !== undefined && (
                     <span aria-hidden="true" class="absolute inset-x-0 bottom-0 h-0.5 bg-text" />
                   )}
                 </a>
@@ -81,5 +78,55 @@ function currentState(href: string): 'page' | 'true' | undefined {
         }
       </ul>
     </nav>
+
+    <div class="ms-auto flex shrink-0 items-center gap-2 lg:ms-0">
+      <a
+        href={ACTION.href}
+        aria-current={actionState}
+        class:list={[
+          'inline-flex min-h-11 items-center rounded-md border border-border-strong px-3 type-label font-semibold text-text no-underline hover:bg-subtle-surface lg:min-h-9',
+          actionState !== undefined && 'bg-subtle-surface',
+        ]}
+      >
+        {ACTION.label}
+      </a>
+
+      <details class="disclosure lg:hidden">
+        <summary
+          class="min-h-11 rounded-md px-2 type-label font-semibold text-text"
+        >
+          Menú
+        </summary>
+        <nav
+          aria-label="Secciones"
+          class="absolute inset-x-0 top-full max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-y border-border bg-surface"
+        >
+          <ul class="mx-auto flex w-full max-w-page flex-col px-gutter py-1">
+            {
+              links.map((link) => {
+                const state = currentState(link.href);
+                return (
+                  <li class="border-b border-border last:border-b-0">
+                    <a
+                      href={link.href}
+                      aria-current={state}
+                      class:list={[
+                        'type-body relative flex min-h-11 items-center ps-4 no-underline',
+                        state !== undefined ? 'font-semibold text-text' : 'text-text',
+                      ]}
+                    >
+                      {link.label}
+                      {state !== undefined && (
+                        <span aria-hidden="true" class="absolute inset-y-2 start-0 w-0.5 bg-text" />
+                      )}
+                    </a>
+                  </li>
+                );
+              })
+            }
+          </ul>
+        </nav>
+      </details>
+    </div>
   </div>
 </header>
