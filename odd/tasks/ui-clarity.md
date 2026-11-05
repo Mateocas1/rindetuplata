@@ -40,9 +40,9 @@ on a task.
 | T1 | S3 | Type and surface foundation: one family (Archivo, `wght` + `wdth` axes), sans labels, no serif accent, no glass/glow/grid; tokens, recipes, their tests, font dependencies (D1-D3) | Sonnet worker | done | fbdadc6 |
 | T2 | S3 | API `realEarned` (pesos above or below expected inflation) on ranked entries and simulations; OpenAPI, web schema/types, fixtures derived by script (D4) | Sonnet worker | done | 6345cea |
 | T3 | S3 | Web presentation helpers: entity display names, liquidity per kind, competition ranks with ties and the gap to the best in exact cents (D5, D7, D8, D13) | Haiku worker | done | e50351b |
-| T4 | S3 | Ranking, home and category landings: answer sentence, real result line, ties, gap to best, source caption, row links, mobile card list, one formatted amount field, liquidity chips (D6-D9, D15, D16) | Sonnet worker | in progress | |
-| T5 | S3 | Detail pages: instrument (two columns, live simulator, signed real result), banks and bank, monthly report, methodology (liquidity and guarantee section, TOC), 404; display names; rail only for the best (D12-D14) | Sonnet worker | in progress | |
-| T6 | S3 | Chrome and account: mobile menu, footer trimmed to one disclaimer, account pages (ingresar, alertas, claves-api, admin) aligned to the new recipes (D10, D11) | Sonnet worker | in progress | |
+| T4 | S3 | Ranking, home and category landings: answer sentence, real result line, ties, gap to best, source caption, row links, mobile card list, one formatted amount field, liquidity chips (D6-D9, D15, D16) | Sonnet worker | done | 0e04f9d |
+| T5 | S3 | Detail pages: instrument (two columns, live simulator, signed real result), banks and bank, monthly report, methodology (liquidity and guarantee section, TOC), 404; display names; rail only for the best (D12-D14) | Sonnet worker | done | de3b77a |
+| T6 | S3 | Chrome and account: mobile menu, footer trimmed to one disclaimer, account pages (ingresar, alertas, claves-api, admin) aligned to the new recipes (D10, D11) | Sonnet worker | done | 2eec290 |
 | T3b | S3 | Parent between waves: shared `RealResult` line (D19, 42c42a0) and es-AR amount input helpers (D16, b59c610) | parent | done | 42c42a0, b59c610 |
 | T7 | S3 | Independent design review against S3 (base build vs new, light/dark, 320/390/1280/1440, contrast, focus); "no findings" is a valid result | Opus reviewer | pending | |
 
@@ -137,4 +137,16 @@ finding bar.
 - **L4** (decision evidence, D5): BCRA Com. "A" 8407 (texto ordenado al 05/03/2026) sets the deposit-guarantee cap at
   $50.000.000 from 2026-04-01 and keeps the rate-based exclusion for term deposits; press sources still quote $25M, so the
   site names no amount and links the BCRA text.
+- **L5** (evidence, wave 2): three workers in parallel worktrees, integrated with `git apply -3` (disjoint hunks of
+  `build-smoke.test.ts` merged cleanly). T6 (Sonnet high, ~8.5 min, 142k): RED 10 → GREEN; header 56px + border at 390,
+  menu links 44px, focus ring on every Tab stop. Deviation accepted: the menu `<details>` uses the shared `disclosure`
+  chevron (motion.test requires every `<details>` on that recipe). T5 (Sonnet high, ~14.5 min, 271k): RED 17 + 4 → GREEN;
+  fiwind reads "▼ $ 2.408 por debajo de la inflación −0,24% real". Deviations accepted: page titles and breadcrumbs use
+  the display name, JSON-LD keeps the source name; "No ofrece" in the banks table (the header gives the context); the
+  simulator aside shows its figure at the row step (the full step overflows ~270px). T4 (Opus high, ~26 min, 316k):
+  RED 22 + 13 + 5 → GREEN; integrated suite: astro check 0/0/0, vitest 791/791. Deviations accepted: the board switches
+  to cards below `md` (640-767px left the name ~130px wide), curated wallet rows read "Carga manual verificada dd/mm"
+  instead of the API's English source name, the answer sentence hides on a failed query like the best-option card.
+  Retro: a staged deletion (`git rm`) in a worker's worktree is missed by `git diff`; the parent checks
+  `git diff --cached` too before applying.
 
