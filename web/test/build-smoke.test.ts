@@ -56,6 +56,16 @@ function renderedText(page: string): string {
     .replaceAll('&#160;', '\u00a0');
 }
 
+/** The `<header>` landmark of a built page. */
+function headerOf(page: string): string {
+  return /<header class="sticky[\s\S]*?<\/header>/.exec(page)?.[0] ?? '';
+}
+
+/** The `<footer>` landmark of a built page. */
+function footerOf(page: string): string {
+  return /<footer[\s\S]*?<\/footer>/.exec(page)?.[0] ?? '';
+}
+
 /** The visible text of every row header cell, in document order. */
 function rowHeaderTexts(page: string): string[] {
   return [...page.matchAll(/<th[^>]*scope="row"[^>]*>([\s\S]*?)<\/th>/g)].map((match) =>
@@ -480,6 +490,64 @@ describe('site header', () => {
     for (const href of ['/', '/plazo-fijo/', '/billeteras/', '/fondos/', '/cripto/', '/metodologia/']) {
       expect(page, href).toContain(`href="${href}"`);
     }
+  });
+
+  it('lists the eight reading sections inline and in a zero-JS menu, with no sideways scroller (D10, D20)', () => {
+    const header = headerOf(html('index.html'));
+    const sections = ['/', '/plazo-fijo/', '/billeteras/', '/fondos/', '/cripto/', '/bancos/', '/informes/', '/metodologia/'];
+
+    for (const href of sections) {
+      expect(header.match(new RegExp(`<a href="${href}"[^>]*class="type-(label|body)`, 'g')) ?? [], href).toHaveLength(2);
+    }
+    expect(header).not.toContain('overflow-x-auto');
+    expect(header).not.toContain('mask-image');
+    expect(header).not.toContain('<script');
+    expect(header).toMatch(/<details[^>]*>\s*<summary[^>]*>\s*Menú\s*(<span aria-hidden="true"[^>]*><\/span>\s*)?<\/summary>/);
+  });
+
+  it('keeps Alertas as the one action and moves Claves API out of the header (D20)', () => {
+    const header = headerOf(html('index.html'));
+
+    expect(header.match(/<a href="\/alertas\/"[^>]*>\s*Alertas/g) ?? []).toHaveLength(1);
+    expect(header).not.toContain('/claves-api/');
+    expect(header).not.toContain('btn-primary');
+    expect(html('alertas/index.html')).toMatch(/<a href="\/alertas\/" aria-current="page"/);
+  });
+
+  it('marks the current section in the menu as well as inline', () => {
+    const header = headerOf(html('plazo-fijo/index.html'));
+
+    expect(header.match(/<a href="\/plazo-fijo\/" aria-current="page"/g) ?? []).toHaveLength(2);
+  });
+});
+
+describe('site footer', () => {
+  it('carries the wordmark, three links, one short disclaimer paragraph and the copyright (D11, D20)', () => {
+    const footer = footerOf(html('index.html'));
+
+    expect(footer).toMatch(/<a [^>]*href="\/metodologia\/"[^>]*>\s*Cómo se calcula/);
+    expect(footer).toMatch(/<a [^>]*href="\/claves-api\/"[^>]*>\s*Claves API/);
+    expect(footer).toMatch(/<a [^>]*href="https:\/\/github.com\/Mateocas1\/rindetuplata"[^>]*>\s*Código y capturas diarias/);
+    expect(footer.match(/<p\b/g) ?? []).toHaveLength(2);
+    const text = renderedText(footer);
+    expect(text).toContain('Es información, no asesoramiento financiero');
+    expect(text).toContain('ninguna entidad nos paga por aparecer');
+    expect(text).toContain('fuente');
+    expect(text).toMatch(/©\s*\d{4} rindetuplata/);
+  });
+
+  it('keeps the disclaimer to two sentences and uses no hand-rolled underline classes', () => {
+    const footer = footerOf(html('index.html'));
+    const paragraph = /<p class="type-body[^"]*">([\s\S]*?)<\/p>/.exec(footer);
+
+    expect(paragraph).not.toBeNull();
+    expect(renderedText(paragraph![1]).match(/[.!?](\s|$)/g) ?? []).toHaveLength(2);
+    expect(footer).not.toContain('underline-offset-2 hover:decoration-text"');
+    expect(footer).not.toContain('uppercase');
+  });
+
+  it('marks the API keys link as current on its own page', () => {
+    expect(footerOf(html('claves-api/index.html'))).toMatch(/<a [^>]*href="\/claves-api\/"[^>]*aria-current="page"|<a [^>]*aria-current="page"[^>]*href="\/claves-api\/"/);
   });
 });
 

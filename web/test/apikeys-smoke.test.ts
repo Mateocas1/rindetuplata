@@ -9,7 +9,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
  *
  * The page is a markup shell around a client-only island, so this builds the site in fixture mode and checks what the
  * static host would serve: the page exists, keeps itself out of the index, carries its H1 and the mount points of its
- * islands, holds no personal data and no key, and the site header links it and marks it as the current page.
+ * islands, holds no personal data and no key, and the site footer links it and marks it as the current page.
  *
  * It builds to its own outDir: Vitest runs test files in parallel and two builds sharing one outDir would race on
  * Astro's `emptyDir`.
@@ -69,11 +69,13 @@ describe('the API keys page', () => {
     expect(page).not.toMatch(API_KEY);
   });
 
-  it('is linked from the site header of every page and marked as current on its own page', () => {
+  it('is linked from the footer of every page, not the header, and marked as current on its own page', () => {
     for (const path of ['index.html', 'metodologia/index.html']) {
-      expect(html(path), path).toMatch(/<a href="\/claves-api\/"[^>]*>\s*Claves API/);
+      const page = html(path);
+      expect(page, path).toMatch(/<footer[\s\S]*<a [^>]*href="\/claves-api\/"[^>]*>\s*Claves API/);
+      expect(/<header class="sticky[\s\S]*?<\/header>/.exec(page)?.[0], path).not.toContain('/claves-api/');
     }
-    expect(html(PAGE)).toMatch(/<a href="\/claves-api\/" aria-current="page"/);
-    expect(html('index.html')).not.toMatch(/<a href="\/claves-api\/" aria-current=/);
+    expect(html(PAGE)).toMatch(/<a [^>]*href="\/claves-api\/"[^>]*aria-current="page"|<a [^>]*aria-current="page"[^>]*href="\/claves-api\/"/);
+    expect(html('index.html')).not.toMatch(/<a [^>]*href="\/claves-api\/"[^>]*aria-current=/);
   });
 });

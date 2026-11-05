@@ -17,12 +17,11 @@ import LoginPanel from '../components/account/LoginPanel';
     <header class="flex flex-col gap-block">
       <h1 class="type-display">Ingresar</h1>
       <p class="type-body text-lead text-muted">
-        Entrá con tu email para crear y seguir tus alertas. Te mandamos un link de un solo uso, sin
-        contraseñas.
+        Entrá con tu email para crear y seguir tus alertas.
       </p>
     </header>
 
-    <div id="ingresar-island">
+    <div id="ingresar-island" class="max-w-md">
       <LoginPanel client:only="react" />
     </div>
   </div>

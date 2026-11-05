@@ -15,7 +15,9 @@
  *    while the create form keeps the alerts view's only primary.
  * 3. The direction (T13d) replaced the T12 text steps with the seven `type-*`
  *    roles (the retired steps were deleted in T13e), and a field label wears the
- *    mono caps `type-label` role; no account surface may size text by hand.
+ *    sentence-case sans `type-label` role (T6, D3); no account surface may size
+ *    text by hand, and none may use uppercase, tracking or the mono family (the
+ *    API key value is the one `font-mono` string).
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
@@ -28,6 +30,7 @@ import type { AlertFormState } from '../../lib/accountForm';
 import AlertCreateForm from './AlertCreateForm';
 import AlertRuleList from './AlertRuleList';
 import LoginPanel from './LoginPanel';
+import NewKeyNotice from '../apikeys/NewKeyNotice';
 import ProblemNotice from './ProblemNotice';
 import StatusNotice from './StatusNotice';
 import WalletRateEditor from './WalletRateEditor';
@@ -39,7 +42,12 @@ const accountDir = fileURLToPath(new URL('.', import.meta.url));
 const webRoot = resolve(accountDir, '../../..');
 
 /** The three account pages, whose own markup is part of the same migration. */
-const accountPages = ['src/pages/ingresar.astro', 'src/pages/alertas.astro', 'src/pages/admin/tasas.astro'];
+const accountPages = [
+  'src/pages/ingresar.astro',
+  'src/pages/alertas.astro',
+  'src/pages/claves-api.astro',
+  'src/pages/admin/tasas.astro',
+];
 
 /** Every class token of every `class` attribute in a rendered tree. */
 function classTokens(html: string): string[] {
@@ -223,13 +231,13 @@ describe('a view has one primary action', () => {
 
     expect(html).toContain('Eliminar la alerta de Billetera sobre Cualquier opción');
     expect(html).toContain('25,00%');
-    // The threshold is the row's protagonist, in the mono tabular data role.
+    // The threshold is the row's protagonist, in the tabular data role.
     expect(countClass(html, 'type-data')).toBeGreaterThanOrEqual(1);
   });
 });
 
 describe('the wallet audit table', () => {
-  it('heads with mono caps labels and reads in mono tabular cells', () => {
+  it('heads with sentence-case labels and reads in tabular cells', () => {
     const html = renderToStaticMarkup(
       h(WalletAuditTable, {
         entries: [
@@ -261,8 +269,8 @@ describe('the wallet tier table', () => {
     expect(html).toContain('role="region"');
     expect(html).toContain('tabindex="0"');
     expect(html).toContain('aria-label="Franjas de tasa"');
-    expect(countClass(html, 'type-label'), 'mono caps heads like the ranking').toBe(3);
-    expect(countClass(html, 'type-data'), 'mono tabular cells like the ranking').toBeGreaterThanOrEqual(3);
+    expect(countClass(html, 'type-label'), 'sentence-case heads like the ranking').toBe(3);
+    expect(countClass(html, 'type-data'), 'tabular cells like the ranking').toBeGreaterThanOrEqual(3);
   });
 });
 
@@ -353,7 +361,35 @@ describe('account text stays on the seven type roles', () => {
     expect(offenders, 'a T12 text step survived the T13d migration').toEqual([]);
   });
 
-  it('renders a field label with the mono caps label role', () => {
+  it('keeps uppercase, tracking and the mono family out of the account surface (T6, D3)', () => {
+    const retired = /\buppercase\b|\btracking-|\bfont-mono\b/;
+    const apikeys = join(webRoot, 'src/components/apikeys');
+    const files = [
+      ...accountFiles(),
+      ...readdirSync(apikeys)
+        .filter((name) => name.endsWith('.tsx'))
+        .map((name) => join(apikeys, name)),
+    ];
+    const offenders = files
+      .filter((file) => retired.test(readFileSync(file, 'utf8')))
+      .map((file) => relative(webRoot, file));
+
+    // The API key value is the one code-like string; it takes the system monospace stack.
+    expect(offenders).toEqual(['src/components/apikeys/NewKeyNotice.tsx']);
+  });
+
+  it('shows the created key in the monospace stack', () => {
+    const html = renderToStaticMarkup(
+      h(NewKeyNotice, {
+        created: { id: 1, key: 'rtp_abc' } as unknown as Parameters<typeof NewKeyNotice>[0]['created'],
+        onDismiss: noop,
+      }),
+    );
+
+    expect(html).toMatch(/class="[^"]*\bfont-mono\b[^"]*">rtp_abc</);
+  });
+
+  it('renders a field label with the sentence-case label role', () => {
     const html = renderToStaticMarkup(
       h(AlertCreateForm, {
         form: EMPTY_FORM,

@@ -3,7 +3,7 @@
  *
  * The same table serves the base schedule and each labelled condition; the
  * caller gives it the accessible name of its region. It reads like the ranking
- * table: mono caps `type-label` heads, mono tabular `type-data` figures,
+ * table: sentence-case `type-label` heads, tabular `type-data` figures,
  * right-aligned numbers.
  *
  * A narrow phone cannot fit three money columns: the table keeps its intrinsic

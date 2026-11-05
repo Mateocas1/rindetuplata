@@ -20,7 +20,7 @@ import {
   cardClass,
   errorTextClass,
   fieldGroupClass,
-  inputClass,
+  inputFullClass,
   labelClass,
 } from './ui';
 
@@ -149,7 +149,7 @@ export default function LoginPanel() {
               setEmail(event.target.value);
               if (emailError !== null) setEmailError(null);
             }}
-            className={inputClass}
+            className={inputFullClass}
           />
           <p id={EMAIL_HINT_ID} className="type-body text-muted">
             Sin contraseñas: te mandamos un link de un solo uso, válido por 15 minutos.

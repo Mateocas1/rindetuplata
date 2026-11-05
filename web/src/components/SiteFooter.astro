@@ -1,39 +1,37 @@
 ---
 /**
- * Footer: the disclaimer (S8 L-G), the neutrality statement (S11) and the
- * source note. Informational wording only, no advice.
+ * Footer: the one disclaimer of every page (D11, S8 L-G). Its single paragraph
+ * keeps the three trust facts in two sentences: information, not advice; the
+ * order comes from a reviewable calculation and no entity pays to appear (S11);
+ * every figure names its public source and date. Informational wording only.
  *
- * T13b (Cobalto Cristal): the wordmark is set in the display family, the links
- * are the mono caps `type-label` role, and the band is separated from the page
- * by one hairline (`border-t`) instead of a surface or a shadow. The links are
- * ink with a hairline underline, so the one cobalt of a viewport stays with the
- * day's leader.
+ * The band is separated from the page by one hairline (`border-t`), not by a
+ * surface or a shadow. The links take the `link` recipe at the label role, so
+ * they read as ink carried by the underline; cobalt stays with the best option.
  */
 const year = new Date().getFullYear();
+
+/** `claves-api` is a page of its own, so the footer link marks it while it is open. */
+const onApiKeys = Astro.url.pathname.replace(/\/+$/, '') === '/claves-api';
 ---
 
 <footer class="mt-section border-t border-border">
-  <div class="mx-auto flex w-full max-w-page flex-col gap-section px-gutter py-section">
-    <div class="flex flex-wrap items-baseline justify-between gap-block">
-      <a
-        href="/"
-        class="wordmark text-text no-underline"
-      >
-        rindetuplata
-      </a>
+  <div class="mx-auto flex w-full max-w-page flex-col gap-block px-gutter py-section">
+    <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-block">
+      <a href="/" class="wordmark text-text no-underline"> rindetuplata </a>
       <nav aria-label="Enlaces del pie">
         <ul class="flex flex-wrap gap-x-6 gap-y-2">
           <li>
-            <a
-              class="type-label text-text underline decoration-border-strong underline-offset-2 hover:decoration-text"
-              href="/metodologia/"
-            >
-              Cómo se calcula
+            <a class="type-label link" href="/metodologia/"> Cómo se calcula </a>
+          </li>
+          <li>
+            <a class="type-label link" href="/claves-api/" aria-current={onApiKeys ? 'page' : undefined}>
+              Claves API
             </a>
           </li>
           <li>
             <a
-              class="type-label text-text underline decoration-border-strong underline-offset-2 hover:decoration-text"
+              class="type-label link"
               href="https://github.com/Mateocas1/rindetuplata"
               rel="noopener"
             >
@@ -44,20 +42,10 @@ const year = new Date().getFullYear();
       </nav>
     </div>
 
-    <div class="flex max-w-prose flex-col gap-block">
-      <p class="type-body text-muted">
-        rindetuplata compara tasas públicas y muestra cuánto le ganás a la inflación con tu monto y
-        tu plazo. Es información, no asesoramiento financiero: no recomendamos dónde poner tu plata.
-      </p>
-      <p class="type-body text-muted">
-        El orden del ranking sale de una cuenta que podés revisar, no de acuerdos comerciales.
-        Ninguna entidad que comparamos nos paga por aparecer.
-      </p>
-      <p class="type-body text-muted">
-        Los datos salen de fuentes públicas (BCRA, ArgentinaDatos y los sitios de cada entidad) y
-        cada fila indica su fuente y la fecha del dato.
-      </p>
-    </div>
+    <p class="type-body max-w-prose text-muted">
+      Es información, no asesoramiento financiero. El orden sale de una cuenta que podés revisar,
+      ninguna entidad nos paga por aparecer, y cada dato indica su fuente pública y su fecha.
+    </p>
 
     <p class="type-label">© {year} rindetuplata</p>
   </div>
