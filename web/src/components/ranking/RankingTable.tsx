@@ -28,14 +28,14 @@ import {
   formatPercent,
 } from '../../lib/format';
 import {
-  confidenceLabel,
+  sourceLabel,
   flagLabel,
   inflationIndexLabel,
   inflationIndexShortLabel,
   kindLabel,
   rateKindShortLabel,
 } from '../../lib/labels';
-import { gapToBest, formatPosition } from '../../lib/rankingPresentation';
+import { earnedFrom, gapToBest, formatPosition } from '../../lib/rankingPresentation';
 import { instrumentPageHref } from '../../lib/slug';
 import type { RankedEntry, Ranking } from '../../lib/types';
 import RealResult from '../ui/RealResult';
@@ -48,8 +48,8 @@ const nameLink =
 
 /** A curated rate names its load, not the English id of its source. */
 function sourceName(entry: RankedEntry): string {
-  if (entry.confidence === 'CURATED_MANUAL') return confidenceLabel(entry.confidence);
-  return entry.source.official ? `${entry.source.displayName} (oficial)` : entry.source.displayName;
+  const label = sourceLabel(entry);
+  return entry.confidence !== 'CURATED_MANUAL' && entry.source.official ? `${label} (oficial)` : label;
 }
 
 function isStale(entry: RankedEntry): boolean {
@@ -161,12 +161,16 @@ function Fact({ children }: { children: ReactNode }) {
   return <span className="whitespace-nowrap">{children}</span>;
 }
 
-/** The "hasta" rate of a conditional offer, under the row's figure. */
-function UpTo({ entry }: { entry: RankedEntry }) {
+/**
+ * The "hasta" offer of a conditional rate, under the row's figure: what it would earn for the term, never the
+ * final balance, since the column reads earnings (T7 fix round).
+ */
+function UpTo({ entry, amount }: { entry: RankedEntry; amount: number }) {
   if (entry.upTo === null) return null;
   return (
     <span className="mt-1 block type-data text-warning">
-      <span className="whitespace-nowrap">Hasta {formatMoney(entry.upTo.finalAmount)}</span> · {entry.upTo.condition}
+      <span className="whitespace-nowrap">Hasta {formatMoney(earnedFrom(amount, entry.upTo.finalAmount))}</span> ·{' '}
+      {entry.upTo.condition}
     </span>
   );
 }
@@ -302,7 +306,7 @@ export default function RankingTable({
                         {formatMoneyWhole(row.gap)} vs. la mejor
                       </span>
                     )}
-                    <UpTo entry={entry} />
+                    <UpTo entry={entry} amount={ranking.request.amount} />
                   </td>
                   <td className={`${cell} px-4 type-body`}>
                     <RealResult realEarned={entry.realEarned} realReturn={entry.realReturn} indexLabel={indexLabel} />
@@ -346,7 +350,7 @@ export default function RankingTable({
                   <span className="type-data whitespace-nowrap text-muted">{formatMoneyWhole(row.gap)} vs. la mejor</span>
                 )}
               </p>
-              <UpTo entry={entry} />
+              <UpTo entry={entry} amount={ranking.request.amount} />
               <p className="mt-2">
                 <RealResult realEarned={entry.realEarned} realReturn={entry.realReturn} indexLabel={indexLabel} />
               </p>

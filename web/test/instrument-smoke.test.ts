@@ -380,6 +380,29 @@ describe('instrument pages', () => {
   });
 });
 
+describe('instrument pages after the T7 review', () => {
+  it('keep the two-column grid to one shrinkable column below lg, so a page with a chart never scrolls sideways', () => {
+    const page = instrumentHtml(instrumentSlug('REBA COMPAÑIA FINANCIERA S.A.', '29'));
+    expect(page).toMatch(/class="grid grid-cols-1 gap-section lg:grid-cols-/);
+  });
+
+  it('state a conditional offer as pesos earned, never as the final amount', () => {
+    const page = decode(instrumentHtml(instrumentSlug('Ualá', '1321')));
+    expect(page).toContain('Ganás hasta $\u00a019.915,26 si sumás $500.000.');
+    expect(page).not.toContain('1.019.915,26');
+  });
+
+  it('name a curated rate in Spanish in the visible provenance and the meta description', () => {
+    const slug = readdirSync(join(dist, 'instrumentos')).find((name) => name.startsWith('naranja-x'));
+    expect(slug).toBeDefined();
+    // The island's props carry the raw API entry; only what a reader sees or a crawler shows must be Spanish.
+    const raw = readFileSync(join(dist, 'instrumentos', slug!, 'index.html'), 'utf8');
+    const page = decode(raw.replace(/ props="[^"]*"/g, ''));
+    expect(page).not.toContain('Curated by the project owner');
+    expect(decode(page)).toContain('Carga manual verificada');
+  });
+});
+
 describe('category pages', () => {
   it('exists for every kind with its own H1, title and description', () => {
     for (const category of CATEGORIES) {

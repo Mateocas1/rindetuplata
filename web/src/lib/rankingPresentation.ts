@@ -61,3 +61,11 @@ export function gapToBest(bestEarned: number, earned: number): number {
 export function formatPosition(position: number, tied: boolean): string {
   return `${tied ? '=' : ''}${String(position).padStart(2, '0')}`;
 }
+
+/**
+ * Pesos earned when an offer ends at `finalAmount` for an invested `amount`, in exact cents (T7 fix round):
+ * the API serves a conditional "hasta" offer as a final amount, and a row reads earnings, not balances.
+ */
+export function earnedFrom(amount: number, finalAmount: number): number {
+  return Number(toCents(finalAmount) - toCents(amount)) / 100;
+}

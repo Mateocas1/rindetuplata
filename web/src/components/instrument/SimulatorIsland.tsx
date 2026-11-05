@@ -14,8 +14,9 @@
 import { useState } from 'react';
 import { ApiProblem, api } from '../../lib/api';
 import { formatAmountInput, parseAmountInput } from '../../lib/amountInput';
+import { earnedFrom } from '../../lib/rankingPresentation';
 import { formatDate, formatDays, formatMoney, formatPercent } from '../../lib/format';
-import { confidenceLabel, flagLabel, rateKindLabel } from '../../lib/labels';
+import { confidenceLabel, flagLabel, rateKindLabel, sourceLabel } from '../../lib/labels';
 import { DEFAULT_AMOUNT, DEFAULT_DAYS, MAX_DAYS, tryParseDays } from '../../lib/rankingQuery';
 import { problemMessage, simulationOutcome, type SimulationOutcome } from '../../lib/simulator';
 import type { MepQuote, RankedEntry, Simulation } from '../../lib/types';
@@ -77,7 +78,7 @@ export function SimulatedResult({
         </div>
       </dl>
       <p className="type-data text-muted">
-        {entry.source.displayName}
+        {sourceLabel(entry)}
         {entry.source.official ? ' · oficial' : ''} · {rateKindLabel(entry.rateUsed.kind)} · dato del{' '}
         {formatDate(entry.dataDate)} · {confidenceLabel(entry.confidence)}
         {entry.verifiedAt !== null ? ` · verificada el ${formatDate(entry.verifiedAt)}` : ''}
@@ -85,7 +86,8 @@ export function SimulatedResult({
       <BreakEvenNote breakEven={entry.breakEvenMep} quote={dollarMep} days={days} />
       {entry.upTo !== null && (
         <p className="type-data text-warning">
-          Hasta {formatMoney(entry.upTo.finalAmount)} {entry.upTo.condition}.
+          Ganás hasta {formatMoney(earnedFrom(amount, entry.upTo.finalAmount))}{' '}
+          {entry.upTo.condition.charAt(0).toLowerCase() + entry.upTo.condition.slice(1)}.
         </p>
       )}
       {isStale && (
