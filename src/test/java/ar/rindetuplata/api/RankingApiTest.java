@@ -177,9 +177,10 @@ class RankingApiTest extends RankingApiIntegrationTest {
 				.andExpect(jsonPath("$.inflation.overHorizon").value(0.015860))
 				.andExpect(jsonPath("$.ranked[0].nominalReturn").value(0.017260))
 				.andExpect(jsonPath("$.ranked[0].realReturn").value(0.001379))
+				.andExpect(jsonPath("$.ranked[0].realEarned").value(1378.63))
 				.andExpect(content().string(containsString("\"twelveMonthRate\":0.211000")))
 				.andExpect(content().string(containsString("\"overHorizon\":0.015860")))
-				.andExpect(content().string(containsString("\"realReturn\":0.001379")));
+				.andExpect(content().string(containsString("\"realReturn\":0.001379,\"realEarned\":1378.63")));
 	}
 
 	@Test
@@ -191,6 +192,7 @@ class RankingApiTest extends RankingApiIntegrationTest {
 				.andExpect(jsonPath("$.inflation").value(nullValue()))
 				.andExpect(jsonPath("$.ranked", hasSize(1)))
 				.andExpect(jsonPath("$.ranked[0].realReturn").value(nullValue()))
-				.andExpect(content().string(containsString("\"realReturn\":null")));
+				.andExpect(jsonPath("$.ranked[0].realEarned").value(nullValue()))
+				.andExpect(content().string(containsString("\"realReturn\":null,\"realEarned\":null")));
 	}
 }

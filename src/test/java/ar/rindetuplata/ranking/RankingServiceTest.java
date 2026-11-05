@@ -631,6 +631,7 @@ class RankingServiceTest {
 				.isEqualByComparingTo("0.017260273973");
 		assertThat(entry.realReturn().setScale(12, RoundingMode.HALF_EVEN))
 				.isEqualByComparingTo("0.001378631185");
+		assertThat(entry.realEarned()).isEqualTo(new BigDecimal("1378.63"));
 	}
 
 	@Test
@@ -643,6 +644,7 @@ class RankingServiceTest {
 		assertThat(result.inflation()).isNull();
 		assertThat(result.ranked()).hasSize(1);
 		assertThat(result.ranked().get(0).realReturn()).isNull();
+		assertThat(result.ranked().get(0).realEarned()).isNull();
 	}
 
 	@Test

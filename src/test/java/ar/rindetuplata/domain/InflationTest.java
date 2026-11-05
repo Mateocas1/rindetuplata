@@ -65,6 +65,46 @@ class InflationTest {
     }
 
     @Test
+    void realEarnedIsThePesosAboveExpectedInflationInTodaysPesos() {
+        // 1,019,726.03 / 1.01586 - 1,000,000 = 3,805.67
+        assertThat(Inflation.realEarned(Money.ars("1000000"), Money.ars("1019726.03"), new BigDecimal("0.01586")))
+                .isEqualTo(new BigDecimal("3805.67"));
+    }
+
+    @Test
+    void realEarnedIsNegativeWhenInflationBeatsTheInvestment() {
+        // 1,010,000 / 1.02 - 1,000,000 = -9,803.9215...
+        assertThat(Inflation.realEarned(Money.ars("1000000"), Money.ars("1010000"), new BigDecimal("0.02")))
+                .isEqualTo(new BigDecimal("-9803.92"));
+    }
+
+    @Test
+    void realEarnedWithZeroInflationIsTheNominalEarnings() {
+        assertThat(Inflation.realEarned(Money.ars("500000"), Money.ars("512345.67"), BigDecimal.ZERO))
+                .isEqualTo(new BigDecimal("12345.67"));
+    }
+
+    @Test
+    void realEarnedIsRoundedToCentavosHalfEvenAtScaleTwo() {
+        // With 100% inflation the factor is exactly 2, so each case lands on an exact half centavo.
+        assertThat(Inflation.realEarned(Money.ars("50"), Money.ars("100.01"), BigDecimal.ONE))
+                .isEqualTo(new BigDecimal("0.00"));
+        assertThat(Inflation.realEarned(Money.ars("50"), Money.ars("100.03"), BigDecimal.ONE))
+                .isEqualTo(new BigDecimal("0.02"));
+        assertThat(Inflation.realEarned(Money.ars("50"), Money.ars("100.05"), BigDecimal.ONE))
+                .isEqualTo(new BigDecimal("0.02"));
+        assertThat(Inflation.realEarned(Money.ars("50"), Money.ars("99.97"), BigDecimal.ONE))
+                .isEqualTo(new BigDecimal("-0.02"));
+        assertThat(Inflation.realEarned(Money.ars("50"), Money.ars("100"), BigDecimal.ONE).scale()).isEqualTo(2);
+    }
+
+    @Test
+    void realEarnedRejectsInflationOfMinusOneHundredPercentOrLess() {
+        assertThatThrownBy(() -> Inflation.realEarned(Money.ars("100"), Money.ars("101"), new BigDecimal("-1")))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void rejectsInflationOfMinusOneHundredPercentOrLess() {
         assertThatThrownBy(() -> Inflation.realReturn(new BigDecimal("0.01"), new BigDecimal("-1")))
                 .isInstanceOf(IllegalArgumentException.class);
