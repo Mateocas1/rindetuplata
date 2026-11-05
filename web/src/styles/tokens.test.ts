@@ -67,26 +67,6 @@ function parseColor(value: string): Oklch {
   };
 }
 
-const toGamma = (v: number) => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055);
-const toLinear = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
-
-/** Source-over in gamma sRGB, as browsers blend: returns the opaque result's linear channels. */
-function composite(layers: Oklch[]): [number, number, number] {
-  let [r, g, b] = oklchToLinearSrgb({ ...layers[0], alpha: 1 }).map((v) => toGamma(Math.min(1, Math.max(0, v))));
-  for (const layer of layers.slice(1)) {
-    const a = layer.alpha ?? 1;
-    const top = oklchToLinearSrgb(layer).map((v) => toGamma(Math.min(1, Math.max(0, v))));
-    [r, g, b] = [r + (top[0] - r) * a, g + (top[1] - g) * a, b + (top[2] - b) * a];
-  }
-  return [toLinear(r), toLinear(g), toLinear(b)];
-}
-
-function ratioOfLuminances(a: number, b: number): number {
-  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-}
-
-const luminanceOfLinear = ([r, g, b]: [number, number, number]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
-
 function relativeLuminance(color: Oklch): number {
   const [r, g, b] = oklchToLinearSrgb(color);
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -209,8 +189,11 @@ const contrastPairs: Array<[string, string, string, number]> = [
   ['muted on subtle-surface (unselected segment)', '--color-muted', '--color-subtle-surface', 4.5],
 ];
 
-/** Glass: tokens declared outside @theme, repointed in the dark block. */
-const glassTokens = ['--glass-fill', '--glass-line', '--glass-lift', '--glow', '--grid-line', '--surface-lift'];
+/** Surface-ladder tokens declared outside @theme, repointed in the dark block. */
+const ladderTokens = ['--surface-lift'];
+
+/** D1: the decorative layer is gone; none of these may come back. */
+const retiredTokens = ['--glass-fill', '--glass-line', '--glass-lift', '--glow', '--grid-line'];
 
 /** The seven text roles of Cobalto Cristal (at most 7), each one `@utility type-*`. */
 const textRoles = ['label', 'display', 'section', 'figure', 'body', 'data', 'index'];
@@ -266,56 +249,46 @@ describe('design tokens', () => {
     ).toBeGreaterThanOrEqual(minimum);
   });
 
-  it('declares the glass and surface-ladder tokens for both appearances', () => {
-    for (const name of glassTokens) {
+  it('declares the surface-ladder tokens for both appearances and no glass, glow or grid (D1)', () => {
+    for (const name of ladderTokens) {
       expect(light.has(name), `${name} light`).toBe(true);
       expect(darkOnly.has(name), `${name} dark`).toBe(true);
     }
+    for (const name of retiredTokens) {
+      expect(light.has(name), `${name} light must be gone`).toBe(false);
+      expect(darkOnly.has(name), `${name} dark must be gone`).toBe(false);
+    }
   });
 
-  // Worst case under the glass: the glow at full strength over the page surface.
-  it.each(
-    bySchema.flatMap(([scheme, map]) =>
-      (['--color-text', '--color-muted'] as const).map((fg) => [scheme, fg, map] as const),
-    ),
-  )('%s: %s on glass over the glow holds 4.5:1', (scheme, foreground, map) => {
-    const behind = composite([
-      parseColor(resolveToken(map, '--color-surface')),
-      parseColor(map.get('--glow')!),
-      parseColor(map.get('--glass-fill')!),
-    ]);
-    const ratio = ratioOfLuminances(
-      relativeLuminance(parseColor(resolveToken(map, foreground))),
-      luminanceOfLinear(behind),
-    );
-    expect(Number(ratio.toFixed(2)), `${scheme} ${foreground} on glass ${ratio.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
-  });
-
-  it('ships the four Cobalto Cristal families and no Inter', () => {
+  it('declares a single text family, Archivo, plus a system mono stack for code (D2)', () => {
     expect(tokens.get('--font-sans')).toMatch(/^'Archivo Variable',/);
-    expect(tokens.get('--font-display')).toMatch(/^'Space Grotesk Variable',/);
-    expect(tokens.get('--font-mono')).toMatch(/^'Geist Mono Variable',/);
-    expect(tokens.get('--font-serif')).toMatch(/^'Instrument Serif',/);
+    expect(tokens.has('--font-display'), '--font-display must be gone').toBe(false);
+    expect(tokens.has('--font-serif'), '--font-serif must be gone').toBe(false);
+    const families = [...tokens.keys()].filter((name) => name.startsWith('--font-'));
+    expect(families.sort()).toEqual(['--font-mono', '--font-sans']);
+    expect(tokens.get('--font-mono')).toMatch(/^ui-monospace,/);
+    expect(tokens.get('--font-mono')).not.toMatch(/Geist/);
+
     const pkg = JSON.parse(readFileSync(join(webRoot, 'package.json'), 'utf8'));
+    expect(pkg.dependencies['@fontsource-variable/archivo']).toBeDefined();
     for (const dep of [
-      '@fontsource-variable/archivo',
       '@fontsource-variable/space-grotesk',
       '@fontsource-variable/geist-mono',
       '@fontsource/instrument-serif',
+      '@fontsource-variable/inter',
     ]) {
-      expect(pkg.dependencies[dep], dep).toBeDefined();
+      expect(pkg.dependencies[dep], `${dep} must be gone`).toBeUndefined();
     }
-    expect(pkg.dependencies['@fontsource-variable/inter']).toBeUndefined();
     const global = readFileSync(globalPath, 'utf8');
-    expect(global).not.toMatch(/inter/i);
-    expect(global).toMatch(/instrument-serif\/400-italic\.css/);
+    expect(global).toContain("@fontsource-variable/archivo/wdth.css");
+    expect(global).not.toMatch(/inter|space-grotesk|geist|instrument-serif/i);
   });
 
-  it('defines exactly the seven text roles and the one serif accent as recipes', () => {
+  it('defines exactly the seven text roles as recipes, with no serif accent', () => {
     const recipes = readFileSync(recipesPath, 'utf8');
     const declared = [...recipes.matchAll(/@utility type-([a-z-]+)/g)].map((m) => m[1]);
     expect(declared.sort()).toEqual([...textRoles].sort());
-    expect(recipes).toMatch(/@utility serif-accent/);
+    expect(recipes).not.toMatch(/@utility serif-accent/);
     for (const step of ['label', 'data', 'body', 'lead', 'section', 'figure', 'figure-row', 'display']) {
       expect(tokens.has(`--text-${step}`), `--text-${step}`).toBe(true);
       expect(tokens.has(`--text-${step}--line-height`), `--text-${step}--line-height`).toBe(true);
@@ -336,12 +309,26 @@ describe('design tokens', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('makes the glass opaque without backdrop-filter or under reduced transparency', () => {
+  it('ships no glass recipe (D1)', () => {
     const recipes = readFileSync(recipesPath, 'utf8');
-    expect(recipes).toMatch(/@utility glass\b/);
-    expect(recipes).toMatch(/@utility glass-field\b/);
-    expect(recipes).toMatch(/@supports not \(\(backdrop-filter/);
-    expect(recipes).toMatch(/prefers-reduced-transparency: reduce/);
+    expect(recipes).not.toMatch(/@utility glass/);
+    expect(recipes).not.toMatch(/backdrop-filter/);
+  });
+
+  it('sets labels in sentence case sans, and display, section, figure and wordmark on the width axis (D2, D3)', () => {
+    const recipes = readFileSync(recipesPath, 'utf8');
+    const body = (name: string) => new RegExp(`@utility ${name} \\{([\\s\\S]*?)\\n\\}`).exec(recipes)?.[1] ?? '';
+    const label = body('type-label');
+    expect(label).toContain('var(--font-sans)');
+    expect(label).not.toMatch(/text-transform/);
+    expect(label).not.toMatch(/letter-spacing: var/);
+    expect(tokens.has('--text-label--letter-spacing')).toBe(false);
+    for (const name of ['type-display', 'type-section', 'type-figure', 'wordmark']) {
+      expect(body(name), name).toMatch(/font-stretch: 1(08|12)%/);
+    }
+    for (const name of ['type-data', 'type-index']) {
+      expect(body(name), name).toContain('var(--font-sans)');
+    }
   });
 
   it('carries links with ink and the underline, never with the one accent (T13e item 4)', () => {
@@ -355,15 +342,16 @@ describe('design tokens', () => {
   it('names the wordmark as the one documented exception to the roles (T13e item 6)', () => {
     const recipes = readFileSync(recipesPath, 'utf8');
     const body = /@utility wordmark \{([\s\S]*?)\n\}/.exec(recipes)?.[1] ?? '';
-    // It takes the display family at the body step from the tokens, so it is a
+    // It takes the width axis at the body step from the tokens, so it is a
     // recipe and not a hand-rolled pair of utilities.
-    expect(body).toContain('var(--font-display)');
+    expect(body).toContain('var(--font-sans)');
     expect(body).toContain('var(--text-body)');
+    expect(body).toContain('font-stretch');
     expect(recipes).toMatch(/wordmark[\s\S]{0,600}?exception/i);
-    // Nothing else re-derives display type: the exception lives in one place.
+    // Nothing else re-derives the logotype: the exception lives in one place.
     const offenders = sourceFiles(join(webRoot, 'src'))
       .filter((file) => !file.endsWith('recipes.css'))
-      .filter((file) => /font-display/.test(readFileSync(file, 'utf8')))
+      .filter((file) => /font-stretch/.test(readFileSync(file, 'utf8')))
       .map((file) => relative(webRoot, file));
     expect(offenders).toEqual([]);
   });

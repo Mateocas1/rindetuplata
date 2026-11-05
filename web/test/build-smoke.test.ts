@@ -79,22 +79,20 @@ beforeAll(() => {
 }, 300_000);
 
 describe('prerendered home page', () => {
-  it('renders the heading the product promises, with "plata" as the one serif accent', () => {
+  it('renders the heading the product promises as plain text (D1)', () => {
     const page = html('index.html');
     const h1 = /<h1 class="type-display">([\s\S]*?)<\/h1>/.exec(page);
     expect(h1, 'the home H1').not.toBeNull();
     expect(renderedText(h1![1]).replace(/\s+/g, ' ').trim()).toBe('¿Dónde rinde tu plata hoy?');
-    expect(h1![1]).toContain('<span class="serif-accent">plata</span>');
+    expect(h1![1]).not.toContain('<');
+    expect(page).not.toContain('serif-accent');
   });
 
-  it('paints the best option as the only glass card, inside the field it blurs', () => {
+  it('paints the best option as a plain card with the cobalt rail, with no glass anywhere (D1, D14)', () => {
     const page = html('index.html');
 
-    // One glass element per page, over the cobalt glow and hairline grid
-    // its `glass-field` parent paints, with the cobalt rail of the leader.
-    expect(page.match(/class="glass /g) ?? []).toHaveLength(1);
-    expect(page).toContain('glass-field');
-    expect(page).toContain('border-s-accent');
+    expect(page).not.toMatch(/class="[^"]*\bglass(-field)?\b/);
+    expect(page).toMatch(/class="card border-s-2 border-s-accent p-6"/);
     expect(renderedText(page)).toContain('La mejor de hoy');
   });
 
@@ -300,6 +298,30 @@ describe('error page', () => {
 });
 
 describe('stylesheet', () => {
+  function builtCss(): string {
+    return readdirSync(join(dist, '_astro'))
+      .filter((file) => file.endsWith('.css'))
+      .map((file) => readFileSync(join(dist, '_astro', file), 'utf8'))
+      .join('\n');
+  }
+
+  it('ships no glass class on any page (D1)', () => {
+    for (const file of htmlFiles(dist)) {
+      expect(
+        normalize(readFileSync(file, 'utf8')),
+        `${relative(dist, file)} has a glass class`,
+      ).not.toMatch(/class="[^"]*\bglass(-field)?\b/);
+    }
+  });
+
+  it('ships one text family and no decorative layer in the built CSS (D1, D2)', () => {
+    const css = builtCss();
+    for (const retired of ['Space Grotesk', 'Geist', 'Instrument Serif', '.glass', '.serif-accent']) {
+      expect(css, `${retired} must not reach the built CSS`).not.toContain(retired);
+    }
+    expect(css).toContain('Archivo Variable');
+  });
+
   it('emits the token utilities the markup uses', () => {
     const cssFiles = readdirSync(join(dist, '_astro')).filter((file) => file.endsWith('.css'));
     expect(cssFiles.length).toBeGreaterThan(0);
@@ -318,9 +340,7 @@ describe('stylesheet', () => {
       '.type-data',
       '.type-figure',
       '.type-index',
-      '.serif-accent',
       '.wordmark',
-      '.glass-field',
       '.bg-thumb',
       '.text-on-thumb',
     ]) {
