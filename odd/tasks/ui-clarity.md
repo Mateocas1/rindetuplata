@@ -100,6 +100,12 @@ finding bar.
   inflación esperada.") and the best-option card keeps the figure.
 - **D16 One amount field, formatted.** The field shows "1.000.000" (es-AR grouping) when not focused and accepts digits
   with or without dots; presets stay as the capsule segmented control under their field; labels share one baseline.
+- **D18 Source and date stay on every row (MVP S11, L13), but not as a column.** The critique asked to move them to a
+  caption; S11 is an earlier owner decision ("with source and data date per row"), so the row keeps them in its
+  secondary line under the name ("Plazo fijo · ArgentinaDatos · 14/10"), and the dedicated "Fuente y fecha" column goes.
+  A curated or stale rate keeps its flag in that line. The table caption states the common source and date once.
+- **D19 One shared real-result component.** `web/src/components/ui/RealResult.tsx` (parent, between waves) renders D6's
+  line for the ranking, the best option and the instrument page, so the three never drift.
 - **D17 Workers leave their changes uncommitted in their worktrees; the parent verifies and commits** (AGENTS.md "The
   parent always verifies pane output and makes the commit"). The Engram mirror is not reachable from this cloud
   session; this document is the record.
