@@ -112,3 +112,11 @@ describe('formatPosition', () => {
     expect(formatPosition(100, false)).toBe('100');
   });
 });
+
+describe('earnedFrom (T7 fix round)', () => {
+  it('turns a conditional final amount into pesos earned, in exact cents', async () => {
+    const { earnedFrom } = await import('./rankingPresentation');
+    expect(earnedFrom(1_000_000, 1_019_915.26)).toBe(19_915.26);
+    expect(earnedFrom(500_000, 500_000)).toBe(0);
+  });
+});

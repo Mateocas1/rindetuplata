@@ -183,3 +183,15 @@ describe('inflationIndexShortLabel', () => {
     expect(inflationIndexShortLabel('OTHER')).toBe('OTHER');
   });
 });
+
+describe('sourceLabel (T7 fix round)', () => {
+  it('names a curated rate in Spanish instead of the source id text', async () => {
+    const { sourceLabel } = await import('./labels');
+    expect(
+      sourceLabel({ confidence: 'CURATED_MANUAL', source: { displayName: 'Curated by the project owner' } }),
+    ).toBe('Carga manual verificada');
+    expect(sourceLabel({ confidence: 'AGGREGATOR_AUTOMATIC', source: { displayName: 'ArgentinaDatos' } })).toBe(
+      'ArgentinaDatos',
+    );
+  });
+});

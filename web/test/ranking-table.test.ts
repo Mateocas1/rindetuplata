@@ -240,7 +240,7 @@ describe('ranking row content (D6, D13, D19)', () => {
   });
 
   it('keeps the conditional "hasta" note of a row', () => {
-    expect(visible(board(wallets))).toContain('Hasta $ 1.019.915,26 · Si sumás $500.000');
+    expect(visible(board(wallets))).toContain('Hasta $ 19.915,26 · Si sumás $500.000');
   });
 });
 
@@ -362,5 +362,17 @@ describe('home answer sentence (D15)', () => {
     expect(nbsp(answerSentence({ ...home, ranked: [] }))).toBe(
       'Hoy no encontramos opciones para $ 1.000.000 a 30 días.',
     );
+  });
+});
+
+describe('the conditional "hasta" offer of a row (T7 fix round)', () => {
+  it('reads as pesos earned for the term, never as the final amount', async () => {
+    const wallets = await loadRanking(
+      { ...DEFAULT_RANKING_QUERY, kinds: ['WALLET'] },
+      { env: { WEB_FIXTURES: '1' }, limit: 200 },
+    );
+    const markup = renderToStaticMarkup(h(RankingTable, { ranking: wallets, pageSlugs: [] }));
+    expect(markup).toContain('Hasta $ 19.915,26');
+    expect(markup).not.toContain('1.019.915,26');
   });
 });

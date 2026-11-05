@@ -10,7 +10,7 @@
 import { liquidityForKind } from '../../lib/categories';
 import { displayName } from '../../lib/displayName';
 import { formatDate, formatDays, formatMoney, formatPercent } from '../../lib/format';
-import { confidenceLabel, inflationIndexLabel, kindLabel, rateKindShortLabel } from '../../lib/labels';
+import { inflationIndexLabel, sourceLabel, kindLabel, rateKindShortLabel } from '../../lib/labels';
 import type { RankedEntry, Ranking } from '../../lib/types';
 import RealResult from '../ui/RealResult';
 import { formatQueryAmount } from './positions';
@@ -29,8 +29,7 @@ export default function BestOptionPlate({ ranking, best }: BestOptionPlateProps)
   const when = best.kind === 'PLAZO_FIJO' ? 'al vencimiento' : `a los ${formatDays(days)}`;
   // "$ 19.726,03" is "$", a no-break space and the number (format.ts); split it so only that space can wrap.
   const [currency, figure = ''] = formatMoney(best.earned).split('\u00a0');
-  const source =
-    best.confidence === 'CURATED_MANUAL' ? confidenceLabel(best.confidence) : best.source.displayName;
+  const source = sourceLabel(best);
 
   return (
     <div className="card border-s-2 border-s-accent p-4 sm:p-6">
