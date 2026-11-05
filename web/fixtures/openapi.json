@@ -1291,6 +1291,10 @@
           "realReturn": {
             "type": "number"
           },
+          "realEarned": {
+            "type": "number",
+            "description": "Pesos above (positive) or below (negative) expected inflation over the horizon, in today's pesos; null without an inflation observation."
+          },
           "upTo": {
             "$ref": "#/components/schemas/UpToView"
           },

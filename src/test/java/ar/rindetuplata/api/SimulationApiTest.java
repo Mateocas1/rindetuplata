@@ -51,6 +51,31 @@ class SimulationApiTest extends RankingApiIntegrationTest {
 	}
 
 	@Test
+	void aSimulationCarriesRealEarnedOnlyWithAnInflationObservation() throws Exception {
+		long id = seedBank("Banco Real", "0.21", null);
+
+		mockMvc.perform(get("/api/v1/simulations")
+				.param("instrumentId", String.valueOf(id))
+				.param("amount", "1000000")
+				.param("days", "30"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.entry.realReturn").value(nullValue()))
+				.andExpect(jsonPath("$.entry.realEarned").value(nullValue()))
+				.andExpect(content().string(containsString("\"realReturn\":null,\"realEarned\":null")));
+
+		seedRem("0.211", java.time.LocalDate.parse("2026-10-09"));
+
+		mockMvc.perform(get("/api/v1/simulations")
+				.param("instrumentId", String.valueOf(id))
+				.param("amount", "1000000")
+				.param("days", "30"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.entry.realReturn").value(0.001379))
+				.andExpect(jsonPath("$.entry.realEarned").value(1378.63))
+				.andExpect(content().string(containsString("\"realReturn\":0.001379,\"realEarned\":1378.63")));
+	}
+
+	@Test
 	void aTermBelowTheMinimumIsIneligible() throws Exception {
 		long id = seedBank("Banco 30 Dias", "0.21", null);
 

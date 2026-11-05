@@ -74,7 +74,7 @@ class AlertRankingTest {
 		BigDecimal rate = new BigDecimal(tna);
 		return new RankedEntry(id, kind, name, "Entity", new SourceView("src", "Source", false),
 				Confidence.AGGREGATOR_AUTOMATIC, null, DAY, DAY, RateUsed.tna(rate, RateKind.FUND_TNA_EQUIVALENT),
-				Money.ars("1000000"), Money.ars("0"), BigDecimal.ZERO, null, null, List.of(), 0, null);
+				Money.ars("1000000"), Money.ars("0"), BigDecimal.ZERO, null, null, null, List.of(), 0, null);
 	}
 
 }

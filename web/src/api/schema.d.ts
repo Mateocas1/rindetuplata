@@ -538,6 +538,8 @@ export interface components {
             earned?: number;
             nominalReturn?: number;
             realReturn?: number;
+            /** @description Pesos above (positive) or below (negative) expected inflation over the horizon, in today's pesos; null without an inflation observation. */
+            realEarned?: number;
             upTo?: components["schemas"]["UpToView"];
             warnings?: components["schemas"]["ValidationFlagView"][];
             /** Format: int32 */
