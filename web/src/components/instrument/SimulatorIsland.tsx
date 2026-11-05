@@ -1,25 +1,26 @@
 /**
- * Per-instrument simulator (T7c, S3, S14).
+ * Per-instrument simulator (T7c, S3, S14; ui-clarity D12, D16).
  *
  * A React island over `GET /api/v1/simulations`; every number it renders comes
- * from the API (no financial math in the browser). The form validates before it
- * asks, the result region is a stable polite live region, and the four outcomes
- * (simulated, ineligible, excluded, failed) each get one Spanish sentence.
+ * from the API (no financial math in the browser). It never starts empty: the
+ * page hands it the result for the default amount and term from its static
+ * data, so the first paint already answers; "Simular" asks the API for the
+ * reader's own amount and term. The submit stays explicit because the public
+ * API is rate limited per IP: nothing fires on a keystroke. The amount field
+ * reads and shows Argentine notation (`amountInput`). The result region is a
+ * stable polite live region, and the four outcomes (simulated, ineligible,
+ * excluded, failed) each get one Spanish sentence.
  */
 import { useState } from 'react';
 import { ApiProblem, api } from '../../lib/api';
-import { formatDate, formatDays, formatMoney, formatPercent, formatSignedPercent } from '../../lib/format';
+import { formatAmountInput, parseAmountInput } from '../../lib/amountInput';
+import { formatDate, formatDays, formatMoney, formatPercent } from '../../lib/format';
 import { confidenceLabel, flagLabel, rateKindLabel } from '../../lib/labels';
-import {
-  DEFAULT_AMOUNT,
-  DEFAULT_DAYS,
-  MAX_DAYS,
-  tryParseAmount,
-  tryParseDays,
-} from '../../lib/rankingQuery';
+import { DEFAULT_AMOUNT, DEFAULT_DAYS, MAX_DAYS, tryParseDays } from '../../lib/rankingQuery';
 import { problemMessage, simulationOutcome, type SimulationOutcome } from '../../lib/simulator';
-import type { MepQuote, Simulation } from '../../lib/types';
+import type { MepQuote, RankedEntry, Simulation } from '../../lib/types';
 import BreakEvenNote from '../ranking/BreakEvenNote';
+import RealResult from '../ui/RealResult';
 
 export interface Props {
   instrumentId: string;
@@ -27,16 +28,11 @@ export interface Props {
   inflationIndexLabel: string;
   defaultAmount?: number;
   defaultDays?: number;
+  /** The page's own entry for the default amount and term: the result the simulator starts with. */
+  initialEntry?: RankedEntry | null;
 }
 
-const inputClass = 'field tabular-nums';
 const labelClass = 'flex flex-col gap-1 type-label';
-
-/** The sign is text; the tone only reinforces it, never replaces it (S10). */
-function realReturnTone(value: number | null): string {
-  if (value === null || value === 0) return 'text-muted';
-  return value > 0 ? 'text-gain' : 'text-loss';
-}
 
 export function SimulatedResult({
   entry,
@@ -54,32 +50,30 @@ export function SimulatedResult({
 }) {
   const isStale = entry.warnings.some((warning) => warning.code === 'STALE');
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <div>
         <p className="type-label">Ganancia estimada</p>
-        <p className="type-figure mt-2">{formatMoney(entry.earned)}</p>
+        <p className="type-figure text-figure-row mt-1">{formatMoney(entry.earned)}</p>
         <p className="type-data text-muted mt-1">
           en {formatDays(days)} con {formatMoney(amount)}
         </p>
       </div>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-4 sm:grid-cols-3">
+      <p>
+        <RealResult
+          realEarned={entry.realEarned}
+          realReturn={entry.realReturn}
+          indexLabel={inflationIndexLabel}
+          size="lead"
+        />
+      </p>
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-4">
         <div>
           <dt className="type-label">Al vencimiento</dt>
-          <dd className="type-figure text-figure-row">{formatMoney(entry.finalAmount)}</dd>
+          <dd className="type-data font-medium">{formatMoney(entry.finalAmount)}</dd>
         </div>
         <div>
           <dt className="type-label">{entry.rateUsed.basis}</dt>
-          <dd className="type-figure text-figure-row">{formatPercent(entry.rateUsed.fraction)}</dd>
-        </div>
-        <div className="col-span-2 sm:col-span-1">
-          <dt className="type-label">Rendimiento real</dt>
-          <dd className={`type-figure text-figure-row ${realReturnTone(entry.realReturn)}`}>
-            {entry.realReturn === null ? 'sin dato' : formatSignedPercent(entry.realReturn)}
-            <span className="sr-only">
-              {' '}
-              real contra la inflación esperada ({inflationIndexLabel})
-            </span>
-          </dd>
+          <dd className="type-data font-medium">{formatPercent(entry.rateUsed.fraction)}</dd>
         </div>
       </dl>
       <p className="type-data text-muted">
@@ -106,24 +100,37 @@ export default function SimulatorIsland({
   inflationIndexLabel,
   defaultAmount = DEFAULT_AMOUNT,
   defaultDays = DEFAULT_DAYS,
+  initialEntry = null,
 }: Props) {
-  const [amount, setAmount] = useState(String(defaultAmount));
+  const [amount, setAmount] = useState(formatAmountInput(defaultAmount));
   const [days, setDays] = useState(String(defaultDays));
   const [amountError, setAmountError] = useState<string | null>(null);
   const [daysError, setDaysError] = useState<string | null>(null);
-  const [outcome, setOutcome] = useState<SimulationOutcome | null>(null);
+  // An instrument the ranking cannot score has no entry: its hero says why, and
+  // the simulator waits for a query instead of repeating it.
+  const [outcome, setOutcome] = useState<SimulationOutcome | null>(
+    initialEntry === null ? null : { status: 'simulated', entry: initialEntry, dollarMep: null },
+  );
   // The amount and term the shown result belongs to, so editing a field never
   // silently relabels a result that came from the previous query.
-  const [submitted, setSubmitted] = useState<{ amount: number; days: number } | null>(null);
+  const [submitted, setSubmitted] = useState<{ amount: number; days: number } | null>(
+    initialEntry === null ? null : { amount: defaultAmount, days: defaultDays },
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  /** Back to "1.000.000" when the field loses focus with a readable amount. */
+  function onAmountBlur() {
+    const parsed = parseAmountInput(amount);
+    if (parsed !== null) setAmount(formatAmountInput(parsed));
+  }
 
   async function onSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     // The button stays focusable while a request runs (aria-disabled, not
     // `disabled`), so a second submit is ignored here instead.
     if (loading) return;
-    const parsedAmount = tryParseAmount(amount);
+    const parsedAmount = parseAmountInput(amount);
     const parsedDays = tryParseDays(days);
     setAmountError(parsedAmount === null ? 'Ingresá un monto en pesos mayor a cero.' : null);
     setDaysError(parsedDays === null ? `Ingresá los días como número entero entre 1 y ${MAX_DAYS}.` : null);
@@ -133,6 +140,7 @@ export default function SimulatorIsland({
       setError(null);
       return;
     }
+    setAmount(formatAmountInput(parsedAmount));
 
     setLoading(true);
     setError(null);
@@ -158,20 +166,24 @@ export default function SimulatorIsland({
     }
   }
 
+  const hasResult = loading || error !== null || outcome !== null;
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
           <div className={labelClass}>
             <label htmlFor={`sim-monto-${instrumentId}`}>Monto en pesos</label>
             <input
               id={`sim-monto-${instrumentId}`}
               name="monto"
               type="text"
-              inputMode="decimal"
-              className={inputClass}
+              inputMode="numeric"
+              autoComplete="off"
+              className="field tabular-nums"
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
+              onBlur={onAmountBlur}
               aria-invalid={amountError !== null}
               aria-describedby={amountError !== null ? `sim-monto-error-${instrumentId}` : undefined}
             />
@@ -188,7 +200,8 @@ export default function SimulatorIsland({
               name="dias"
               type="text"
               inputMode="numeric"
-              className={inputClass}
+              autoComplete="off"
+              className="field tabular-nums"
               value={days}
               onChange={(event) => setDays(event.target.value)}
               aria-invalid={daysError !== null}
@@ -201,7 +214,7 @@ export default function SimulatorIsland({
             )}
           </div>
         </div>
-        <button type="submit" className="btn-secondary self-start aria-disabled:opacity-60" aria-disabled={loading}>
+        <button type="submit" className="btn-primary aria-disabled:opacity-60" aria-disabled={loading}>
           {loading ? 'Simulando…' : 'Simular'}
         </button>
       </form>
@@ -210,7 +223,7 @@ export default function SimulatorIsland({
         role="status"
         aria-live="polite"
         aria-busy={loading}
-        className="card min-h-6 p-6"
+        className={hasResult ? 'border-t border-border pt-5' : undefined}
       >
         {loading && <p className="type-body text-muted">Simulando con tu monto y tu plazo…</p>}
         {!loading && error !== null && <p className="type-body text-loss">{error}</p>}
@@ -225,30 +238,20 @@ export default function SimulatorIsland({
         )}
         {!loading && outcome?.status === 'ineligible' && (
           <div className="flex flex-col gap-1">
-            <p className="type-label">Con ese monto y ese plazo esta opción no entra</p>
+            <p className="type-body font-medium">Con ese monto y ese plazo esta opción no entra</p>
             <p className="type-body text-muted">{outcome.message}</p>
           </div>
         )}
         {!loading && outcome?.status === 'excluded' && (
           <div className="flex flex-col gap-1">
-            <p className="type-label">Esta opción no se puede simular hoy</p>
+            <p className="type-body font-medium">Esta opción no se puede simular hoy</p>
             <p className="type-body text-muted">{outcome.message}</p>
           </div>
         )}
         {!loading && outcome?.status === 'unknown' && (
           <p className="type-body text-muted">{outcome.message}</p>
         )}
-        {!loading && outcome === null && error === null && (
-          <p className="type-body text-muted">
-            Poné tu monto y tus días y te mostramos cuánto ganás, con la tasa que publica la
-            fuente.
-          </p>
-        )}
       </div>
-      <p className="type-data text-muted">
-        La cuenta la hace la API con la tasa y las condiciones de cada producto. Es información,
-        no asesoramiento financiero.
-      </p>
     </div>
   );
 }

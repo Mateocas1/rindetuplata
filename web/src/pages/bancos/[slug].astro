@@ -1,13 +1,15 @@
 ---
 /**
- * Bank entity page (T6b, S6; T10a): today's (or, for a bank whose last rate is older than its source's newest
- * capture, the last published) non-client and client plazo fijo TNA, the 90-day chart (the instrument history
- * chart, unchanged), how many of the days we saw the bank it paid the highest non-client TNA, and the source and
- * dates. Built at build time with no island; the bank's instrument page is linked only when one was built (D1).
+ * Bank entity page (T6b, S6; T10a; ui-clarity D12-D14): today's (or, for a bank whose last rate is older than its
+ * source's newest capture, the last published) non-client and client plazo fijo TNA, the 90-day chart (the instrument
+ * history chart, unchanged), how many of the days we saw the bank it paid the highest non-client TNA, and the source
+ * and dates. Built at build time with no island; the bank's instrument page is linked only when one was built (D1).
+ * At `lg` the hero (a plain card) and the best-rate block sit side by side, the chart takes the full width.
  */
 import HistoryChart from '../../components/instrument/HistoryChart.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { MissingHistoryRecording } from '../../lib/data';
+import { displayName } from '../../lib/displayName';
 import {
   bankPageCopy,
   bestRateSentence,
@@ -51,6 +53,9 @@ try {
 const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(Astro.url.pathname, site);
 const source = sourceName(bank.sourceId);
+// The H1 and the title show the name people use; the legal name stays once, quietly, under the H1 (D13).
+const name = displayName(bank.name);
+const legalName = name !== bank.name ? bank.name : null;
 const client = bank.clientTna === null ? null : formatPercent(bank.clientTna);
 const instrumentPage = instrumentSlugs.includes(instrumentSlug(bank.name, bank.instrumentId))
   ? `/instrumentos/${instrumentSlug(bank.name, bank.instrumentId)}/`
@@ -59,16 +64,15 @@ const provenance =
   `${source} · dato del ${formatDate(bank.dataDate)}` +
   (bank.captureDate === bank.dataDate ? '' : ` · captura del ${formatDate(bank.captureDate)}`);
 
-const { title, description, headline } = bankPageCopy(bank);
+const { title, description, headline } = bankPageCopy({ ...bank, name });
 
 const jsonLd = breadcrumbJsonLd([
   { name: 'Inicio', url: new URL('/', site).href },
   { name: 'Bancos', url: new URL('/bancos/', site).href },
-  { name: bank.name, url: canonical.href },
+  { name, url: canonical.href },
 ]);
 
-const linkClass =
-  'text-text underline decoration-border-strong underline-offset-2 hover:decoration-text';
+const crumbClass = 'hover:text-text hover:underline focus-visible:underline underline-offset-2';
 ---
 
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
@@ -77,36 +81,39 @@ const linkClass =
       <nav aria-label="Ubicación" class="type-label">
         <ol class="flex flex-wrap gap-x-2">
           <li>
-            <a class={linkClass} href="/">Inicio</a>
+            <a class={crumbClass} href="/">Inicio</a>
           </li>
           <li>
             <span aria-hidden="true">/</span>{' '}
-            <a class={linkClass} href="/bancos/">Bancos</a>
+            <a class={crumbClass} href="/bancos/">Bancos</a>
           </li>
-          <li aria-current="page"><span aria-hidden="true">/</span> {bank.name}</li>
+          <li aria-current="page"><span aria-hidden="true">/</span> {name}</li>
         </ol>
       </nav>
-      <div class="flex flex-col gap-block">
-        <p class="type-label">Plazo fijo</p>
-        <h1 class="type-display max-w-prose">{bank.name}</h1>
-      </div>
-
-      <div class="card max-w-prose border-s-2 border-s-accent p-6">
-        <p class="type-section">{headline}</p>
-        {client !== null && <p class="type-body mt-2">{client} TNA para clientes del banco</p>}
-        <p class="type-data text-muted mt-4">{provenance}</p>
+      <div class="flex flex-col gap-2">
+        <h1 class="type-display">{name}</h1>
+        {legalName !== null && <p class="type-data text-muted">Nombre legal: {legalName}</p>}
       </div>
     </header>
 
-    <section class="flex max-w-prose flex-col gap-block" aria-labelledby="mejor-tasa">
-      <h2 id="mejor-tasa" class="type-section">¿Cuántas veces fue la mejor?</h2>
-      <p class="type-body">{bestRateSentence(bank.bestDays, bank.observedDays)}</p>
-      <p class="type-data text-muted">
-        Contamos los días en que capturamos la tasa para no clientes del banco, entre el{' '}
-        {formatDate(bank.from)} y el {formatDate(bank.to)}. Si dos bancos empatan, los dos cuentan
-        como la mejor; un día sin captura no cuenta.
-      </p>
-    </section>
+    <div class="grid gap-section lg:grid-cols-2 lg:items-start lg:gap-x-10">
+      <div class="card p-6">
+        <p class="type-label">Plazo fijo</p>
+        <p class="type-section mt-2">{headline}</p>
+        {client !== null && <p class="type-body mt-2">{client} TNA para clientes del banco</p>}
+        <p class="type-data text-muted mt-4">{provenance}</p>
+      </div>
+
+      <section class="flex flex-col gap-block" aria-labelledby="mejor-tasa">
+        <h2 id="mejor-tasa" class="type-section">¿Cuántas veces fue la mejor?</h2>
+        <p class="type-body">{bestRateSentence(bank.bestDays, bank.observedDays)}</p>
+        <p class="type-data text-muted">
+          Contamos los días en que capturamos la tasa para no clientes del banco, entre el{' '}
+          {formatDate(bank.from)} y el {formatDate(bank.to)}. Si dos bancos empatan, los dos cuentan
+          como la mejor; un día sin captura no cuenta.
+        </p>
+      </section>
+    </div>
 
     <section class="flex flex-col gap-block" aria-labelledby="historial">
       <div class="flex flex-col gap-2">
@@ -116,29 +123,25 @@ const linkClass =
       <HistoryChart history={history} />
     </section>
 
-    <footer class="flex max-w-prose flex-col gap-2 border-t border-border pt-block">
+    <footer class="border-t border-border pt-block">
       <p class="type-body">
         {
           instrumentPage !== null && (
             <>
-              <a class={linkClass} href={instrumentPage}>
+              <a class="link" href={instrumentPage}>
                 Simulá con tu monto y tu plazo
               </a>{' '}
               ·{' '}
             </>
           )
         }
-        <a class={linkClass} href="/bancos/">
+        <a class="link" href="/bancos/">
           Todos los bancos
         </a>{' '}
         ·{' '}
-        <a class={linkClass} href="/metodologia/">
+        <a class="link" href="/metodologia/">
           Cómo se calcula cada número
         </a>
-      </p>
-      <p class="type-data text-muted">
-        Es información, no asesoramiento financiero. rindetuplata no recibe dinero de las entidades
-        que compara.
       </p>
     </footer>
   </article>

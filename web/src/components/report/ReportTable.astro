@@ -2,8 +2,10 @@
 /**
  * The table of one monthly report (T6a): one row per option measured, in the order the API returns (best real return
  * first). Static markup, no island. The verdict is written in words next to the arrow, so it never depends on colour
- * alone (S10). Mirrors the ranking table's recipe: a sticky first column, mono caps heads and one hairline per row.
+ * alone (S10). Mirrors the ranking table's recipe: a sticky first column, sentence-case heads and one hairline per row.
+ * Names go through `displayName` (D13); the "Datos" column is one quiet line, "31 de 31 días · Fuente".
  */
+import { displayName } from '../../lib/displayName';
 import { formatInteger, formatPercent, formatSignedPercent } from '../../lib/format';
 import { kindLabel } from '../../lib/labels';
 import type { MonthlyReport } from '../../lib/reports';
@@ -32,10 +34,10 @@ const rowCell = (isLast: boolean) => `px-4 py-3 align-top ${isLast ? '' : 'borde
     >
       <table class="w-full min-w-[40rem] table-fixed border-separate border-spacing-0">
         <colgroup>
-          <col class="w-[40%]" />
-          <col class="w-[18%]" />
-          <col class="w-[26%]" />
+          <col class="w-[34%]" />
           <col class="w-[16%]" />
+          <col class="w-[24%]" />
+          <col class="w-[26%]" />
         </colgroup>
         <caption class="sr-only">
           {formatInteger(report.rows.length)} opciones medidas en {month}, ordenadas por su rendimiento real
@@ -58,7 +60,8 @@ const rowCell = (isLast: boolean) => `px-4 py-3 align-top ${isLast ? '' : 'borde
           {
             report.rows.map((row, index) => {
               const cell = rowCell(index === report.rows.length - 1);
-              const entity = row.entity !== null && row.entity !== row.name ? row.entity : null;
+              const name = displayName(row.name);
+              const entity = row.entity !== null && displayName(row.entity) !== name ? displayName(row.entity) : null;
               const arrow = row.real > 0 ? '▲' : row.real < 0 ? '▼' : '=';
               const tone = row.real > 0 ? 'text-gain' : row.real < 0 ? 'text-loss' : 'text-muted';
               return (
@@ -73,7 +76,7 @@ const rowCell = (isLast: boolean) => `px-4 py-3 align-top ${isLast ? '' : 'borde
                     <span class={identCell}>
                       <span class="type-index">{String(index + 1).padStart(2, '0')}</span>
                       <span class="min-w-0">
-                        <span class="block type-body font-medium">{row.name}</span>
+                        <span class="block type-body font-medium">{name}</span>
                         <span class="mt-1 block type-data text-muted">
                           {kindLabel(row.kind)}
                           {entity === null ? '' : ` · ${entity}`}
@@ -94,10 +97,8 @@ const rowCell = (isLast: boolean) => `px-4 py-3 align-top ${isLast ? '' : 'borde
                     <span class="mt-1 block type-data">{row.beatInflation ? 'Le ganó' : 'No le ganó'}</span>
                   </td>
                   <td class:list={[cell, 'type-data text-muted']}>
-                    <span class="block">
-                      {formatInteger(row.coverage.days)} de {formatInteger(row.coverage.total)} días
-                    </span>
-                    <span class="block">{row.source.displayName}</span>
+                    {formatInteger(row.coverage.days)} de {formatInteger(row.coverage.total)} días ·{' '}
+                    {row.source.displayName}
                   </td>
                 </tr>
               );

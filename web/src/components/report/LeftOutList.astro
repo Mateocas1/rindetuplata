@@ -3,6 +3,7 @@
  * The options a month's report could not measure, each with its reason in Spanish (S15: nothing is dropped silently).
  * Collapsed by default so the table keeps the page.
  */
+import { displayName } from '../../lib/displayName';
 import { kindLabel } from '../../lib/labels';
 import { leftOutReasonLabel, type ReportLeftOut } from '../../lib/reports';
 
@@ -22,7 +23,7 @@ const { leftOut } = Astro.props;
       <ul class="mt-3 flex flex-col gap-3">
         {leftOut.map((left) => (
           <li>
-            <span class="block type-body font-medium">{left.name}</span>
+            <span class="block type-body font-medium">{displayName(left.name)}</span>
             <span class="block type-data text-muted">
               {kindLabel(left.kind)} · {leftOutReasonLabel(left.reason)}
             </span>

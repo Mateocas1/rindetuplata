@@ -257,13 +257,10 @@ const description =
         </details>
       </>
     ) : (
-      <div class="card max-w-prose p-6">
-        <p class="type-label">Todavía no hay historial para este instrumento</p>
-        <p class="type-body mt-2 max-w-prose">
-          El histórico se arma con una ingesta diaria y todavía no hay fechas para comparar.
-          Mientras tanto, arriba están la tasa y las condiciones de hoy.
-        </p>
-      </div>
+      <p class="type-body rounded-panel border border-dashed border-border px-4 py-6 text-muted">
+        Todavía no hay historial para este instrumento: se arma con una captura por día y aún no
+        hay fechas para comparar.
+      </p>
     )
   }
 </figure>

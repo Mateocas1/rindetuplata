@@ -27,8 +27,8 @@ const jsonLd = breadcrumbJsonLd([
   { name: 'Bancos', url: canonical.href },
 ]);
 
-const linkClass =
-  'text-text underline decoration-border-strong underline-offset-2 hover:decoration-text';---
+const crumbClass = 'hover:text-text hover:underline focus-visible:underline underline-offset-2';
+---
 
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
   <div class="flex flex-col gap-section py-section">
@@ -36,7 +36,7 @@ const linkClass =
       <nav aria-label="Ubicación" class="type-label">
         <ol class="flex flex-wrap items-center gap-x-2">
           <li>
-            <a class={linkClass} href="/">Inicio</a>
+            <a class={crumbClass} href="/">Inicio</a>
           </li>
           <li aria-current="page"><span aria-hidden="true">/</span> Bancos</li>
         </ol>
@@ -61,7 +61,7 @@ const linkClass =
       {
         all.length === 0 ? (
           <div class="card max-w-prose p-6">
-            <p class="type-label">Todavía no hay tasas por banco</p>
+            <p class="type-body font-semibold">Todavía no hay tasas por banco</p>
             <p class="type-body mt-2">
               Los datos se capturan una vez por día; apenas haya una captura, los bancos aparecen
               acá.
@@ -101,14 +101,14 @@ const linkClass =
 
     <p class="type-data text-muted">
       Mirá{' '}
-      <a class={linkClass} href="/plazo-fijo/">
+      <a class="link" href="/plazo-fijo/">
         los plazos fijos ordenados por lo que ganás con tu monto y tu plazo
       </a>
       {' '}o cómo{' '}
-      <a class={linkClass} href="/metodologia/">
+      <a class="link" href="/metodologia/">
         se calcula cada número
       </a>
-      . Es información, no asesoramiento financiero.
+      .
     </p>
   </div>
 </BaseLayout>

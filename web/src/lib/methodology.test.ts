@@ -48,3 +48,33 @@ describe('metodologia: dólar MEP section', () => {
     expect(mep).not.toContain('Billeteras remuneradas');
   });
 });
+
+describe('metodologia: liquidez y garantía section', () => {
+  const liquidity = section('liquidez-garantia');
+  const text = liquidity.replace(/\{' '\}/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+
+  it('has its own titled section, listed in the table of contents', () => {
+    expect(liquidity).toContain('<h2 id="liquidez-garantia"');
+    expect(text).toContain('Liquidez y garantía de los depósitos');
+    expect(page).toContain("id: 'liquidez-garantia'");
+  });
+
+  it('says when the money can be taken out, per kind', () => {
+    expect(text).toMatch(/plazo fijo[^.]*al vencimiento/i);
+    expect(text).toMatch(/billeteras[^.]*disponible al instante/i);
+    expect(text).toMatch(/fondos money market[^.]*rescate en el día/i);
+  });
+
+  it('states the guarantee with its exclusions and without a peso cap', () => {
+    expect(text).toMatch(/BCRA/);
+    expect(text).toMatch(/tope por persona y por entidad/);
+    expect(text).toMatch(/tasas muy por encima/);
+    expect(text).toMatch(/cuotapartes[^.]*no son depósitos/);
+    expect(text).toMatch(/proveedor de servicios de pago/);
+    expect(text).not.toMatch(/\$\s*\d/);
+  });
+
+  it('links the BCRA text as the source of truth', () => {
+    expect(liquidity).toContain('https://www.bcra.gob.ar/archivos/Pdfs/texord/t-seggar.pdf');
+  });
+});
