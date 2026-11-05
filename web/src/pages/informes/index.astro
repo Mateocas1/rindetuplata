@@ -25,8 +25,7 @@ const jsonLd = breadcrumbJsonLd([
   { name: 'Informes', url: canonical.href },
 ]);
 
-const linkClass =
-  'text-text underline decoration-border-strong underline-offset-2 hover:decoration-text';
+const crumbClass = 'hover:text-text hover:underline focus-visible:underline underline-offset-2';
 
 /** "Le ganaron a la inflación 4 de 5 opciones", with the singular and the none-at-all cases. */
 function verdict(month: ReportMonthSummary): string {
@@ -48,7 +47,7 @@ function verdict(month: ReportMonthSummary): string {
       <nav aria-label="Ubicación" class="type-label">
         <ol class="flex flex-wrap items-center gap-x-2">
           <li>
-            <a class={linkClass} href="/">Inicio</a>
+            <a class={crumbClass} href="/">Inicio</a>
           </li>
           <li aria-current="page"><span aria-hidden="true">/</span> Informes</li>
         </ol>
@@ -81,7 +80,10 @@ function verdict(month: ReportMonthSummary): string {
           <ul class="grid gap-block sm:grid-cols-2">
             {months.map((month) => (
               <li class="card p-6">
-                <a class={`${linkClass} type-section`} href={reportPath(month.month)}>
+                <a
+                  class="type-section underline-offset-2 hover:underline focus-visible:underline"
+                  href={reportPath(month.month)}
+                >
                   {monthLabel(month.month)}
                 </a>
                 <p class="type-data mt-3">{verdict(month)}</p>
@@ -95,10 +97,8 @@ function verdict(month: ReportMonthSummary): string {
       )
     }
 
-    <p class="type-data max-w-prose text-muted">
-      Mirá{' '}
-      <a class={linkClass} href="/metodologia/">cómo se calcula cada número</a>. Es información, no
-      asesoramiento financiero.
+    <p class="type-body max-w-prose">
+      <a class="link" href="/metodologia/">Cómo se calcula cada número</a>
     </p>
   </div>
 </BaseLayout>

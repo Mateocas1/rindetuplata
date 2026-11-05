@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { displayName } from '../src/lib/displayName';
 import { formatMoney } from '../src/lib/format';
 import { ACCOUNT_PATHS } from '../src/lib/sitemapPaths.js';
 
@@ -284,6 +285,45 @@ describe('prerendered methodology page', () => {
     expect(text).toContain('inflación anualizada');
     expect(text).toContain('tasa efectiva anual');
   });
+
+  it('lists its sections in a table of contents whose links resolve to h2 ids (D12)', () => {
+    const page = html('metodologia/index.html');
+    const ids = new Set([...page.matchAll(/<h2[^>]*\sid="([^"]+)"/g)].map((match) => match[1]));
+    const toc = /<nav[^>]*aria-label="En esta página"[^>]*>[\s\S]*?<\/nav>/.exec(page)?.[0] ?? '';
+    const targets = [...toc.matchAll(/href="#([^"]+)"/g)].map((match) => match[1]);
+
+    expect(toc, 'a table of contents nav').not.toBe('');
+    expect(targets.length).toBeGreaterThanOrEqual(10);
+    for (const target of targets) {
+      expect(ids.has(target), `#${target} has no h2`).toBe(true);
+    }
+    // Every h2 is listed, so the contents never drift from the page.
+    expect([...ids].sort()).toEqual([...new Set(targets)].sort());
+    // At lg the contents sit in a sticky aside next to the reading column.
+    expect(page).toMatch(/<aside[^>]*\blg:sticky\b[^>]*>/);
+  });
+
+  it('explains liquidity and the deposit guarantee, with the BCRA source and no peso cap (D5)', () => {
+    const page = html('metodologia/index.html');
+    const text = renderedText(page).replace(/\s+/g, ' ');
+    const section = /<section[^>]*aria-labelledby="liquidez-garantia"[\s\S]*?<\/section>/.exec(page)?.[0] ?? '';
+
+    expect(section, 'the liquidity section').not.toBe('');
+    expect(text).toContain('Liquidez y garantía de los depósitos');
+    expect(section).toContain('href="https://www.bcra.gob.ar/archivos/Pdfs/texord/t-seggar.pdf"');
+    expect(section).toContain('Aplicación del sistema de seguro de garantía de los depósitos');
+    const prose = renderedText(section).replace(/\s+/g, ' ');
+    expect(prose).toContain('al vencimiento');
+    expect(prose).toContain('disponible al instante');
+    expect(prose).toContain('rescate en el día');
+    expect(prose).toContain('cuotapartes');
+    expect(prose).toContain('no son depósitos');
+    expect(prose).toContain('proveedor de servicios de pago');
+    expect(prose).toContain('tasas muy por encima');
+    expect(prose).toContain('el ranking no marca la garantía');
+    // The cap changes: the source is the truth, so the page never prints an amount for it.
+    expect(prose).not.toMatch(/\$\s*\d/);
+  });
 });
 
 describe('robots.txt', () => {
@@ -304,6 +344,13 @@ describe('error page', () => {
   it('is exported for the static host', () => {
     expect(existsSync(join(dist, '404.html'))).toBe(true);
     expect(html('404.html')).toContain('No encontramos esta página');
+  });
+
+  it('uses the shared roles: one primary action back to the ranking, no mono or uppercase', () => {
+    const main = /<main[\s\S]*<\/main>/.exec(html('404.html'))![0];
+    expect(main).toContain('btn-primary');
+    expect(main).toContain('href="/"');
+    expect(main).not.toMatch(/\buppercase\b|\bfont-mono\b|\btracking-/);
   });
 });
 
@@ -453,7 +500,31 @@ describe('prerendered month report', () => {
 
     expect(page).toContain('href="/metodologia/"');
     expect(renderedText(page)).toContain('Cómo medimos');
-    expect(renderedText(page)).toContain('no es asesoramiento financiero');
+    // The one sentence specific to reports stays; the generic disclaimer is the footer's (D11).
+    expect(renderedText(page).replace(/\s+/g, ' ')).toContain(
+      'lo que rindió una opción en el pasado no garantiza que lo repita',
+    );
+  });
+
+  it('has a plain hero, a wide layout, one quiet data line per row and no page disclaimer (D12, D14)', () => {
+    const page = html('informes/2026-10/index.html');
+    const main = /<main[\s\S]*<\/main>/.exec(page)![0];
+    const text = renderedText(main).replace(/\s+/g, ' ');
+
+    expect(main).not.toContain('border-s-accent');
+    expect(main).toMatch(/class="[^"]*\blg:grid-cols-2\b[^"]*"/);
+    // "31 de 31 días · Fuente" on one line.
+    expect(text).toMatch(/30 de 31 días · [A-Za-z]/);
+    expect(text).not.toContain('Esto es información y no es asesoramiento financiero');
+    expect(text).not.toContain('no recibe dinero de las entidades');
+    expect(main).not.toMatch(/\buppercase\b|\bfont-mono\b/);
+  });
+
+  it('shows names through the display-name helper', () => {
+    const headers = rowHeaderTexts(html('informes/2026-10/index.html'));
+    for (const [index, row] of report.rows.entries()) {
+      expect(headers[index]).toContain(displayName(row.name));
+    }
   });
 
   it('ships no island: the report is static markup', () => {
