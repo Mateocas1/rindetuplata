@@ -80,7 +80,9 @@ export function SimulatedResult({
       <p className="type-data text-muted">
         {sourceLabel(entry)}
         {entry.source.official ? ' · oficial' : ''} · {rateKindLabel(entry.rateUsed.kind)} · dato del{' '}
-        {formatDate(entry.dataDate)} · {confidenceLabel(entry.confidence)}
+        {formatDate(entry.dataDate)}
+        {/* A curated rate already names its load as the source (sourceLabel). */}
+        {entry.confidence === 'CURATED_MANUAL' ? '' : ` · ${confidenceLabel(entry.confidence)}`}
         {entry.verifiedAt !== null ? ` · verificada el ${formatDate(entry.verifiedAt)}` : ''}
       </p>
       <BreakEvenNote breakEven={entry.breakEvenMep} quote={dollarMep} days={days} />

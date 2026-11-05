@@ -403,6 +403,22 @@ describe('instrument pages after the T7 review', () => {
   });
 });
 
+describe('instrument pages after review round 2', () => {
+  it('never break the hero figure inside the number', () => {
+    const page = instrumentHtml(instrumentSlug('REBA COMPAÑIA FINANCIERA S.A.', '29'));
+    expect(page).toContain('<p class="type-figure mt-3">$ <span class="whitespace-nowrap">19.726,03</span></p>');
+    expect(page).not.toMatch(/type-figure[^"]*break-words/);
+  });
+
+  it('name a curated load once in the simulator caption', () => {
+    const slug = readdirSync(join(dist, 'instrumentos')).find((name) => name.startsWith('naranja-x'));
+    const raw = readFileSync(join(dist, 'instrumentos', slug!, 'index.html'), 'utf8');
+    const page = decode(raw.replace(/ props="[^"]*"/g, '')).replace(/<!-- -->/g, '');
+    expect(page).toMatch(/Carga manual verificada · tasa base · dato del \d{2}\/\d{2}\/\d{4}/);
+    expect(page).not.toMatch(/Carga manual verificada · tasa base · dato del [\d/]+ · Carga manual verificada/);
+  });
+});
+
 describe('category pages', () => {
   it('exists for every kind with its own H1, title and description', () => {
     for (const category of CATEGORIES) {
