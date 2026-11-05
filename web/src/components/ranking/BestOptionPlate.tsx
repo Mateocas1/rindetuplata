@@ -1,22 +1,19 @@
 /**
- * The best option of the query the reader is looking at, as a plain card with
- * the cobalt rail (T13b; D1 and D14 of `odd/tasks/ui-clarity.md`: no glass).
+ * The best option of the query the reader is looking at, as a plain card with the cobalt rail (ui-clarity D14:
+ * the rail marks only the best option, the same job as the rail of row 01).
  *
- * It restates the first row of the board: the same fact, so the cobalt it
- * spends (the 2px rail on its start edge) is the same job as the rail of
- * row 01 and its "Mejor" chip. The rail marks only the best option.
- *
- * Every figure comes from the API payload; the card only formats it.
+ * It restates the first row of the board as an answer: the pesos earned as the figure, the display name (D13)
+ * with its kind and when the money is available (D5), the real result in words (D6, the shared `RealResult`),
+ * the final amount (D8: it lives here and on the instrument page, not in the rows), the rate and one line of
+ * provenance. Every figure comes from the API payload; the card only formats it (S14).
  */
-import {
-  formatDate,
-  formatDays,
-  formatMoney,
-  formatPercent,
-  formatSignedPercent,
-} from '../../lib/format';
-import { inflationIndexShortLabel, kindLabel } from '../../lib/labels';
+import { liquidityForKind } from '../../lib/categories';
+import { displayName } from '../../lib/displayName';
+import { formatDate, formatDays, formatMoney, formatPercent } from '../../lib/format';
+import { confidenceLabel, inflationIndexLabel, kindLabel, rateKindShortLabel } from '../../lib/labels';
 import type { RankedEntry, Ranking } from '../../lib/types';
+import RealResult from '../ui/RealResult';
+import { formatQueryAmount } from './positions';
 
 export interface BestOptionPlateProps {
   ranking: Ranking;
@@ -27,38 +24,49 @@ export interface BestOptionPlateProps {
 export default function BestOptionPlate({ ranking, best }: BestOptionPlateProps) {
   const { amount, days } = ranking.request;
   const inflation = ranking.inflation;
-  const real = best.realReturn;
+  const liquidity = liquidityForKind(best.kind);
+  // A plazo fijo matures; a wallet, a fund or a crypto balance is simply worth this much after the term.
+  const when = best.kind === 'PLAZO_FIJO' ? 'al vencimiento' : `a los ${formatDays(days)}`;
+  // "$ 19.726,03" is "$", a no-break space and the number (format.ts); split it so only that space can wrap.
+  const [currency, figure = ''] = formatMoney(best.earned).split('\u00a0');
+  const source =
+    best.confidence === 'CURATED_MANUAL' ? confidenceLabel(best.confidence) : best.source.displayName;
 
   return (
-    <div className="card border-s-2 border-s-accent p-6">
+    <div className="card border-s-2 border-s-accent p-4 sm:p-6">
       <p className="type-label">La mejor de hoy · {kindLabel(best.kind)}</p>
-      <p className="type-figure mt-2.5 break-words">{formatMoney(best.earned)}</p>
-      <p className="type-body mt-2 font-medium">{best.name}</p>
-      <p className="type-data mt-0.5 text-muted">
-        en {formatDays(days)} con {formatMoney(amount)}
+      {/* The number never breaks inside itself; on a very narrow card the sign may wrap above it instead. */}
+      <p className="type-figure mt-3">
+        {currency}{' '}
+        <span className="whitespace-nowrap">{figure}</span>
+      </p>
+      <p className="type-data mt-1 text-muted">
+        ganás en {formatDays(days)} con {formatQueryAmount(amount)}
       </p>
 
-      <dl className="mt-6 grid grid-cols-3 gap-4 border-t border-border pt-5">
-        <div className="flex flex-col justify-between gap-2">
-          <dt className="type-label">TNA</dt>
-          <dd className="type-data">{formatPercent(best.rateUsed.fraction)}</dd>
-        </div>
-        <div className="flex flex-col justify-between gap-2">
-          <dt className="type-label">Retorno real</dt>
-          <dd className="type-data">{real === null ? 'sin dato' : formatSignedPercent(real)}</dd>
-        </div>
-        <div className="flex flex-col justify-between gap-2">
-          <dt className="type-label">
-            {inflation === null ? 'Inflación' : `Inflación ${inflationIndexShortLabel(inflation.index)}`}
-          </dt>
-          <dd className="type-data">
-            {inflation === null ? 'sin dato' : formatPercent(inflation.overHorizon)}
-          </dd>
-        </div>
-      </dl>
+      <p className="type-body mt-5 font-semibold break-words">{displayName(best.name)}</p>
+      <p className="type-data mt-0.5 text-muted">
+        {kindLabel(best.kind)}
+        {liquidity === null ? '' : ` · ${liquidity}`}
+      </p>
 
-      <p className="type-data mt-5 text-muted">
-        {best.source.displayName} · dato del {formatDate(best.dataDate)}
+      <div className="mt-5 flex flex-col gap-1 border-t border-border pt-5">
+        <RealResult
+          realEarned={best.realEarned}
+          realReturn={best.realReturn}
+          indexLabel={inflation === null ? 'sin dato de inflación' : inflationIndexLabel(inflation.index)}
+          size="lead"
+        />
+        <p className="type-body">
+          Tenés {formatMoney(best.finalAmount)} {when}.
+        </p>
+      </div>
+
+      <p className="type-data mt-5">
+        {formatPercent(best.rateUsed.fraction)} <span className="text-muted">{rateKindShortLabel(best.rateUsed.kind)}</span>
+      </p>
+      <p className="type-data mt-0.5 text-muted">
+        {source} · {formatDate(best.dataDate)}
       </p>
     </div>
   );
