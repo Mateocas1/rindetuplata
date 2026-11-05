@@ -8,16 +8,18 @@
  * breadcrumb.
  *
  * Hierarchy (L77): the H1 is the display role, the intro is the reading role at
- * its lead step, and the provenance of the whole page — its date and the query
- * the ranking was run with — is ONE quiet `type-data` line, not a stack of small
- * grey prose. The links are ink with a hairline underline: cobalt stays with the
+ * its lead step, and the date and the query the ranking was run with are ONE
+ * quiet label line. The board carries its own source caption, per-row
+ * provenance and footnote (ui-clarity D18, D11); the footer carries the one
+ * disclaimer. Links are ink with a hairline underline: cobalt stays with the
  * day's leader.
  */
 import RankingTable from './ranking/RankingTable';
+import { formatQueryAmount } from './ranking/positions';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import type { Category } from '../lib/categories';
 import { loadRanking, CATALOG_LIMIT } from '../lib/data';
-import { formatDate, formatDays, formatMoney } from '../lib/format';
+import { formatDate, formatDays } from '../lib/format';
 import { loadInstrumentPages } from '../lib/pages';
 import { DEFAULT_RANKING_QUERY } from '../lib/rankingQuery';
 import { breadcrumbJsonLd } from '../lib/seo';
@@ -42,9 +44,6 @@ const jsonLd = breadcrumbJsonLd([
   { name: 'Inicio', url: new URL('/', site).href },
   { name: category.navLabel, url: canonical.href },
 ]);
-
-const linkClass =
-  'text-text underline decoration-border-strong underline-offset-2 hover:decoration-text';
 ---
 
 <BaseLayout title={category.title} description={description} jsonLd={jsonLd}>
@@ -53,34 +52,25 @@ const linkClass =
       <nav aria-label="Ubicación" class="type-label">
         <ol class="flex flex-wrap items-center gap-x-2">
           <li>
-            <a class={linkClass} href="/">Inicio</a>
+            <a class="link" href="/">Inicio</a>
           </li>
           <li aria-current="page"><span aria-hidden="true">/</span> {category.navLabel}</li>
         </ol>
       </nav>
       <h1 class="type-display">{category.h1}</h1>
       <p class="type-body text-lead text-muted">{category.intro}</p>
-      <p class="type-data text-muted">
-        Datos del {formatDate(ranking.request.asOf)} · sobre {formatMoney(ranking.request.amount)} a
-        {' '}{formatDays(ranking.request.days)} · ordenado por los pesos que ganás.
+      <p class="type-label">
+        Datos del {formatDate(ranking.request.asOf)} · con {formatQueryAmount(ranking.request.amount)} a{' '}
+        {formatDays(ranking.request.days)}, ordenado por los pesos que ganás
       </p>
     </header>
 
     <section class="flex flex-col gap-block" aria-labelledby="ranking-de-hoy">
-      <h2 id="ranking-de-hoy" class="type-section">El ranking de hoy</h2>
+      <div class="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
+        <h2 id="ranking-de-hoy" class="type-section">El ranking de hoy</h2>
+        <p class="type-label"><a class="link" href="/">Probá con tu monto y tu plazo</a></p>
+      </div>
       <RankingTable ranking={ranking} pageSlugs={pages.slugs} />
     </section>
-
-    <p class="type-data text-muted">
-      Mirá{' '}
-      <a class={linkClass} href="/">
-        todas las opciones juntas, con tu monto y tu plazo
-      </a>
-      {' '}o cómo{' '}
-      <a class={linkClass} href="/metodologia/">
-        se calcula cada número
-      </a>
-      .
-    </p>
   </div>
 </BaseLayout>

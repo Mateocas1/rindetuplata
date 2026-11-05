@@ -103,7 +103,7 @@ describe('prerendered home page', () => {
     const page = html('index.html');
 
     expect(page).not.toMatch(/class="[^"]*\bglass(-field)?\b/);
-    expect(page).toMatch(/class="card border-s-2 border-s-accent p-6"/);
+    expect(page).toMatch(/class="card border-s-2 border-s-accent p-4 sm:p-6"/);
     expect(renderedText(page)).toContain('La mejor de hoy');
   });
 
@@ -127,30 +127,65 @@ describe('prerendered home page', () => {
     expect(page).toContain('bg-thumb');
     expect(page).toContain('text-on-thumb');
     expect(page).toContain('bg-subtle-surface');
-    // The prototype's presets are shortcuts: the reader's own inputs stay.
-    expect(page).toMatch(/<input[^>]*id="monto"[^>]*type="number"/);
-    expect(page).toMatch(/<input[^>]*id="dias"[^>]*type="number"/);
+    // The presets are shortcuts: the reader's own inputs stay, as numeric text fields.
+    expect(page).toMatch(/<input[^>]*id="monto"[^>]*type="text"[^>]*inputmode="numeric"/i);
+    expect(page).toMatch(/<input[^>]*id="dias"[^>]*inputmode="numeric"/i);
   });
 
-  it('renders the first three ranked options in order', () => {
+  it('shows the amount in Argentine notation in the built field (D16)', () => {
+    const field = /<input[^>]*id="monto"[^>]*>/.exec(html('index.html'));
+
+    expect(field, 'the amount field').not.toBeNull();
+    expect(field![0]).toContain('value="1.000.000"');
+  });
+
+  it('answers the H1 with one sentence right under the lead (D15)', () => {
+    const page = html('index.html');
+    const text = renderedText(page).replace(/\s+/g, ' ');
+    const answer =
+      'Hoy, con $ 1.000.000 a 30 días, lo que más rinde es Reba: ganás $ 19.726,03, $ 3.806 por encima de la inflación esperada.';
+
+    expect(text).toContain(answer);
+    // Right under the lead: after the H1, before the controls.
+    expect(text.indexOf(answer)).toBeGreaterThan(text.indexOf('¿Dónde rinde tu plata hoy?'));
+    expect(text.indexOf(answer)).toBeLessThan(text.indexOf('Monto en pesos'));
+  });
+
+  it('says once how the board is ordered, and states the data date in one quiet line', () => {
+    const text = renderedText(html('index.html')).replace(/\s+/g, ' ');
+
+    expect(text).not.toContain('El orden sale de los pesos que ganás');
+    expect(text).toContain('datos del 14/10/2026');
+  });
+
+  it('renders the first three ranked options in order, by their display names (D13)', () => {
     const page = html('index.html');
     const positions = fixture.ranked
       .slice(0, 3)
-      .map((entry) => page.indexOf(entry.name));
+      .map((entry) => page.indexOf(`>${displayName(entry.name)}<`));
 
     for (const [index, position] of positions.entries()) {
       expect(position, `option ${index + 1} is missing from the page`).toBeGreaterThan(-1);
     }
     expect(positions[0]).toBeLessThan(positions[1]);
     expect(positions[1]).toBeLessThan(positions[2]);
+    expect(renderedText(page)).not.toContain('REBA COMPAÑIA FINANCIERA S.A.');
   });
 
-  it('contains the table inside its scroll region and keeps its focus ring visible (T12e)', () => {
-    const region = /<div class="([^"]*)" role="region" aria-label="Ranking para/.exec(html('index.html'));
-    expect(region, 'ranking scroll region').not.toBeNull();
-    // `relative` keeps the sr-only spans inside the scroller (no page-level sideways scroll at 320px);
-    // an inset outline is never clipped by the card's overflow-hidden.
-    expect(region![1].split(/\s+/)).toEqual(expect.arrayContaining(['relative', 'focus-visible:-outline-offset-2']));
+  it('renders the board as a table from md and as a card list below it, with no sideways scroll (D9)', () => {
+    const page = html('index.html');
+    const board = page.slice(page.indexOf('id="resultado"'));
+
+    expect(board).not.toContain('role="region"');
+    expect(board).not.toContain('Deslizá la tabla');
+    expect(board).toMatch(/<div class="[^"]*\bhidden\b[^"]*\bmd:block\b[^"]*"><table/);
+    const lists = [...board.matchAll(/<ol\b[^>]*class="([^"]*)"[^>]*>([\s\S]*?)<\/ol>/g)].filter((match) =>
+      match[1].split(/\s+/).includes('md:hidden'),
+    );
+    // The board and the "siguientes" continuation: each table has its list twin.
+    expect(lists).toHaveLength(2);
+    const cards = lists.flatMap((match) => [...match[2].matchAll(/<li\b/g)]);
+    expect(cards).toHaveLength(fixture.ranked.length);
   });
 
   it('renders their earned amounts with the API values', () => {
@@ -160,79 +195,69 @@ describe('prerendered home page', () => {
     }
   });
 
-  it('numbers the board with a mono 01-08 gutter and keeps the rest behind a disclosure', () => {
+  it('numbers the board with shared positions for ties and keeps the rest behind a disclosure (D7)', () => {
     const page = html('index.html');
     const headers = rowHeaderTexts(page);
-    const expected = fixture.ranked.slice(0, 3);
-    expect(headers.length).toBeGreaterThanOrEqual(expected.length);
-    for (const [index, entry] of expected.entries()) {
-      const position = String(index + 1).padStart(2, '0');
-      expect(headers[index], `row ${index + 1}`).toMatch(new RegExp(`^${position}\\s`));
-      expect(headers[index], `row ${index + 1}`).toContain(entry.name);
+    const positions = [...page.matchAll(/<tr\b[^>]*>\s*<td\b[^>]*>([\s\S]*?)<\/td>/g)].map((match) =>
+      renderedText(match[1].replace(/<span class="sr-only">[^<]*<\/span>/g, '')).replace(/\s+/g, ' ').trim(),
+    );
+
+    expect(headers).toHaveLength(fixture.ranked.length);
+    for (const [index, entry] of fixture.ranked.slice(0, 3).entries()) {
+      expect(headers[index], `row ${index + 1}`).toContain(displayName(entry.name));
     }
+    // Reba, Adcap, Pellegrini; then CMF and Voii earn the same, and so do the two Unico classes.
+    expect(positions.slice(0, 9)).toEqual(['01', '02', '03', '=04', '=04', '=06', '=06', '=08', '=08']);
 
     // Nothing is dropped: the first table is the day's eight, the second one
-    // continues the gutter inside one disclosure.
+    // continues the positions inside one disclosure.
     const boards = [...page.matchAll(/<th[^>]*scope="row"/g)].map((match) => match.index ?? -1);
-    expect(boards).toHaveLength(fixture.ranked.length);
     const summary = page.indexOf('opciones siguientes');
     expect(summary).toBeGreaterThan(-1);
     expect(boards[7]).toBeLessThan(summary);
     expect(boards[8]).toBeGreaterThan(summary);
-    expect(headers[8]).toMatch(/^09\s/);
   });
 
-  it('keeps the pesos earned whole inside the sticky row header below md (T13e item 1)', () => {
+  it('states where the data comes from on every row and once above the board (S11, D18)', () => {
     const page = html('index.html');
-    const headers = [...page.matchAll(/<th[^>]*scope="row"[^>]*>([\s\S]*?)<\/th>/g)].map(
-      (match) => match[1],
-    );
+    const text = renderedText(page).replace(/\s+/g, ' ');
 
-    for (const [index, entry] of fixture.ranked.slice(0, 3).entries()) {
-      // Below md the first column is the only one on screen: the row's
-      // protagonist figure has to be in it, and the wide copy is hidden so the
-      // amount is never announced twice.
-      expect(headers[index], `row ${index + 1} earned`).toContain(formatMoney(entry.earned));
-      expect(headers[index], `row ${index + 1} narrow copy`).toContain('md:hidden');
+    expect(page).not.toContain('Fuente y fecha');
+    expect(text).toContain('Fuente: ArgentinaDatos · datos al 14/10/2026');
+    for (const header of rowHeaderTexts(page)) {
+      expect(header).toMatch(/ · [^·]+ \d{2}\/\d{2}/);
     }
-    // The wide copy of the same figure steps aside below md, so the amount is
-    // never announced twice.
-    const wideCopy = [...page.matchAll(/<span class="([^"]*)"/g)]
-      .map((match) => match[1].split(/\s+/))
-      .filter((tokens) => tokens.includes('hidden') && tokens.includes('md:block'));
-    expect(wideCopy.length).toBeGreaterThan(0);
-    for (const tokens of wideCopy) expect(tokens).toContain('type-figure');
   });
 
-  it('states where the data comes from (S11)', () => {
-    const page = html('index.html');
-    expect(page).toContain('Fuente y fecha');
-    expect(page).toContain('ArgentinaDatos');
-    expect(renderedText(page)).toMatch(/\d{2}\/\d{2}\/\d{4}/);
-  });
-
-  it('spends cobalt on the two leader rails only (T13e item 4)', () => {
+  it('spends cobalt on the leader rails only (T13e item 4, D14)', () => {
     const page = html('index.html');
     const tokens = [...page.matchAll(/class="([^"]*)"/g)]
       .flatMap((match) => match[1].split(/\s+/))
       .filter((token) => /^(bg-accent(-solid)?|border(-s)?-accent|text-accent(-solid)?)$/.test(token));
 
-    // The plate's rail, and row 01's rail. The "Mejor" chip is ink now, and no
-    // inline link wears the accent: the underline carries it.
-    expect(tokens.sort()).toEqual(['bg-accent', 'border-s-accent']);
+    // The best-option card's rail, row 01's rail in the table and the first card's rail in the
+    // mobile list (one of the two views is hidden). The "Mejor" chip is ink, and no link wears the accent.
+    expect(tokens.sort()).toEqual(['bg-accent', 'border-s-accent', 'border-s-accent']);
   });
 
-  it('shortens the row provenance: short kind label, source and date on one line (T13e item 5)', () => {
+  it('keeps the row provenance short: short kind label, source and short date (T13e item 5, D18)', () => {
     const page = html('index.html');
     // The TNA cell names its kind in two words, never a four-line sentence.
     expect(page).toContain('TNA no clientes');
     expect(page).toContain('TNA fondo');
     expect(page).not.toContain('tasa para no clientes');
     expect(page).not.toContain('TNA equivalente del fondo');
-    // The row carries one quiet provenance line: its source and its date. The
-    // confidence lives on the instrument page and in the methodology.
+    // The confidence lives on the instrument page and in the methodology.
     expect(page).not.toContain('Agregador automático');
-    expect(page).toContain('ArgentinaDatos · 14/10/2026');
+    expect(renderedText(page).replace(/\s+/g, ' ')).toContain('Plazo fijo · Al vencimiento · ArgentinaDatos 14/10');
+  });
+
+  it('closes the board with one plain footnote and no page-level disclaimer (D11)', () => {
+    const page = html('index.html');
+    const main = /<main\b[\s\S]*?<\/main>/.exec(page)![0];
+
+    expect(main).toMatch(/<p class="type-body max-w-prose text-muted">[\s\S]*?Cómo se calcula cada número/);
+    expect(main).not.toContain('asesoramiento');
   });
 
   it('carries the canonical link, the social tags and the WebSite JSON-LD', () => {
@@ -247,6 +272,38 @@ describe('prerendered home page', () => {
 
   it('hydrates the explorer island', () => {
     expect(html('index.html')).toContain('<script');
+  });
+});
+
+describe('prerendered category landings', () => {
+  const landings = ['plazo-fijo', 'billeteras', 'fondos', 'cripto'];
+
+  it('show the board without a "Fuente y fecha" column, with a card list twin and one footnote (D9, D11, D18)', () => {
+    for (const slug of landings) {
+      const page = html(`${slug}/index.html`);
+      const main = /<main\b[\s\S]*?<\/main>/.exec(page)![0];
+
+      expect(main, slug).not.toContain('Fuente y fecha');
+      expect(main, slug).not.toContain('role="region"');
+      expect(main, slug).toMatch(/<ol\b[^>]*class="[^"]*\bmd:hidden\b/);
+      expect(main, slug).toMatch(/<p class="type-body max-w-prose text-muted">[\s\S]*?Cómo se calcula cada número/);
+      expect(main, slug).not.toContain('asesoramiento');
+      expect(rowHeaderTexts(main).length, slug).toBe(
+        [...main.matchAll(/<ol\b[^>]*class="[^"]*\bmd:hidden\b[^"]*"[^>]*>[\s\S]*?<\/ol>/g)]
+          .map((match) => match[0].match(/<li\b/g)?.length ?? 0)
+          .reduce((sum, count) => sum + count, 0),
+      );
+    }
+  });
+
+  it('share positions between equal plazo fijo earnings and name the banks by their display names (D7, D13)', () => {
+    const text = renderedText(html('plazo-fijo/index.html')).replace(/\s+/g, ' ');
+
+    expect(text).toContain('=04');
+    expect(text).toContain('Reba');
+    expect(text).toContain('Banco CMF');
+    expect(text).not.toContain('REBA COMPAÑIA FINANCIERA');
+    expect(text).toContain('−$ 411 vs. la mejor');
   });
 });
 

@@ -8,6 +8,7 @@
  * developer-facing English, so the copy is built from the reader's own amount
  * and term (see `ineligibleExplanation`).
  */
+import { displayName } from '../../lib/displayName';
 import { formatDate, formatInteger } from '../../lib/format';
 import { excludedReasonLabel, flagLabel, ineligibleExplanation, kindLabel } from '../../lib/labels';
 import type { Ranking, ValidationFlag } from '../../lib/types';
@@ -52,7 +53,7 @@ export default function ExcludedList({ ranking }: ExcludedListProps) {
             <ul className="flex flex-col gap-1">
               {ranking.ineligible.map((entry) => (
                 <li key={entry.id} className="type-data text-muted">
-                  <span className="text-text">{entry.name}</span> · {kindLabel(entry.kind)} ·{' '}
+                  <span className="text-text">{displayName(entry.name)}</span> · {kindLabel(entry.kind)} ·{' '}
                   {ineligibleExplanation(entry.reason, { days, amount })}
                 </li>
               ))}
@@ -67,7 +68,7 @@ export default function ExcludedList({ ranking }: ExcludedListProps) {
             <ul className="flex flex-col gap-1">
               {entries.map((entry) => (
                 <li key={entry.id} className="type-data text-muted">
-                  <span className="text-text">{entry.name}</span> · {kindLabel(entry.kind)} ·{' '}
+                  <span className="text-text">{displayName(entry.name)}</span> · {kindLabel(entry.kind)} ·{' '}
                   {entry.source.displayName} · dato del {formatDate(entry.dataDate)}
                   <Flags flags={entry.flags} />
                 </li>

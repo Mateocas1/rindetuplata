@@ -1,40 +1,40 @@
 /**
- * RankingExplorer (S15, S10, S19) — the only island on the site.
+ * RankingExplorer (S15, S10, S19) — the home island.
  *
- * It is server-rendered with the build-time default ranking, so the table works
- * with JavaScript disabled; once hydrated it re-queries `/api/v1/ranking` for the
- * reader's amount, term, kinds and banks, keeps the query string in sync
- * (`?monto=&dias=&tipo=&cliente=`) and reports loading, error and empty states
- * through an always-rendered `role="status"` region.
+ * It is server-rendered with the build-time default ranking, so the page works with JavaScript disabled; once
+ * hydrated it re-queries `/api/v1/ranking` for the reader's amount, term, kinds and banks, keeps the query string
+ * in sync (`?monto=&dias=&tipo=&cliente=`) and reports loading, error and empty states through an always-rendered
+ * `role="status"` region.
  *
- * T13b: the hero of the page is this island's first band — the two capsule
- * segmented controls (the prototype's amounts and terms) on one side and the
- * one card with the best option of the current query on the
- * other. The presets are shortcuts over the same query state as the free
- * inputs: picking one goes through `applyAmountPreset` / `applyDaysPreset` and
- * re-queries, and the reader's own value simply leaves the control unselected.
- * The kind filters and the bank list moved behind one disclosure, so the screen
- * asks for a monto and a plazo first and nothing else.
+ * The island opens with the answer to the page's question (ui-clarity D15): one sentence, rendered on the server
+ * and updated with the query. Then the controls: the amount and the term, each a free field next to its capsule
+ * presets on one grid whose label row shares a baseline (D16); the amount field reads in Argentine notation
+ * ("1.000.000") when it is not being edited. The presets are shortcuts over the same query state: picking one goes
+ * through `applyAmountPreset` / `applyDaysPreset`, and the reader's own value leaves the control unselected. Kinds
+ * and banks stay behind one disclosure; the best option sits beside the controls and the board follows.
  *
  * No financial maths happens here: the API returns the amounts and we format them.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { formatAmountInput, parseAmountInput } from '../../lib/amountInput';
 import { ApiProblem, api } from '../../lib/api';
-import { formatDays, formatInteger, formatMoney } from '../../lib/format';
+import { displayName } from '../../lib/displayName';
+import { formatDays, formatInteger } from '../../lib/format';
 import { KIND_OPTIONS } from '../../lib/labels';
 import {
   MAX_DAYS,
   parseRankingQuery,
   serializeRankingQuery,
-  tryParseAmount,
   tryParseDays,
   type RankingQueryState,
 } from '../../lib/rankingQuery';
 import { RANKING_KINDS, type BankOption, type RankedKind, type Ranking } from '../../lib/types';
-import ExcludedList from './ExcludedList';
-import BestOptionPlate from './BestOptionPlate';
-import RankingTable from './RankingTable';
 import Segmented from '../ui/Segmented';
+import BestOptionPlate from './BestOptionPlate';
+import ExcludedList from './ExcludedList';
+import RankingTable, { RankingFootnote } from './RankingTable';
+import { answerSentence } from './answer';
+import { formatQueryAmount } from './positions';
 import { AMOUNT_PRESETS, DAYS_PRESETS, applyAmountPreset, applyDaysPreset, matchPreset } from './presets';
 
 export interface RankingExplorerProps {
@@ -50,9 +50,9 @@ export interface RankingExplorerProps {
 const DEBOUNCE_MS = 400;
 /** The board is the day's best eight; the rest follow behind a disclosure. */
 const BOARD_SIZE = 8;
-// One recipe, one place (T12a): the field shape comes from `field`, the layout
-// width from here.
-const inputClass = 'field max-w-56 tabular-nums';
+// One recipe, one place (T12a): the field shape comes from `field`; its height matches the capsule control
+// beside it (40px segments + 3px track + 1px border, each side), so the two controls of a row line up.
+const inputClass = 'field h-12 tabular-nums';
 const labelClass = 'type-label';
 
 export default function RankingExplorer({
@@ -68,7 +68,7 @@ export default function RankingExplorer({
   const [checkedKinds, setCheckedKinds] = useState<RankedKind[]>(
     initialQuery.kinds.length > 0 ? initialQuery.kinds : [...RANKING_KINDS],
   );
-  const [amountText, setAmountText] = useState(String(initialQuery.amount));
+  const [amountText, setAmountText] = useState(formatAmountInput(initialQuery.amount));
   const [daysText, setDaysText] = useState(String(initialQuery.days));
   const [amountTouched, setAmountTouched] = useState(false);
   const [daysTouched, setDaysTouched] = useState(false);
@@ -91,10 +91,12 @@ export default function RankingExplorer({
   );
   const selectionKey = useMemo(() => serializeRankingQuery(selection), [selection]);
 
-  const parsedAmount = tryParseAmount(amountText);
+  const parsedAmount = parseAmountInput(amountText);
   const parsedDays = tryParseDays(daysText);
   const amountError =
-    amountTouched && parsedAmount === null ? 'Escribí un monto en pesos mayor a 0.' : null;
+    amountTouched && parsedAmount === null
+      ? 'Escribí un monto en pesos mayor a 0, por ejemplo 1.000.000.'
+      : null;
   const daysError =
     daysTouched && parsedDays === null ? `Escribí un plazo en días, entre 1 y ${MAX_DAYS}.` : null;
   const noKinds = checkedKinds.length === 0;
@@ -104,7 +106,7 @@ export default function RankingExplorer({
   const adopt = (next: RankingQueryState) => {
     setAmount(next.amount);
     setDays(next.days);
-    setAmountText(String(next.amount));
+    setAmountText(formatAmountInput(next.amount));
     setDaysText(String(next.days));
     setAmountTouched(true);
     setDaysTouched(true);
@@ -180,12 +182,14 @@ export default function RankingExplorer({
       return 'Revisá el monto y el plazo para ver el ranking.';
     }
     if (status === 'loading') {
-      return `Buscando opciones para ${formatMoney(parsedAmount)} a ${formatDays(parsedDays)}…`;
+      return `Buscando opciones para ${formatQueryAmount(parsedAmount)} a ${formatDays(parsedDays)}…`;
     }
     if (status === 'error') return 'No se pudo cargar el ranking.';
     return `${formatInteger(ranking.ranked.length)} de ${formatInteger(
       ranking.totals.ranked,
-    )} opciones para ${formatMoney(ranking.request.amount)} a ${formatDays(ranking.request.days)}.`;
+    )} opciones para ${formatQueryAmount(ranking.request.amount)} a ${formatDays(
+      ranking.request.days,
+    )}.`;
   })();
 
   const best = ranking.ranked[0];
@@ -193,37 +197,40 @@ export default function RankingExplorer({
 
   return (
     <div className="flex flex-col gap-section">
+      {/* The answer to the H1, for the ranking on screen: it names its own amount and term, so it stays true
+          while a new query loads. Like the best-option card, it steps aside when a query fails, so it never
+          answers a question the reader stopped asking next to the error. */}
+      {status !== 'error' && (
+        <p className="type-body text-lead max-w-prose font-medium text-text">{answerSentence(ranking)}</p>
+      )}
+
       <section aria-labelledby="armar-ranking">
         <h2 id="armar-ranking" className="sr-only">
           Armá tu ranking
         </h2>
-        <div className="grid gap-section lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start">
+        <div className="grid gap-section lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
           <div className="flex min-w-0 flex-col gap-6">
-            <div className="flex flex-wrap items-end gap-x-8 gap-y-block">
-              <Segmented
-                name="monto-preset"
-                legend="Montos frecuentes"
-                options={AMOUNT_PRESETS}
-                selected={matchPreset(AMOUNT_PRESETS, amount)}
-                onSelect={(value) => adopt(applyAmountPreset(selection, value))}
-              />
-              <div className="flex flex-col gap-1">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-[minmax(0,13rem)_max-content]">
+              <div className="flex min-w-0 flex-col gap-2">
                 <label htmlFor="monto" className={labelClass}>
                   Monto en pesos
                 </label>
                 <input
                   id="monto"
                   name="monto"
-                  type="number"
+                  type="text"
                   inputMode="numeric"
-                  min="1"
-                  step="any"
+                  autoComplete="off"
                   value={amountText}
                   aria-invalid={amountError !== null}
                   aria-describedby={amountError !== null ? 'monto-error' : undefined}
                   onChange={(event) => {
                     setAmountTouched(true);
                     setAmountText(event.target.value);
+                  }}
+                  onBlur={() => {
+                    // On blur a valid amount takes its grouped form; an invalid one stays as typed, with its message.
+                    if (parsedAmount !== null) setAmountText(formatAmountInput(parsedAmount));
                   }}
                   className={inputClass}
                 />
@@ -233,28 +240,24 @@ export default function RankingExplorer({
                   </p>
                 )}
               </div>
-            </div>
-
-            <div className="flex flex-wrap items-end gap-x-8 gap-y-block">
               <Segmented
-                name="plazo-preset"
-                legend="Plazos frecuentes"
-                options={DAYS_PRESETS}
-                selected={matchPreset(DAYS_PRESETS, days)}
-                onSelect={(value) => adopt(applyDaysPreset(selection, value))}
+                name="monto-preset"
+                legend="Montos frecuentes"
+                options={AMOUNT_PRESETS}
+                selected={matchPreset(AMOUNT_PRESETS, amount)}
+                onSelect={(value) => adopt(applyAmountPreset(selection, value))}
               />
-              <div className="flex flex-col gap-1">
+
+              <div className="flex min-w-0 flex-col gap-2">
                 <label htmlFor="dias" className={labelClass}>
                   Plazo en días
                 </label>
                 <input
                   id="dias"
                   name="dias"
-                  type="number"
+                  type="text"
                   inputMode="numeric"
-                  min="1"
-                  max={MAX_DAYS}
-                  step="1"
+                  autoComplete="off"
                   value={daysText}
                   aria-invalid={daysError !== null}
                   aria-describedby={daysError !== null ? 'dias-error' : undefined}
@@ -270,6 +273,13 @@ export default function RankingExplorer({
                   </p>
                 )}
               </div>
+              <Segmented
+                name="plazo-preset"
+                legend="Plazos frecuentes"
+                options={DAYS_PRESETS}
+                selected={matchPreset(DAYS_PRESETS, days)}
+                onSelect={(value) => adopt(applyDaysPreset(selection, value))}
+              />
             </div>
 
             <details className="disclosure card px-4 py-3">
@@ -327,7 +337,7 @@ export default function RankingExplorer({
                               checked={clientOf.includes(bank.id)}
                               onChange={() => toggleBank(bank.id)}
                             />
-                            <span className="min-w-0 break-words">{bank.name}</span>
+                            <span className="min-w-0 break-words">{displayName(bank.name)}</span>
                           </label>
                         </li>
                       ))}
@@ -379,7 +389,7 @@ export default function RankingExplorer({
             </div>
           ) : (
             <>
-              <RankingTable ranking={ranking} pageSlugs={pageSlugs} limit={BOARD_SIZE} />
+              <RankingTable ranking={ranking} pageSlugs={pageSlugs} limit={BOARD_SIZE} footnote={false} />
               {rest > 0 && (
                 <details className="disclosure mt-6">
                   <summary className="type-label text-text">
@@ -395,6 +405,7 @@ export default function RankingExplorer({
         </div>
 
         <ExcludedList ranking={ranking} />
+        {status !== 'error' && ranking.ranked.length > 0 && <RankingFootnote ranking={ranking} />}
       </section>
     </div>
   );

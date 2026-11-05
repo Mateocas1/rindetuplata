@@ -3,6 +3,11 @@
  * Home (S15, S14, S11): the ranking for the default amount and term, rendered at
  * build time from the API (or the recorded fixtures with WEB_FIXTURES=1) and
  * taken over by the RankingExplorer island once it hydrates.
+ *
+ * The H1 stays the question (ui-clarity D15); the island answers it in one
+ * sentence right under the lead. The lead says once how the board is ordered;
+ * the data date is the one quiet line above the H1, and the footer carries the
+ * one disclaimer (D11).
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import RankingExplorer from '../components/ranking/RankingExplorer';
@@ -32,20 +37,15 @@ const jsonLd = {
 ---
 
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
-  <div class="flex flex-col gap-section py-section">
+  {/* Header to answer is one block (gap-block): the island opens with the answer sentence right under the
+      lead (D15) and keeps its own section rhythm after it. */}
+  <div class="flex flex-col gap-block py-section">
     <header class="flex max-w-prose flex-col gap-block">
-      <p class="type-label">
-        Comparador · datos del {formatDate(dataDate)}
-      </p>
+      <p class="type-label">Comparador · datos del {formatDate(dataDate)}</p>
       <h1 class="type-display">¿Dónde rinde tu plata hoy?</h1>
       <p class="type-body text-lead text-muted">
-        Plazos fijos, billeteras remuneradas, fondos money market y cripto, ordenados por cuánto
-        ganás en pesos con tu monto y tu plazo. Al lado de cada uno, cuánto de eso le gana a la
-        inflación esperada.
-      </p>
-      <p class="type-data text-muted">
-        El orden sale de los pesos que ganás, no de la tasa. Cada fila indica su fuente y la fecha
-        del dato.
+        Plazos fijos, billeteras remuneradas, fondos money market y cripto, ordenados por los pesos
+        que ganás con tu monto y tu plazo, no por la tasa.
       </p>
     </header>
 
