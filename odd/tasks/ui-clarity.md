@@ -37,12 +37,13 @@ on a task.
 
 | ID | Specs | Task | Route | Status | Commit |
 |---|---|---|---|---|---|
-| T1 | S3 | Type and surface foundation: one family (Archivo, `wght` + `wdth` axes), sans labels, no serif accent, no glass/glow/grid; tokens, recipes, their tests, font dependencies (D1-D3) | Sonnet worker | pending | |
-| T2 | S3 | API `realEarned` (pesos above or below expected inflation) on ranked entries and simulations; OpenAPI, web schema/types, fixtures derived by script (D4) | Sonnet worker | pending | |
-| T3 | S3 | Web presentation helpers: entity display names, liquidity per kind, competition ranks with ties and the gap to the best in exact cents (D5, D7, D8, D13) | Haiku worker | pending | |
-| T4 | S3 | Ranking, home and category landings: answer sentence, real result line, ties, gap to best, source caption, row links, mobile card list, one formatted amount field, liquidity chips (D6-D9, D15, D16) | Sonnet worker | pending | |
-| T5 | S3 | Detail pages: instrument (two columns, live simulator, signed real result), banks and bank, monthly report, methodology (liquidity and guarantee section, TOC), 404; display names; rail only for the best (D12-D14) | Sonnet worker | pending | |
-| T6 | S3 | Chrome and account: mobile menu, footer trimmed to one disclaimer, account pages (ingresar, alertas, claves-api, admin) aligned to the new recipes (D10, D11) | Sonnet worker | pending | |
+| T1 | S3 | Type and surface foundation: one family (Archivo, `wght` + `wdth` axes), sans labels, no serif accent, no glass/glow/grid; tokens, recipes, their tests, font dependencies (D1-D3) | Sonnet worker | done | fbdadc6 |
+| T2 | S3 | API `realEarned` (pesos above or below expected inflation) on ranked entries and simulations; OpenAPI, web schema/types, fixtures derived by script (D4) | Sonnet worker | done | 6345cea |
+| T3 | S3 | Web presentation helpers: entity display names, liquidity per kind, competition ranks with ties and the gap to the best in exact cents (D5, D7, D8, D13) | Haiku worker | done | e50351b |
+| T4 | S3 | Ranking, home and category landings: answer sentence, real result line, ties, gap to best, source caption, row links, mobile card list, one formatted amount field, liquidity chips (D6-D9, D15, D16) | Sonnet worker | in progress | |
+| T5 | S3 | Detail pages: instrument (two columns, live simulator, signed real result), banks and bank, monthly report, methodology (liquidity and guarantee section, TOC), 404; display names; rail only for the best (D12-D14) | Sonnet worker | in progress | |
+| T6 | S3 | Chrome and account: mobile menu, footer trimmed to one disclaimer, account pages (ingresar, alertas, claves-api, admin) aligned to the new recipes (D10, D11) | Sonnet worker | in progress | |
+| T3b | S3 | Parent between waves: shared `RealResult` line (D19, 42c42a0) and es-AR amount input helpers (D16, b59c610) | parent | done | 42c42a0, b59c610 |
 | T7 | S3 | Independent design review against S3 (base build vs new, light/dark, 320/390/1280/1440, contrast, focus); "no findings" is a valid result | Opus reviewer | pending | |
 
 Waves: T1, T2 and T3 run in parallel (disjoint files, own worktrees); T4, T5 and T6 run in parallel on top of them
@@ -123,3 +124,17 @@ finding bar.
 - **L2** (2026-11-05, evidence): critique from a fixture build (`WEB_FIXTURES=1`), 30 screenshots light/dark × 1440/390
   of home, plazo fijo, billeteras, fondos, instrument, bank, banks, report, methodology, ingresar, alertas, 404. Baseline:
   vitest 634/634 in 45s. Docker started inside the cloud container (`dockerd`, root), `postgres:18-alpine` pulls and runs.
+- **L3** (evidence, wave 1): three workers in parallel worktrees. T1 (Sonnet high, ~6.5 min, 125k tokens): RED 10 failing
+  (serif span in the H1, glass class on the home, Space Grotesk in the CSS, token assertions) → GREEN; integrated with T3:
+  astro check 0/0/0, vitest 706/706; only the three Archivo `wdth` files ship. T2 (Sonnet high, ~12 min, 138k): RED
+  compile errors (`Inflation.realEarned`, `RankedEntry` arity) → GREEN; full Maven suite 905/0/0 in its worktree, the six
+  touched test classes rerun on the branch (90 tests green); `openapi.json` produced from the running app, kept to the
+  4-line `realEarned` addition (the fresh dump reordered unrelated `JsonNode` properties); REBA derives 3805.67 on
+  $1.000.000/30d; 529 fixture rows recomputed independently. T3 (Haiku xhigh, ~3.5 min, 107k — over the 100k guide
+  by 7%, task stayed bounded): RED missing modules → GREEN 77 tests. Parent: `RealResult` and `amountInput` test-first
+  (RED missing module → GREEN). Retro: the Agent tool's worktrees start from `origin/main`, not from the working branch
+  (D21); a NBSP-aware text helper is needed when asserting es-AR money in rendered markup (`\s` folds U+00A0).
+- **L4** (decision evidence, D5): BCRA Com. "A" 8407 (texto ordenado al 05/03/2026) sets the deposit-guarantee cap at
+  $50.000.000 from 2026-04-01 and keeps the rate-based exclusion for term deposits; press sources still quote $25M, so the
+  site names no amount and links the BCRA text.
+
