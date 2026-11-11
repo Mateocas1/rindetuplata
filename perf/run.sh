@@ -6,7 +6,7 @@
 #   perf/run.sh after
 #
 # What it does, in order (everything stops again on exit, even on failure):
-#   1. takes /tmp/rindetuplata-maven.lock for the whole run (AGENTS.md: one Maven run at a time; it also keeps another
+#   1. takes /tmp/rindetuplata-maven.lock for the whole run (one Maven run at a time; it also keeps another
 #      suite from skewing the timings) and builds the jar with ./mvnw (skip with PERF_JAR=<path>);
 #   2. starts PostgreSQL 18 (docker, 127.0.0.1:$PG_PORT) and perf/mock_sources.py (127.0.0.1:$MOCK_PORT), a local stand-in
 #      for the nine external sources serving recorded captures: no live HTTP;

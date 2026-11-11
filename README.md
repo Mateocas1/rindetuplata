@@ -18,7 +18,6 @@ visible, row by row, with the source and the date of every number.
 > Status: MVP complete. Ingestion, ranking API, magic-link alerts, the "Cobalto Cristal" static site and the
 > deploy recipe all work end to end, and a private, unlisted preview runs on the owner's machine behind
 > Tailscale Funnel for a few testers. A public launch and a UI/UX polish pass are future work.
-> Scope and progress: [`odd/tasks/rindetuplata-mvp.md`](odd/tasks/rindetuplata-mvp.md).
 
 ## Numbers from a real run
 
@@ -257,5 +256,3 @@ Each line reads as what was achieved, how it is measured, and how it was built:
   398 Vitest, plus a Playwright end-to-end over the full Compose stack), run in GitHub Actions.
 
 Case study: [mateocas1.github.io/portfolio/rindetuplata.html](https://mateocas1.github.io/portfolio/rindetuplata.html).
-Built by Mateo with AI under Organic Driven Development: the specs, decisions and per-task evidence live in
-[`odd/tasks/rindetuplata-mvp.md`](odd/tasks/rindetuplata-mvp.md).

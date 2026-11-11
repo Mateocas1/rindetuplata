@@ -5,12 +5,10 @@ on:
     branches: [main]
     paths-ignore:
       - "capture/**"
-      - "odd/**"
       - "**.md"
   pull_request:
     paths-ignore:
       - "capture/**"
-      - "odd/**"
       - "**.md"
 
 permissions:

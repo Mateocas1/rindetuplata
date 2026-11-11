@@ -44,3 +44,10 @@ web/.site/
 # Database dumps (T4c, F4): the default BACKUP_DIR is /var/backups/rindetuplata, outside the checkout; this keeps
 # a dump out of git for anyone who points BACKUP_DIR at a directory inside it.
 backups/
+
+### Local notes ###
+odd/
+.agents/
+skills-lock.json
+CLAUDE.md
+AGENTS.md

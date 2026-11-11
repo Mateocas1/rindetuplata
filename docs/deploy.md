@@ -28,7 +28,7 @@ docker compose --profile stack up -d --wait
 ```
 
 - `postgres`, `rabbitmq` and `mailpit` have no profile, so the plain `docker compose up -d postgres`
-  workflow (AGENTS.md) is unchanged.
+  workflow is unchanged.
 - `web` is Caddy (`deploy/Caddyfile.local`): it serves `web/dist` read-only and proxies `/api/*` to
   `api:8080`, so the whole product is one origin, exactly like production.
 - The site is built *against* the running API: `build:api` refuses to run without `API_URL` and strips

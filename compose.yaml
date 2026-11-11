@@ -1,6 +1,6 @@
 # Local development stack (T1, T6d, T7e).
 #
-# `docker compose up -d postgres` (the workflow in AGENTS.md) starts only the services without a
+# `docker compose up -d postgres` starts only the services without a
 # profile: postgres, rabbitmq and mailpit, for `./mvnw spring-boot:test-run` and the Astro dev server.
 #
 # The whole product locally is this same file with the `stack` profile:
