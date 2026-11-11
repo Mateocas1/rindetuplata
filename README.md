@@ -7,6 +7,16 @@
 [![Capture tests](https://github.com/Mateocas1/rindetuplata/actions/workflows/capture-test.yml/badge.svg)](https://github.com/Mateocas1/rindetuplata/actions/workflows/capture-test.yml)
 [![Daily raw capture](https://github.com/Mateocas1/rindetuplata/actions/workflows/daily-capture.yml/badge.svg)](https://github.com/Mateocas1/rindetuplata/actions/workflows/daily-capture.yml)
 
+> - **What:** an Argentine yield comparator that ranks plazo fijo, money-market funds and wallets by the pesos you earn and by real return against expected inflation.
+> - **Status (11/11/2026):** not deployed. `rindetuplata.ar` does not resolve and the private preview is off. No users or testers to report.
+> - **Stack:** Java 21, Spring Boot 4.1 (MVC, Batch, Security, AMQP, Flyway), JdbcClient, PostgreSQL 18, RabbitMQ 4, Astro 7 + React 19.
+> - **Run it:** `cd web && npm ci && WEB_FIXTURES=1 npm run dev` serves the site from recorded fixtures (Node 24, no backend needed); `./mvnw test` runs the backend tests (Testcontainers starts PostgreSQL and RabbitMQ). More under [Run](#run).
+> - **Tests:** 905 backend (JUnit 5 + Testcontainers) and 799 frontend (Vitest), green in CI on `main` (11/11/2026).
+> - **Link:** case study at [mateocas1.github.io/portfolio/rindetuplata.html](https://mateocas1.github.io/portfolio/rindetuplata.html)
+> - **How it was built:** I design, decide and verify: I define the tests, the review criteria and the measurements. AI agents write much of the code under those tests and that review.
+
+![rindetuplata home page, served from the recorded fixtures of 14/10/2026](docs/home.png)
+
 **¿Dónde rinde tu plata hoy?** An Argentine yield comparator that ranks plazo fijo by bank, money-market
 funds, remunerated wallets and fintech yields by the **pesos you earn for your amount and your term**, and by
 **real return**: how much each option beats or loses to inflation.
@@ -15,9 +25,8 @@ With monthly inflation near 2%, a headline rate means little on its own. A 19% T
 plazo fijo look close on paper; one of them loses to expected inflation over 30 days. The product makes that
 visible, row by row, with the source and the date of every number.
 
-> Status: MVP complete. Ingestion, ranking API, magic-link alerts, the "Cobalto Cristal" static site and the
-> deploy recipe all work end to end, and a private, unlisted preview runs on the owner's machine behind
-> Tailscale Funnel for a few testers. A public launch and a UI/UX polish pass are future work.
+> Status: MVP complete. Ingestion, ranking API, magic-link alerts, the static site and the deploy recipe
+> work end to end locally. There is no public deploy yet; a public launch is future work.
 
 ## Numbers from a real run
 
@@ -49,8 +58,8 @@ saver persona). Of the top 200, **79 lose to expected inflation** over the 30 da
 |---|---|
 | External sources behind adapters | 9 (BCRA transparency and statistics, ArgentinaDatos, dolarapi, Ualá, curated rates) |
 | Sources archived daily from day one | 4 (those whose history cannot be recovered later) |
-| Backend tests (JUnit 5 + Testcontainers) | 450 |
-| Frontend tests (Vitest) | 398, plus a Playwright end-to-end smoke over the full Compose stack |
+| Backend tests (JUnit 5 + Testcontainers) | 905 (CI on `main`, 11/11/2026) |
+| Frontend tests (Vitest) | 799 (CI on `main`, 11/11/2026), plus a Playwright end-to-end smoke over the full Compose stack |
 
 ## What it does
 
@@ -150,12 +159,13 @@ Requires Java 21 and Docker (the Maven wrapper downloads Maven).
 ./mvnw test                         # backend tests; Testcontainers starts PostgreSQL and RabbitMQ
 ./mvnw spring-boot:test-run         # API on :8080 with a Testcontainers PostgreSQL
 (cd web && npm ci && npm test)      # frontend tests (Node 24)
+(cd web && WEB_FIXTURES=1 npm run dev)    # dev server on :4321 from the recorded fixtures, no backend
 (cd web && WEB_FIXTURES=1 npm run build)  # build the site from the recorded fixtures
 capture/test/capture_test.sh        # raw capture tests (bash + jq + python3, no network)
 for t in deploy/test/*-test.sh; do bash "$t"; done  # deploy script tests (Docker, Node, python3; web/ deps installed)
 ```
 
-The full local stack (API, site, PostgreSQL, RabbitMQ, Mailpit), the private preview
+The full local stack (API, site, PostgreSQL, RabbitMQ, Mailpit), the recipe for a private preview
 (`deploy/preview.sh`: Compose overlay, Caddy with `noindex`, a sidecar that rebuilds the site after each ingestion,
 Tailscale Funnel on/off) and the VPS + CDN recipe are in [`docs/deploy.md`](docs/deploy.md).
 
@@ -249,10 +259,16 @@ Each line reads as what was achieved, how it is measured, and how it was built:
 - **Re-running a day never duplicates data and one failing source never blocks the rest**, measured over
   9 external sources, by giving each date its own Spring Batch job instance and each source its own adapter
   behind a port.
-- **No email alert is lost or sent twice**, by writing alert matches to a transactional outbox in the
-  same transaction and relaying them to RabbitMQ with publisher confirms, an idempotent consumer and a
-  dead-letter queue.
-- **848 automated tests guard it** (450 JUnit 5 against real PostgreSQL and RabbitMQ in Testcontainers,
-  398 Vitest, plus a Playwright end-to-end over the full Compose stack), run in GitHub Actions.
+- **Alerts are delivered at least once, with deduplication**, by writing alert matches to a transactional
+  outbox in the same transaction and relaying them to RabbitMQ (`FOR UPDATE SKIP LOCKED`) with publisher
+  confirms, an idempotent consumer and a dead-letter queue. `OutboxRelay` documents the resend window.
+- **1,704 automated tests guard it** (905 JUnit 5 against real PostgreSQL and RabbitMQ in Testcontainers,
+  799 Vitest, plus a Playwright end-to-end over the full Compose stack), run in GitHub Actions.
 
 Case study: [mateocas1.github.io/portfolio/rindetuplata.html](https://mateocas1.github.io/portfolio/rindetuplata.html).
+I design, decide and verify: I define the tests, the review criteria and the measurements. AI agents write much of
+the code under those tests and that review.
+
+## License
+
+[MIT](LICENSE)
