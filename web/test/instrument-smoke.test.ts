@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { CATEGORIES } from '../src/lib/categories';
 import { CHART_HEIGHT, CHART_WIDTH } from '../src/lib/chart';
 import { CATALOG_LIMIT, loadRanking } from '../src/lib/data';
+import { displayName } from '../src/lib/displayName';
 import { formatDate, formatMoney, formatPercent } from '../src/lib/format';
 import { loadInstrumentPages } from '../src/lib/pages';
 import { DEFAULT_RANKING_QUERY } from '../src/lib/rankingQuery';
@@ -16,7 +17,7 @@ import { RANKING_KINDS, type RankedEntry } from '../src/lib/types';
  * Instrument and category build smoke test.
  *
  * Builds the site in fixture mode and checks the prerendered output: every
- * `href="/instrumentos/…"` on every page resolves to a built file (D1), one page
+ * `href="/instrumentos/…"` on every page resolves to a built file, one page
  * per kind with its H1, an inline SVG chart with a title and a description, the
  * same data as a table, the JSON-LD blocks and no React for the chart; the four
  * category landings with each row linked to a built page; the sitemap with the
@@ -137,7 +138,10 @@ describe('instrument pages', () => {
   it('exists once per kind with its own H1, rate, source and dates', () => {
     for (const { entry, slug } of samplePerKind) {
       const page = instrumentHtml(slug);
-      expect(page, slug).toContain(`<h1 class="type-display`);
+      const h1 = /<h1 class="type-display[^"]*">([\s\S]*?)<\/h1>/.exec(page);
+      expect(h1, slug).not.toBeNull();
+      // The H1 is the display name; the source's own name stays on the page.
+      expect(h1![1].trim(), slug).toBe(displayName(entry.name));
       expect(page, slug).toContain(entry.name);
       expect(page, slug).toContain(formatPercent(entry.rateUsed.fraction));
       // The rate and its unit are separate readout cells, never run together.
@@ -156,7 +160,8 @@ describe('instrument pages', () => {
       // ranking's amount earns in the default term, as the protagonist figure.
       expect(page, slug).toContain('class="type-figure');
       expect(page, slug).toContain(formatMoney(entry.earned));
-      expect(page, slug).toContain('en 30 días con');
+      // The hero label states the query it answers.
+      expect(page, slug).toContain('Con $\u00a01.000.000 a 30 días');
       // Provenance is one quiet data line, not a wall of small grey prose.
       expect(page, slug).toMatch(/class="type-data text-muted/);
     }
@@ -220,19 +225,86 @@ describe('instrument pages', () => {
     expect(region, 'no y tick label scrolls away').not.toContain('text-anchor="end"');
   });
 
-  it('keeps the hero rail as the only cobalt decoration, and Simular a peer action (T13e item 4)', () => {
-    const page = instrumentHtml(samplePerKind[0].slug);
-    const tokens = [...page.matchAll(/class="([^"]*)"/g)].flatMap((match) =>
-      match[1].split(/\s+/),
-    );
+  it('has no cobalt rail (D14) and one primary action: Simular (D16)', () => {
+    for (const { slug } of samplePerKind) {
+      const page = instrumentHtml(slug);
+      const tokens = [...page.matchAll(/class="([^"]*)"/g)].flatMap((match) => match[1].split(/\s+/));
 
-    // The hero rail is the page's cobalt moment; the chart's series colour is
-    // data, not decoration.
-    expect(tokens.filter((token) => token === 'border-s-accent')).toHaveLength(1);
-    expect(tokens.filter((token) => /^bg-accent/.test(token))).toEqual([]);
-    // The simulator's submit is a peer action, never the filled accent button.
-    expect(tokens).toContain('btn-secondary');
-    expect(tokens).not.toContain('btn-primary');
+      expect(tokens, slug).not.toContain('border-s-accent');
+      expect(tokens.filter((token) => /^bg-accent/.test(token)), slug).toEqual([]);
+      // The simulator's submit is the view's one filled action.
+      expect(tokens.filter((token) => token === 'btn-primary'), slug).toHaveLength(1);
+      expect(tokens, slug).not.toContain('btn-secondary');
+    }
+  });
+
+  it('uses the page width: a main column and a sticky simulator aside at lg (D12)', () => {
+    for (const { slug } of samplePerKind) {
+      const page = instrumentHtml(slug);
+      expect(page, slug).toMatch(/class="[^"]*\blg:grid-cols-\[[^"]*"/);
+      const aside = /<aside[^>]*>/.exec(page)?.[0];
+      expect(aside, `${slug} has an aside`).toBeDefined();
+      expect(aside, slug).toMatch(/\blg:sticky\b/);
+      expect(aside, slug).toMatch(/\blg:top-\d+/);
+      // The simulator lives in the aside, the history in the main column.
+      const asideHtml = /<aside[\s\S]*?<\/aside>/.exec(page)![0];
+      expect(asideHtml, slug).toContain('Simulá con tu monto y tu plazo');
+      expect(asideHtml, slug).not.toContain('role="img"');
+    }
+  });
+
+  it('shows the simulator already answering for the default amount and term, never an empty card (D16)', () => {
+    for (const { entry, slug } of samplePerKind) {
+      const page = instrumentHtml(slug);
+      const island = /<astro-island[\s\S]*?<\/astro-island>/.exec(page)?.[0] ?? '';
+      expect(island, slug).toContain('Ganancia estimada');
+      expect(island, slug).toContain(formatMoney(entry.earned));
+      expect(island, slug).not.toContain('Poné tu monto');
+      // The amount is shown grouped, as a text field with a numeric keyboard.
+      expect(island, slug).toMatch(/<input[^>]*value="1\.000\.000"/);
+      expect(island, slug).toMatch(/<input[^>]*inputmode="numeric"/i);
+      // The simulator's own disclaimer line is gone.
+      expect(island, slug).not.toContain('asesoramiento');
+    }
+  });
+
+  it('reads a negative real result as a loss with its sign: fiwind ARS is below inflation (D6)', () => {
+    const page = instrumentHtml('fiwind-ars-1267');
+    const main = /<main[\s\S]*<\/main>/.exec(page)![0];
+    const text = main.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    expect(text).toContain('por debajo de la inflación');
+    expect(text).not.toContain('por encima de la inflación');
+    // The words and the arrow carry the direction; the secondary percentage keeps its sign.
+    expect(text).toContain('$ 2.408 por debajo de la inflación');
+    expect(text).toContain('−0,24% real');
+    expect(main).toMatch(/text-loss[^>]*>[\s\S]{0,200}por debajo de la inflación/);
+  });
+
+  it('keeps the page free of disclaimer paragraphs: the footer carries the one (D11)', () => {
+    for (const { slug } of samplePerKind) {
+      const main = /<main[\s\S]*<\/main>/.exec(instrumentHtml(slug))![0];
+      expect(main, slug).not.toContain('asesoramiento financiero');
+      expect(main, slug).not.toContain('no recibe dinero');
+    }
+  });
+
+  it('shows the legal name once, quietly, when the display name differs from it (D13)', () => {
+    const page = instrumentHtml('reba-compania-financiera-s-a-29');
+    expect(/<h1 class="type-display[^"]*">([\s\S]*?)<\/h1>/.exec(page)![1].trim()).toBe('Reba');
+    const text = page.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    expect(text).toContain('Nombre legal: REBA COMPAÑIA FINANCIERA S.A.');
+    // Kind and liquidity are one quiet line, and the category is named once in the breadcrumb.
+    expect(text).toContain('Plazo fijo · Al vencimiento');
+    expect(page).not.toMatch(/CRIPTO|PLAZO FIJO/);
+  });
+
+  it('keeps no leftover decorative type on the page', () => {
+    for (const { slug } of samplePerKind) {
+      const tokens = [...instrumentHtml(slug).matchAll(/class="([^"]*)"/g)].flatMap((match) =>
+        match[1].split(/\s+/),
+      );
+      expect(tokens.filter((token) => /^(uppercase|font-mono)$|^tracking-/.test(token)), slug).toEqual([]);
+    }
   });
 
   it('repeats the chart data in a secondary table', () => {
@@ -305,6 +377,45 @@ describe('instrument pages', () => {
     }
     expect(chunks.some((file) => file.startsWith('HistoryChart'))).toBe(false);
     expect(chunks.some((file) => file.startsWith('SimulatorIsland'))).toBe(true);
+  });
+});
+
+describe('instrument pages after the T7 review', () => {
+  it('keep the two-column grid to one shrinkable column below lg, so a page with a chart never scrolls sideways', () => {
+    const page = instrumentHtml(instrumentSlug('REBA COMPAÑIA FINANCIERA S.A.', '29'));
+    expect(page).toMatch(/class="grid grid-cols-1 gap-section lg:grid-cols-/);
+  });
+
+  it('state a conditional offer as pesos earned, never as the final amount', () => {
+    const page = decode(instrumentHtml(instrumentSlug('Ualá', '1321')));
+    expect(page).toContain('Ganás hasta $\u00a019.915,26 si sumás $500.000.');
+    expect(page).not.toContain('1.019.915,26');
+  });
+
+  it('name a curated rate in Spanish in the visible provenance and the meta description', () => {
+    const slug = readdirSync(join(dist, 'instrumentos')).find((name) => name.startsWith('naranja-x'));
+    expect(slug).toBeDefined();
+    // The island's props carry the raw API entry; only what a reader sees or a crawler shows must be Spanish.
+    const raw = readFileSync(join(dist, 'instrumentos', slug!, 'index.html'), 'utf8');
+    const page = decode(raw.replace(/ props="[^"]*"/g, ''));
+    expect(page).not.toContain('Curated by the project owner');
+    expect(decode(page)).toContain('Carga manual verificada');
+  });
+});
+
+describe('instrument pages after review round 2', () => {
+  it('never break the hero figure inside the number', () => {
+    const page = instrumentHtml(instrumentSlug('REBA COMPAÑIA FINANCIERA S.A.', '29'));
+    expect(page).toContain('<p class="type-figure mt-3">$ <span class="whitespace-nowrap">19.726,03</span></p>');
+    expect(page).not.toMatch(/type-figure[^"]*break-words/);
+  });
+
+  it('name a curated load once in the simulator caption', () => {
+    const slug = readdirSync(join(dist, 'instrumentos')).find((name) => name.startsWith('naranja-x'));
+    const raw = readFileSync(join(dist, 'instrumentos', slug!, 'index.html'), 'utf8');
+    const page = decode(raw.replace(/ props="[^"]*"/g, '')).replace(/<!-- -->/g, '');
+    expect(page).toMatch(/Carga manual verificada · tasa base · dato del \d{2}\/\d{2}\/\d{4}/);
+    expect(page).not.toMatch(/Carga manual verificada · tasa base · dato del [\d/]+ · Carga manual verificada/);
   });
 });
 

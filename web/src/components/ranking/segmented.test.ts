@@ -16,6 +16,7 @@ import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { loadRanking } from '../../lib/data';
+import { displayName } from '../../lib/displayName';
 import { DEFAULT_RANKING_QUERY, serializeRankingQuery } from '../../lib/rankingQuery';
 import type { Ranking } from '../../lib/types';
 import RankingExplorer from './RankingExplorer';
@@ -125,8 +126,9 @@ describe('ranking explorer presets', () => {
   it('keeps the free amount and term inputs beside the presets', () => {
     const markup = explorer();
 
-    expect(markup).toMatch(/<input[^>]*id="monto"[^>]*type="number"/);
-    expect(markup).toMatch(/<input[^>]*id="dias"[^>]*type="number"/);
+    // Text fields with a numeric keyboard: the amount shows "1.000.000", which a number input cannot hold.
+    expect(markup).toMatch(/<input[^>]*id="monto"[^>]*type="text"[^>]*inputmode="numeric"[^>]*value="1.000.000"/i);
+    expect(markup).toMatch(/<input[^>]*id="dias"[^>]*type="text"[^>]*inputmode="numeric"/i);
     expect(markup).toContain('Monto en pesos');
     expect(markup).toContain('Plazo en días');
   });
@@ -136,7 +138,15 @@ describe('ranking explorer presets', () => {
     const first = small.ranked[0];
 
     expect(serializeRankingQuery(DEFAULT_RANKING_QUERY)).toBe('');
-    expect(markup).toContain(first.name);
+    expect(markup).toContain(displayName(first.name));
     expect(markup).toContain(DAYS_PRESETS[0].label);
+  });
+
+  it('opens with the answer sentence of its own ranking, before the controls (D15)', () => {
+    const markup = explorer().replaceAll('\u00a0', ' ');
+    const answer = 'Hoy, con $ 1.000.000 a 30 días, lo que más rinde es Reba:';
+
+    expect(markup).toContain(answer);
+    expect(markup.indexOf(answer)).toBeLessThan(markup.indexOf('Monto en pesos'));
   });
 });

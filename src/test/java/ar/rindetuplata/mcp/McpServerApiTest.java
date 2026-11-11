@@ -119,6 +119,8 @@ class McpServerApiTest extends McpIntegrationTest {
 			assertThat(row.get("earned").decimalValue()).isEqualByComparingTo("29589.04");
 			assertThat(row.get("nominalReturn").decimalValue()).isEqualByComparingTo("0.029589");
 			assertThat(row.get("realReturn").decimalValue()).isLessThan(row.get("nominalReturn").decimalValue());
+			assertThat(row.has("realEarned")).as("realEarned mirrors realReturn").isTrue();
+			assertThat(row.get("realEarned").decimalValue().scale()).isEqualTo(2);
 		}
 	}
 

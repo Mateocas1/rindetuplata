@@ -2,9 +2,9 @@
  * Class strings shared by the account islands.
  *
  * Thin aliases over the recipes in `styles/recipes.css` (card, field,
- * buttons) plus the seven Cobalto Cristal text roles, so every island shares one
- * shape and `tokens.css` stays the single source of color. A field label is the
- * mono caps `type-label`; help and error lines are `type-body` (muted or loss)
+ * buttons) plus the seven text roles, so every island shares one shape and
+ * `tokens.css` stays the single source of color. A field label is the
+ * sentence-case sans `type-label`; help and error lines are `type-body` (muted or loss)
  * and stay tied to their control with `aria-describedby`. The `field` recipe is
  * 16px on mobile so iOS Safari never zooms.
  */
@@ -13,7 +13,10 @@ export const inputClass = 'field max-w-64 tabular-nums';
 /** Free text: no `tabular-nums`, and no narrow measure. */
 export const textareaClass = 'field';
 
-/** Control labels: mono caps, never a second size. */
+/** A text field that fills its card (the login email): no `tabular-nums`, no narrow measure. */
+export const inputFullClass = 'field';
+
+/** Control labels: sentence case, sans, never a second size. */
 export const labelClass = 'type-label';
 
 export const fieldGroupClass = 'flex flex-col gap-1';

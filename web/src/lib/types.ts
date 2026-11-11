@@ -74,6 +74,13 @@ export interface RankedEntry {
   earned: number;
   nominalReturn: number;
   realReturn: number | null;
+  /**
+   * Pesos above (positive) or below (negative) the expected inflation over the horizon, in today's pesos
+   * (`finalAmount / (1 + inflation.overHorizon) - amount`); null without an inflation observation.
+   * Optional because the recorded fixtures predate the API field and carry a derived value: read it as
+   * `realEarned ?? null` and fall back to `realReturn`.
+   */
+  realEarned?: number | null;
   upTo: UpTo | null;
   warnings: ValidationFlag[];
   /**

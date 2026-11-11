@@ -77,7 +77,8 @@ describe('RankingTable break-even', () => {
 
     expect(html).toContain('Ganás en 30 días');
     expect(html).toContain('$\u00a024.657,53');
-    expect(html).toContain('$\u00a01.024.657,53 al vencimiento');
+    // The final amount lives on the best-option card and the instrument page, never in a row.
+    expect(html).not.toContain('al vencimiento</');
   });
 
   it('is hidden when the API sent no quote, or the row has no break-even', () => {
@@ -91,10 +92,14 @@ describe('RankingTable break-even', () => {
     }
   });
 
-  it('renders one disclosure per row that has a break-even', () => {
+  it('renders one disclosure per row that has a break-even, in each of the two views (D9)', () => {
     const html = table(ranking([entry('1', 'Banco A', true), entry('2', 'Banco B', false)], quote));
+    const tableView = html.slice(html.indexOf('<table'), html.indexOf('</table>'));
+    const listView = html.slice(html.indexOf('<ol'), html.indexOf('</ol>'));
 
-    expect(html.match(/<details/g)).toHaveLength(1);
+    expect(tableView.match(/<details/g)).toHaveLength(1);
+    expect(listView.match(/<details/g)).toHaveLength(1);
+    expect(html.match(/<details/g)).toHaveLength(2);
   });
 });
 

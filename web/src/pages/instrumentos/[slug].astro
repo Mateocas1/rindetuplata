@@ -7,15 +7,23 @@
  * which would only ever be thin pages. Everything is rendered at build time: the
  * rate, its dates, its source and confidence, the history chart as an inline SVG
  * and the simulator island, which is the only client JavaScript on the page.
+ *
+ * Layout: at `lg` a main column (hero, history) and a sticky simulator aside
+ * that starts already answering for the default amount and term; below `lg`
+ * the aside stacks right after the hero. The hero is a plain card: the cobalt
+ * rail marks only the best option of a ranking.
  */
 import HistoryChart from '../../components/instrument/HistoryChart.astro';
 import SimulatorIsland from '../../components/instrument/SimulatorIsland';
+import RealResult from '../../components/ui/RealResult';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { categoryForKind } from '../../lib/categories';
+import { categoryForKind, liquidityForKind } from '../../lib/categories';
 import { MissingHistoryRecording, loadHistory } from '../../lib/data';
-import { formatDate, formatDays, formatMoney, formatPercent, formatSignedPercent } from '../../lib/format';
+import { displayName } from '../../lib/displayName';
+import { formatDate, formatDays, formatMoney, formatMoneyWhole, formatPercent } from '../../lib/format';
 import {
   confidenceLabel,
+  sourceLabel,
   flagLabel,
   ineligibleExplanation,
   inflationIndexLabel,
@@ -24,6 +32,7 @@ import {
 } from '../../lib/labels';
 import { loadInstrumentPages } from '../../lib/pages';
 import { DEFAULT_AMOUNT, DEFAULT_DAYS } from '../../lib/rankingQuery';
+import { earnedFrom } from '../../lib/rankingPresentation';
 import { breadcrumbJsonLd, financialProductJsonLd } from '../../lib/seo';
 import { instrumentSlug } from '../../lib/slug';
 import type { IneligibleEntry, Inflation, InstrumentHistory, RankedEntry } from '../../lib/types';
@@ -60,6 +69,10 @@ const category = categoryForKind(entry.kind);
 const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(Astro.url.pathname, site);
 const kindName = kindLabel(entry.kind);
+const liquidity = liquidityForKind(entry.kind);
+const name = displayName(entry.name);
+// The source's own name stays on the page once, quietly, when it reads differently.
+const legalName = name !== entry.name ? entry.name : null;
 const basis = ranked === null ? null : ranked.rateUsed.basis;
 const ratePercent = ranked === null ? null : formatPercent(ranked.rateUsed.fraction);
 const inflationLabel =
@@ -67,12 +80,12 @@ const inflationLabel =
 
 const title =
   basis !== null && ratePercent !== null
-    ? `${entry.name} · ${kindName}: ${basis} ${ratePercent} | rindetuplata`
-    : `${entry.name} · ${kindName} | rindetuplata`;
+    ? `${name} · ${kindName}: ${basis} ${ratePercent} | rindetuplata`
+    : `${name} · ${kindName} | rindetuplata`;
 const description =
   ranked !== null
-    ? `Cuánto rinde ${entry.name} hoy: ${basis} ${ratePercent} según ${entry.source.displayName}, dato del ${formatDate(entry.dataDate)}. Mirá el historial contra la inflación del INDEC y simulá con tu monto y tu plazo.`
-    : `${entry.name} (${kindName}) no entra en el ranking de hoy. Mirá su historial contra la inflación del INDEC y las condiciones que pide.`;
+    ? `Cuánto rinde ${name} hoy: ${basis} ${ratePercent} según ${sourceLabel(entry)}, dato del ${formatDate(entry.dataDate)}. Mirá el historial contra la inflación del INDEC y simulá con tu monto y tu plazo.`
+    : `${name} (${kindName}) no entra en el ranking de hoy. Mirá su historial contra la inflación del INDEC y las condiciones que pide.`;
 
 /** One trail, one URL shape: every item ends in a slash like the canonical. */
 const breadcrumb = [
@@ -80,7 +93,7 @@ const breadcrumb = [
   ...(category === null
     ? []
     : [{ name: category.navLabel, url: new URL(category.path, site).href }]),
-  { name: entry.name, url: canonical.href },
+  { name, url: canonical.href },
 ];
 
 const jsonLd: object[] = [breadcrumbJsonLd(breadcrumb)];
@@ -88,7 +101,7 @@ if (ranked !== null) {
   jsonLd.push(
     financialProductJsonLd({
       name: ranked.name,
-      description: `${kindName}. Fuente: ${ranked.source.displayName}. Dato del ${formatDate(ranked.dataDate)}.`,
+      description: `${kindName}. Fuente: ${sourceLabel(ranked)}. Dato del ${formatDate(ranked.dataDate)}.`,
       url: canonical.href,
       interestRate: ranked.rateUsed.fraction,
       provider: ranked.entity,
@@ -98,14 +111,25 @@ if (ranked !== null) {
 
 const isStale = ranked !== null && ranked.warnings.some((warning) => warning.code === 'STALE');
 
-// The hero states today's fact the way the reference plate does: the pesos the
-// default amount earns in the default term as the protagonist figure, the rate
-// and its kind as data, and one quiet provenance line. The simulator
-// below turns that default into the reader's own amount and term.
-const defaultMoney = formatMoney(DEFAULT_AMOUNT);
+// The hero states today's fact: the pesos the default amount earns in the
+// default term as the protagonist figure, the real result right under it in
+// words and tone, and the rate and the term's inflation as data. The
+// simulator beside it starts from the same numbers and turns them into the
+// reader's own amount and term.
+const defaultMoney = formatMoneyWhole(DEFAULT_AMOUNT);
+// "$ 19.726,03" is "$", a no-break space and the number (format.ts): only that space may wrap.
+const [heroCurrency, heroFigure = ''] = ranked === null ? ['', ''] : formatMoney(ranked.earned).split('\u00a0');
+/** "Si sumás $500.000" reads inside a sentence as "si sumás $500.000". */
+const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
 const defaultTerm = formatDays(DEFAULT_DAYS);
 const inflationValue = inflation === null ? 'sin dato' : formatPercent(inflation.overHorizon);
-const provenance = `${entry.source.displayName}${entry.source.official ? ' · fuente oficial' : ''} · dato del ${formatDate(entry.dataDate)}`;
+const provenance = `${sourceLabel(entry)}${entry.source.official && !('confidence' in entry && entry.confidence === 'CURATED_MANUAL') ? ' · fuente oficial' : ''} · dato del ${formatDate(entry.dataDate)}`;
+const ineligibleMessage =
+  ineligible === null
+    ? 'La API no lo puede rankear hoy.'
+    : ineligibleExplanation(ineligible.reason, { amount: DEFAULT_AMOUNT, days: DEFAULT_DAYS });
+
+const crumbClass = 'hover:text-text hover:underline focus-visible:underline underline-offset-2';
 ---
 
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
@@ -114,7 +138,7 @@ const provenance = `${entry.source.displayName}${entry.source.official ? ' · fu
       <nav aria-label="Ubicación" class="type-label">
         <ol class="flex flex-wrap gap-x-2">
           <li>
-            <a class="hover:text-text" href="/">
+            <a class={crumbClass} href="/">
               Inicio
             </a>
           </li>
@@ -122,45 +146,49 @@ const provenance = `${entry.source.displayName}${entry.source.official ? ' · fu
             category !== null && (
               <li>
                 <span aria-hidden="true">/</span>{' '}
-                <a class="hover:text-text" href={category.path}>
+                <a class={crumbClass} href={category.path}>
                   {category.navLabel}
                 </a>
               </li>
             )
           }
-          <li aria-current="page"><span aria-hidden="true">/</span> {entry.name}</li>
+          <li aria-current="page"><span aria-hidden="true">/</span> {name}</li>
         </ol>
       </nav>
-      <div class="flex flex-col gap-block">
-        <p class="type-label">
-          {kindName}
-          {ranked?.entity !== null && ranked?.entity !== undefined && ranked.entity !== ranked.name
-            ? ` · ${ranked.entity}`
-            : ''}
+      <div class="flex flex-col gap-2">
+        <h1 class="type-display">{name}</h1>
+        {legalName !== null && <p class="type-data text-muted">Nombre legal: {legalName}</p>}
+        <p class="type-data text-muted">
+          {kindName}{liquidity !== null ? ` · ${liquidity}` : ''}
         </p>
-        <h1 class="type-display max-w-prose">{entry.name}</h1>
       </div>
+    </header>
 
+    <div class="grid grid-cols-1 gap-section lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-x-10">
       {
         ranked !== null ? (
-          <div class="card max-w-prose border-s-2 border-s-accent p-6">
-            <p class="type-label">Hoy</p>
-            <p class="type-figure mt-3">{formatMoney(ranked.earned)}</p>
-            <p class="type-data text-muted mt-1">
-              en {defaultTerm} con {defaultMoney}
+          <div class="card p-6 lg:col-start-1 lg:row-start-1">
+            <p class="type-label">
+              Con {defaultMoney} a {defaultTerm} ganás
             </p>
-            <dl class="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-4 sm:grid-cols-3">
+            {/* The number never breaks inside itself; on a very narrow card the sign may wrap above it instead. */}
+            <p class="type-figure mt-3">
+              {heroCurrency} <span class="whitespace-nowrap">{heroFigure}</span>
+            </p>
+            <p class="mt-3">
+              <RealResult
+                realEarned={ranked.realEarned}
+                realReturn={ranked.realReturn}
+                indexLabel={inflationLabel}
+                size="lead"
+              />
+            </p>
+            <dl class="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-4">
               <div>
                 <dt class="type-label">{basis}</dt>
                 <dd class="type-data">{ratePercent}</dd>
               </div>
               <div>
-                <dt class="type-label">Rendimiento real</dt>
-                <dd class="type-data">
-                  {ranked.realReturn === null ? 'sin dato' : formatSignedPercent(ranked.realReturn)}
-                </dd>
-              </div>
-              <div class="col-span-2 sm:col-span-1">
                 <dt class="type-label">Inflación del plazo</dt>
                 <dd class="type-data">{inflationValue}</dd>
               </div>
@@ -168,7 +196,8 @@ const provenance = `${entry.source.displayName}${entry.source.official ? ' · fu
             <p class="type-data text-muted mt-4">{provenance}</p>
             {ranked.upTo !== null && (
               <p class="type-data text-warning mt-2">
-                Hasta {formatMoney(ranked.upTo.finalAmount)} {ranked.upTo.condition}.
+                Ganás hasta {formatMoney(earnedFrom(DEFAULT_AMOUNT, ranked.upTo.finalAmount))}{' '}
+                {lowerFirst(ranked.upTo.condition)}.
               </p>
             )}
             {isStale && (
@@ -193,16 +222,9 @@ const provenance = `${entry.source.displayName}${entry.source.official ? ' · fu
             </details>
           </div>
         ) : (
-          <div class="card max-w-prose p-6">
-            <p class="type-label">Hoy no entra en el ranking</p>
-            <p class="type-body mt-2 max-w-prose">
-              {ineligible === null
-                ? 'La API no lo puede rankear hoy.'
-                : ineligibleExplanation(ineligible.reason, {
-                    amount: DEFAULT_AMOUNT,
-                    days: DEFAULT_DAYS,
-                  })}
-            </p>
+          <div class="card p-6 lg:col-start-1 lg:row-start-1">
+            <p class="type-body font-semibold">Hoy no entra en el ranking</p>
+            <p class="type-body mt-2 max-w-prose">{ineligibleMessage}</p>
             <p class="type-data text-muted mt-3">
               {provenance}
               {ineligible !== null ? ` · captura del ${formatDate(ineligible.captureDate)}` : ''}
@@ -210,31 +232,35 @@ const provenance = `${entry.source.displayName}${entry.source.official ? ' · fu
           </div>
         )
       }
-    </header>
 
-    <section class="flex flex-col gap-block" aria-labelledby="historial">
-      <div class="flex flex-col gap-2">
-        <h2 id="historial" class="type-section">Cómo viene rindiendo</h2>
-        <p class="type-data text-muted">Tasa efectiva anual contra inflación anualizada del INDEC</p>
-      </div>
-      <HistoryChart history={history} />
-    </section>
-
-    <section class="flex max-w-prose flex-col gap-block" aria-labelledby="simulador">
-      <div class="flex flex-col gap-2">
+      <aside
+        class="card p-6 lg:sticky lg:top-20 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+        aria-labelledby="simulador"
+      >
         <h2 id="simulador" class="type-section">Simulá con tu monto y tu plazo</h2>
-        <p class="type-data text-muted">
+        <p class="type-data text-muted mt-2">
           Rendimiento real contra la inflación esperada del {inflationLabel}
         </p>
-      </div>
-      <SimulatorIsland
-        client:visible
-        instrumentId={entry.id}
-        inflationIndexLabel={inflationLabel}
-      />
-    </section>
+        <div class="mt-5">
+          <SimulatorIsland
+            client:visible
+            instrumentId={entry.id}
+            inflationIndexLabel={inflationLabel}
+            initialEntry={ranked}
+          />
+        </div>
+      </aside>
 
-    <footer class="flex max-w-prose flex-col gap-2 border-t border-border pt-block">
+      <section class="flex flex-col gap-block lg:col-start-1 lg:row-start-2" aria-labelledby="historial">
+        <div class="flex flex-col gap-2">
+          <h2 id="historial" class="type-section">Cómo viene rindiendo</h2>
+          <p class="type-data text-muted">Tasa efectiva anual contra inflación anualizada del INDEC</p>
+        </div>
+        <HistoryChart history={history} />
+      </section>
+    </div>
+
+    <footer class="border-t border-border pt-block">
       <p class="type-body">
         {
           category !== null && (
@@ -249,10 +275,6 @@ const provenance = `${entry.source.displayName}${entry.source.official ? ' · fu
         <a class="link" href="/metodologia/">
           Cómo se calcula cada número
         </a>
-      </p>
-      <p class="type-data text-muted">
-        Es información, no asesoramiento financiero. rindetuplata no recibe dinero de las entidades
-        que compara.
       </p>
     </footer>
   </article>

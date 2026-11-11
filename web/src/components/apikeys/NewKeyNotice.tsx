@@ -43,7 +43,7 @@ export default function NewKeyNotice({ created, onDismiss }: NewKeyNoticeProps) 
           revocá esta clave y creá otra.
         </p>
         <p className="type-label mt-1">Tu clave</p>
-        <p className="type-data break-all rounded-panel border border-border bg-surface px-3 py-2 select-all">
+        <p className="type-data font-mono break-all rounded-panel border border-border bg-surface px-3 py-2 select-all">
           {created.key}
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-2">

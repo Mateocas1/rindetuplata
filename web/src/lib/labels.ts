@@ -161,3 +161,11 @@ export function inflationIndexShortLabel(index: string): string {
 export const KIND_OPTIONS: Array<{ value: RankedKind; label: string }> = (
   ['PLAZO_FIJO', 'WALLET', 'FUND', 'CRYPTO'] as const
 ).map((value) => ({ value, label: KIND_LABELS[value] }));
+
+/**
+ * The source as a reader sees it: a curated rate is named by its confidence level, in Spanish,
+ * instead of the curated source's own English display name.
+ */
+export function sourceLabel(entry: { confidence?: string; source: { displayName: string } }): string {
+  return entry.confidence === 'CURATED_MANUAL' ? confidenceLabel('CURATED_MANUAL') : entry.source.displayName;
+}

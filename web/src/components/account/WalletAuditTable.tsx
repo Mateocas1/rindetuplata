@@ -2,8 +2,8 @@
  * Audit trail of one curated wallet rate.
  *
  * A table read the way the ranking table reads: the action is the row header in
- * `type-body`, actor, date and the stored document are mono `type-data` under
- * mono caps `type-label` heads. It keeps its intrinsic width and scrolls inside
+ * `type-body`, actor, date and the stored document are tabular `type-data` under
+ * sentence-case `type-label` heads. It keeps its intrinsic width and scrolls inside
  * a focusable, labelled region, so it never spills past the wallet's hairline
  * card on a phone (the ranking table's own pattern).
  *

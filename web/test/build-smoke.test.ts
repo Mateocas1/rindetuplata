@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { displayName } from '../src/lib/displayName';
 import { formatMoney } from '../src/lib/format';
 import { ACCOUNT_PATHS } from '../src/lib/sitemapPaths.js';
 
@@ -56,6 +57,16 @@ function renderedText(page: string): string {
     .replaceAll('&#160;', '\u00a0');
 }
 
+/** The `<header>` landmark of a built page. */
+function headerOf(page: string): string {
+  return /<header class="sticky[\s\S]*?<\/header>/.exec(page)?.[0] ?? '';
+}
+
+/** The `<footer>` landmark of a built page. */
+function footerOf(page: string): string {
+  return /<footer[\s\S]*?<\/footer>/.exec(page)?.[0] ?? '';
+}
+
 /** The visible text of every row header cell, in document order. */
 function rowHeaderTexts(page: string): string[] {
   return [...page.matchAll(/<th[^>]*scope="row"[^>]*>([\s\S]*?)<\/th>/g)].map((match) =>
@@ -79,22 +90,20 @@ beforeAll(() => {
 }, 300_000);
 
 describe('prerendered home page', () => {
-  it('renders the heading the product promises, with "plata" as the one serif accent', () => {
+  it('renders the heading the product promises as plain text (D1)', () => {
     const page = html('index.html');
     const h1 = /<h1 class="type-display">([\s\S]*?)<\/h1>/.exec(page);
     expect(h1, 'the home H1').not.toBeNull();
     expect(renderedText(h1![1]).replace(/\s+/g, ' ').trim()).toBe('¿Dónde rinde tu plata hoy?');
-    expect(h1![1]).toContain('<span class="serif-accent">plata</span>');
+    expect(h1![1]).not.toContain('<');
+    expect(page).not.toContain('serif-accent');
   });
 
-  it('paints the best option as the only glass card, inside the field it blurs', () => {
+  it('paints the best option as a plain card with the cobalt rail, with no glass anywhere (D1, D14)', () => {
     const page = html('index.html');
 
-    // One glass element per page, over the cobalt glow and hairline grid
-    // its `glass-field` parent paints, with the cobalt rail of the leader.
-    expect(page.match(/class="glass /g) ?? []).toHaveLength(1);
-    expect(page).toContain('glass-field');
-    expect(page).toContain('border-s-accent');
+    expect(page).not.toMatch(/class="[^"]*\bglass(-field)?\b/);
+    expect(page).toMatch(/class="card border-s-2 border-s-accent p-4 sm:p-6"/);
     expect(renderedText(page)).toContain('La mejor de hoy');
   });
 
@@ -118,30 +127,65 @@ describe('prerendered home page', () => {
     expect(page).toContain('bg-thumb');
     expect(page).toContain('text-on-thumb');
     expect(page).toContain('bg-subtle-surface');
-    // The prototype's presets are shortcuts: the reader's own inputs stay.
-    expect(page).toMatch(/<input[^>]*id="monto"[^>]*type="number"/);
-    expect(page).toMatch(/<input[^>]*id="dias"[^>]*type="number"/);
+    // The presets are shortcuts: the reader's own inputs stay, as numeric text fields.
+    expect(page).toMatch(/<input[^>]*id="monto"[^>]*type="text"[^>]*inputmode="numeric"/i);
+    expect(page).toMatch(/<input[^>]*id="dias"[^>]*inputmode="numeric"/i);
   });
 
-  it('renders the first three ranked options in order', () => {
+  it('shows the amount in Argentine notation in the built field (D16)', () => {
+    const field = /<input[^>]*id="monto"[^>]*>/.exec(html('index.html'));
+
+    expect(field, 'the amount field').not.toBeNull();
+    expect(field![0]).toContain('value="1.000.000"');
+  });
+
+  it('answers the H1 with one sentence right under the lead (D15)', () => {
+    const page = html('index.html');
+    const text = renderedText(page).replace(/\s+/g, ' ');
+    const answer =
+      'Hoy, con $ 1.000.000 a 30 días, lo que más rinde es Reba: ganás $ 19.726,03, $ 3.806 por encima de la inflación esperada.';
+
+    expect(text).toContain(answer);
+    // Right under the lead: after the H1, before the controls.
+    expect(text.indexOf(answer)).toBeGreaterThan(text.indexOf('¿Dónde rinde tu plata hoy?'));
+    expect(text.indexOf(answer)).toBeLessThan(text.indexOf('Monto en pesos'));
+  });
+
+  it('says once how the board is ordered, and states the data date in one quiet line', () => {
+    const text = renderedText(html('index.html')).replace(/\s+/g, ' ');
+
+    expect(text).not.toContain('El orden sale de los pesos que ganás');
+    expect(text).toContain('datos del 14/10/2026');
+  });
+
+  it('renders the first three ranked options in order, by their display names (D13)', () => {
     const page = html('index.html');
     const positions = fixture.ranked
       .slice(0, 3)
-      .map((entry) => page.indexOf(entry.name));
+      .map((entry) => page.indexOf(`>${displayName(entry.name)}<`));
 
     for (const [index, position] of positions.entries()) {
       expect(position, `option ${index + 1} is missing from the page`).toBeGreaterThan(-1);
     }
     expect(positions[0]).toBeLessThan(positions[1]);
     expect(positions[1]).toBeLessThan(positions[2]);
+    expect(renderedText(page)).not.toContain('REBA COMPAÑIA FINANCIERA S.A.');
   });
 
-  it('contains the table inside its scroll region and keeps its focus ring visible (T12e)', () => {
-    const region = /<div class="([^"]*)" role="region" aria-label="Ranking para/.exec(html('index.html'));
-    expect(region, 'ranking scroll region').not.toBeNull();
-    // `relative` keeps the sr-only spans inside the scroller (no page-level sideways scroll at 320px);
-    // an inset outline is never clipped by the card's overflow-hidden.
-    expect(region![1].split(/\s+/)).toEqual(expect.arrayContaining(['relative', 'focus-visible:-outline-offset-2']));
+  it('renders the board as a table from md and as a card list below it, with no sideways scroll (D9)', () => {
+    const page = html('index.html');
+    const board = page.slice(page.indexOf('id="resultado"'));
+
+    expect(board).not.toContain('role="region"');
+    expect(board).not.toContain('Deslizá la tabla');
+    expect(board).toMatch(/<div class="[^"]*\bhidden\b[^"]*\bmd:block\b[^"]*"><table/);
+    const lists = [...board.matchAll(/<ol\b[^>]*class="([^"]*)"[^>]*>([\s\S]*?)<\/ol>/g)].filter((match) =>
+      match[1].split(/\s+/).includes('md:hidden'),
+    );
+    // The board and the "siguientes" continuation: each table has its list twin.
+    expect(lists).toHaveLength(2);
+    const cards = lists.flatMap((match) => [...match[2].matchAll(/<li\b/g)]);
+    expect(cards).toHaveLength(fixture.ranked.length);
   });
 
   it('renders their earned amounts with the API values', () => {
@@ -151,79 +195,69 @@ describe('prerendered home page', () => {
     }
   });
 
-  it('numbers the board with a mono 01-08 gutter and keeps the rest behind a disclosure', () => {
+  it('numbers the board with shared positions for ties and keeps the rest behind a disclosure (D7)', () => {
     const page = html('index.html');
     const headers = rowHeaderTexts(page);
-    const expected = fixture.ranked.slice(0, 3);
-    expect(headers.length).toBeGreaterThanOrEqual(expected.length);
-    for (const [index, entry] of expected.entries()) {
-      const position = String(index + 1).padStart(2, '0');
-      expect(headers[index], `row ${index + 1}`).toMatch(new RegExp(`^${position}\\s`));
-      expect(headers[index], `row ${index + 1}`).toContain(entry.name);
+    const positions = [...page.matchAll(/<tr\b[^>]*>\s*<td\b[^>]*>([\s\S]*?)<\/td>/g)].map((match) =>
+      renderedText(match[1].replace(/<span class="sr-only">[^<]*<\/span>/g, '')).replace(/\s+/g, ' ').trim(),
+    );
+
+    expect(headers).toHaveLength(fixture.ranked.length);
+    for (const [index, entry] of fixture.ranked.slice(0, 3).entries()) {
+      expect(headers[index], `row ${index + 1}`).toContain(displayName(entry.name));
     }
+    // Reba, Adcap, Pellegrini; then CMF and Voii earn the same, and so do the two Unico classes.
+    expect(positions.slice(0, 9)).toEqual(['01', '02', '03', '=04', '=04', '=06', '=06', '=08', '=08']);
 
     // Nothing is dropped: the first table is the day's eight, the second one
-    // continues the gutter inside one disclosure.
+    // continues the positions inside one disclosure.
     const boards = [...page.matchAll(/<th[^>]*scope="row"/g)].map((match) => match.index ?? -1);
-    expect(boards).toHaveLength(fixture.ranked.length);
     const summary = page.indexOf('opciones siguientes');
     expect(summary).toBeGreaterThan(-1);
     expect(boards[7]).toBeLessThan(summary);
     expect(boards[8]).toBeGreaterThan(summary);
-    expect(headers[8]).toMatch(/^09\s/);
   });
 
-  it('keeps the pesos earned whole inside the sticky row header below md (T13e item 1)', () => {
+  it('states where the data comes from on every row and once above the board (S11, D18)', () => {
     const page = html('index.html');
-    const headers = [...page.matchAll(/<th[^>]*scope="row"[^>]*>([\s\S]*?)<\/th>/g)].map(
-      (match) => match[1],
-    );
+    const text = renderedText(page).replace(/\s+/g, ' ');
 
-    for (const [index, entry] of fixture.ranked.slice(0, 3).entries()) {
-      // Below md the first column is the only one on screen: the row's
-      // protagonist figure has to be in it, and the wide copy is hidden so the
-      // amount is never announced twice.
-      expect(headers[index], `row ${index + 1} earned`).toContain(formatMoney(entry.earned));
-      expect(headers[index], `row ${index + 1} narrow copy`).toContain('md:hidden');
+    expect(page).not.toContain('Fuente y fecha');
+    expect(text).toContain('Fuente: ArgentinaDatos · datos al 14/10/2026');
+    for (const header of rowHeaderTexts(page)) {
+      expect(header).toMatch(/ · [^·]+ \d{2}\/\d{2}/);
     }
-    // The wide copy of the same figure steps aside below md, so the amount is
-    // never announced twice.
-    const wideCopy = [...page.matchAll(/<span class="([^"]*)"/g)]
-      .map((match) => match[1].split(/\s+/))
-      .filter((tokens) => tokens.includes('hidden') && tokens.includes('md:block'));
-    expect(wideCopy.length).toBeGreaterThan(0);
-    for (const tokens of wideCopy) expect(tokens).toContain('type-figure');
   });
 
-  it('states where the data comes from (S11)', () => {
-    const page = html('index.html');
-    expect(page).toContain('Fuente y fecha');
-    expect(page).toContain('ArgentinaDatos');
-    expect(renderedText(page)).toMatch(/\d{2}\/\d{2}\/\d{4}/);
-  });
-
-  it('spends cobalt on the two leader rails only (T13e item 4)', () => {
+  it('spends cobalt on the leader rails only (T13e item 4, D14)', () => {
     const page = html('index.html');
     const tokens = [...page.matchAll(/class="([^"]*)"/g)]
       .flatMap((match) => match[1].split(/\s+/))
       .filter((token) => /^(bg-accent(-solid)?|border(-s)?-accent|text-accent(-solid)?)$/.test(token));
 
-    // The plate's rail, and row 01's rail. The "Mejor" chip is ink now, and no
-    // inline link wears the accent: the underline carries it.
-    expect(tokens.sort()).toEqual(['bg-accent', 'border-s-accent']);
+    // The best-option card's rail, row 01's rail in the table and the first card's rail in the
+    // mobile list (one of the two views is hidden). The "Mejor" chip is ink, and no link wears the accent.
+    expect(tokens.sort()).toEqual(['bg-accent', 'border-s-accent', 'border-s-accent']);
   });
 
-  it('shortens the row provenance: short kind label, source and date on one line (T13e item 5)', () => {
+  it('keeps the row provenance short: short kind label, source and short date (T13e item 5, D18)', () => {
     const page = html('index.html');
     // The TNA cell names its kind in two words, never a four-line sentence.
     expect(page).toContain('TNA no clientes');
     expect(page).toContain('TNA fondo');
     expect(page).not.toContain('tasa para no clientes');
     expect(page).not.toContain('TNA equivalente del fondo');
-    // The row carries one quiet provenance line: its source and its date. The
-    // confidence lives on the instrument page and in the methodology.
+    // The confidence lives on the instrument page and in the methodology.
     expect(page).not.toContain('Agregador automático');
-    expect(page).toContain('ArgentinaDatos · 14/10/2026');
+    expect(renderedText(page).replace(/\s+/g, ' ')).toContain('Plazo fijo · Al vencimiento · ArgentinaDatos 14/10');
+  });
+
+  it('closes the board with one plain footnote and no page-level disclaimer (D11)', () => {
+    const page = html('index.html');
+    const main = /<main\b[\s\S]*?<\/main>/.exec(page)![0];
+
+    expect(main).toMatch(/<p class="type-body max-w-prose text-muted">[\s\S]*?Cómo se calcula cada número/);
+    expect(main).not.toContain('asesoramiento');
   });
 
   it('carries the canonical link, the social tags and the WebSite JSON-LD', () => {
@@ -238,6 +272,38 @@ describe('prerendered home page', () => {
 
   it('hydrates the explorer island', () => {
     expect(html('index.html')).toContain('<script');
+  });
+});
+
+describe('prerendered category landings', () => {
+  const landings = ['plazo-fijo', 'billeteras', 'fondos', 'cripto'];
+
+  it('show the board without a "Fuente y fecha" column, with a card list twin and one footnote (D9, D11, D18)', () => {
+    for (const slug of landings) {
+      const page = html(`${slug}/index.html`);
+      const main = /<main\b[\s\S]*?<\/main>/.exec(page)![0];
+
+      expect(main, slug).not.toContain('Fuente y fecha');
+      expect(main, slug).not.toContain('role="region"');
+      expect(main, slug).toMatch(/<ol\b[^>]*class="[^"]*\bmd:hidden\b/);
+      expect(main, slug).toMatch(/<p class="type-body max-w-prose text-muted">[\s\S]*?Cómo se calcula cada número/);
+      expect(main, slug).not.toContain('asesoramiento');
+      expect(rowHeaderTexts(main).length, slug).toBe(
+        [...main.matchAll(/<ol\b[^>]*class="[^"]*\bmd:hidden\b[^"]*"[^>]*>[\s\S]*?<\/ol>/g)]
+          .map((match) => match[0].match(/<li\b/g)?.length ?? 0)
+          .reduce((sum, count) => sum + count, 0),
+      );
+    }
+  });
+
+  it('share positions between equal plazo fijo earnings and name the banks by their display names (D7, D13)', () => {
+    const text = renderedText(html('plazo-fijo/index.html')).replace(/\s+/g, ' ');
+
+    expect(text).toContain('=04');
+    expect(text).toContain('Reba');
+    expect(text).toContain('Banco CMF');
+    expect(text).not.toContain('REBA COMPAÑIA FINANCIERA');
+    expect(text).toContain('−$ 411 vs. la mejor');
   });
 });
 
@@ -276,6 +342,45 @@ describe('prerendered methodology page', () => {
     expect(text).toContain('inflación anualizada');
     expect(text).toContain('tasa efectiva anual');
   });
+
+  it('lists its sections in a table of contents whose links resolve to h2 ids (D12)', () => {
+    const page = html('metodologia/index.html');
+    const ids = new Set([...page.matchAll(/<h2[^>]*\sid="([^"]+)"/g)].map((match) => match[1]));
+    const toc = /<nav[^>]*aria-label="En esta página"[^>]*>[\s\S]*?<\/nav>/.exec(page)?.[0] ?? '';
+    const targets = [...toc.matchAll(/href="#([^"]+)"/g)].map((match) => match[1]);
+
+    expect(toc, 'a table of contents nav').not.toBe('');
+    expect(targets.length).toBeGreaterThanOrEqual(10);
+    for (const target of targets) {
+      expect(ids.has(target), `#${target} has no h2`).toBe(true);
+    }
+    // Every h2 is listed, so the contents never drift from the page.
+    expect([...ids].sort()).toEqual([...new Set(targets)].sort());
+    // At lg the contents sit in a sticky aside next to the reading column.
+    expect(page).toMatch(/<aside[^>]*\blg:sticky\b[^>]*>/);
+  });
+
+  it('explains liquidity and the deposit guarantee, with the BCRA source and no peso cap (D5)', () => {
+    const page = html('metodologia/index.html');
+    const text = renderedText(page).replace(/\s+/g, ' ');
+    const section = /<section[^>]*aria-labelledby="liquidez-garantia"[\s\S]*?<\/section>/.exec(page)?.[0] ?? '';
+
+    expect(section, 'the liquidity section').not.toBe('');
+    expect(text).toContain('Liquidez y garantía de los depósitos');
+    expect(section).toContain('href="https://www.bcra.gob.ar/archivos/Pdfs/texord/t-seggar.pdf"');
+    expect(section).toContain('Aplicación del sistema de seguro de garantía de los depósitos');
+    const prose = renderedText(section).replace(/\s+/g, ' ');
+    expect(prose).toContain('al vencimiento');
+    expect(prose).toContain('disponible al instante');
+    expect(prose).toContain('rescate en el día');
+    expect(prose).toContain('cuotapartes');
+    expect(prose).toContain('no son depósitos');
+    expect(prose).toContain('proveedor de servicios de pago');
+    expect(prose).toContain('tasas muy por encima');
+    expect(prose).toContain('el ranking no marca la garantía');
+    // The cap changes: the source is the truth, so the page never prints an amount for it.
+    expect(prose).not.toMatch(/\$\s*\d/);
+  });
 });
 
 describe('robots.txt', () => {
@@ -297,9 +402,40 @@ describe('error page', () => {
     expect(existsSync(join(dist, '404.html'))).toBe(true);
     expect(html('404.html')).toContain('No encontramos esta página');
   });
+
+  it('uses the shared roles: one primary action back to the ranking, no mono or uppercase', () => {
+    const main = /<main[\s\S]*<\/main>/.exec(html('404.html'))![0];
+    expect(main).toContain('btn-primary');
+    expect(main).toContain('href="/"');
+    expect(main).not.toMatch(/\buppercase\b|\bfont-mono\b|\btracking-/);
+  });
 });
 
 describe('stylesheet', () => {
+  function builtCss(): string {
+    return readdirSync(join(dist, '_astro'))
+      .filter((file) => file.endsWith('.css'))
+      .map((file) => readFileSync(join(dist, '_astro', file), 'utf8'))
+      .join('\n');
+  }
+
+  it('ships no glass class on any page (D1)', () => {
+    for (const file of htmlFiles(dist)) {
+      expect(
+        normalize(readFileSync(file, 'utf8')),
+        `${relative(dist, file)} has a glass class`,
+      ).not.toMatch(/class="[^"]*\bglass(-field)?\b/);
+    }
+  });
+
+  it('ships one text family and no decorative layer in the built CSS (D1, D2)', () => {
+    const css = builtCss();
+    for (const retired of ['Space Grotesk', 'Geist', 'Instrument Serif', '.glass', '.serif-accent']) {
+      expect(css, `${retired} must not reach the built CSS`).not.toContain(retired);
+    }
+    expect(css).toContain('Archivo Variable');
+  });
+
   it('emits the token utilities the markup uses', () => {
     const cssFiles = readdirSync(join(dist, '_astro')).filter((file) => file.endsWith('.css'));
     expect(cssFiles.length).toBeGreaterThan(0);
@@ -318,9 +454,7 @@ describe('stylesheet', () => {
       '.type-data',
       '.type-figure',
       '.type-index',
-      '.serif-accent',
       '.wordmark',
-      '.glass-field',
       '.bg-thumb',
       '.text-on-thumb',
     ]) {
@@ -423,7 +557,31 @@ describe('prerendered month report', () => {
 
     expect(page).toContain('href="/metodologia/"');
     expect(renderedText(page)).toContain('Cómo medimos');
-    expect(renderedText(page)).toContain('no es asesoramiento financiero');
+    // The one sentence specific to reports stays; the generic disclaimer is the footer's.
+    expect(renderedText(page).replace(/\s+/g, ' ')).toContain(
+      'lo que rindió una opción en el pasado no garantiza que lo repita',
+    );
+  });
+
+  it('has a plain hero, a wide layout, one quiet data line per row and no page disclaimer (D12, D14)', () => {
+    const page = html('informes/2026-10/index.html');
+    const main = /<main[\s\S]*<\/main>/.exec(page)![0];
+    const text = renderedText(main).replace(/\s+/g, ' ');
+
+    expect(main).not.toContain('border-s-accent');
+    expect(main).toMatch(/class="[^"]*\blg:grid-cols-2\b[^"]*"/);
+    // "31 de 31 días · Fuente" on one line.
+    expect(text).toMatch(/30 de 31 días · [A-Za-z]/);
+    expect(text).not.toContain('Esto es información y no es asesoramiento financiero');
+    expect(text).not.toContain('no recibe dinero de las entidades');
+    expect(main).not.toMatch(/\buppercase\b|\bfont-mono\b/);
+  });
+
+  it('shows names through the display-name helper', () => {
+    const headers = rowHeaderTexts(html('informes/2026-10/index.html'));
+    for (const [index, row] of report.rows.entries()) {
+      expect(headers[index]).toContain(displayName(row.name));
+    }
   });
 
   it('ships no island: the report is static markup', () => {
@@ -460,6 +618,64 @@ describe('site header', () => {
     for (const href of ['/', '/plazo-fijo/', '/billeteras/', '/fondos/', '/cripto/', '/metodologia/']) {
       expect(page, href).toContain(`href="${href}"`);
     }
+  });
+
+  it('lists the eight reading sections inline and in a zero-JS menu, with no sideways scroller (D10, D20)', () => {
+    const header = headerOf(html('index.html'));
+    const sections = ['/', '/plazo-fijo/', '/billeteras/', '/fondos/', '/cripto/', '/bancos/', '/informes/', '/metodologia/'];
+
+    for (const href of sections) {
+      expect(header.match(new RegExp(`<a href="${href}"[^>]*class="type-(label|body)`, 'g')) ?? [], href).toHaveLength(2);
+    }
+    expect(header).not.toContain('overflow-x-auto');
+    expect(header).not.toContain('mask-image');
+    expect(header).not.toContain('<script');
+    expect(header).toMatch(/<details[^>]*>\s*<summary[^>]*>\s*Menú\s*(<span aria-hidden="true"[^>]*><\/span>\s*)?<\/summary>/);
+  });
+
+  it('keeps Alertas as the one action and moves Claves API out of the header (D20)', () => {
+    const header = headerOf(html('index.html'));
+
+    expect(header.match(/<a href="\/alertas\/"[^>]*>\s*Alertas/g) ?? []).toHaveLength(1);
+    expect(header).not.toContain('/claves-api/');
+    expect(header).not.toContain('btn-primary');
+    expect(html('alertas/index.html')).toMatch(/<a href="\/alertas\/" aria-current="page"/);
+  });
+
+  it('marks the current section in the menu as well as inline', () => {
+    const header = headerOf(html('plazo-fijo/index.html'));
+
+    expect(header.match(/<a href="\/plazo-fijo\/" aria-current="page"/g) ?? []).toHaveLength(2);
+  });
+});
+
+describe('site footer', () => {
+  it('carries the wordmark, three links, one short disclaimer paragraph and the copyright (D11, D20)', () => {
+    const footer = footerOf(html('index.html'));
+
+    expect(footer).toMatch(/<a [^>]*href="\/metodologia\/"[^>]*>\s*Cómo se calcula/);
+    expect(footer).toMatch(/<a [^>]*href="\/claves-api\/"[^>]*>\s*Claves API/);
+    expect(footer).toMatch(/<a [^>]*href="https:\/\/github.com\/Mateocas1\/rindetuplata"[^>]*>\s*Código y capturas diarias/);
+    expect(footer.match(/<p\b/g) ?? []).toHaveLength(2);
+    const text = renderedText(footer);
+    expect(text).toContain('Es información, no asesoramiento financiero');
+    expect(text).toContain('ninguna entidad nos paga por aparecer');
+    expect(text).toContain('fuente');
+    expect(text).toMatch(/©\s*\d{4} rindetuplata/);
+  });
+
+  it('keeps the disclaimer to two sentences and uses no hand-rolled underline classes', () => {
+    const footer = footerOf(html('index.html'));
+    const paragraph = /<p class="type-body[^"]*">([\s\S]*?)<\/p>/.exec(footer);
+
+    expect(paragraph).not.toBeNull();
+    expect(renderedText(paragraph![1]).match(/[.!?](\s|$)/g) ?? []).toHaveLength(2);
+    expect(footer).not.toContain('underline-offset-2 hover:decoration-text"');
+    expect(footer).not.toContain('uppercase');
+  });
+
+  it('marks the API keys link as current on its own page', () => {
+    expect(footerOf(html('claves-api/index.html'))).toMatch(/<a [^>]*href="\/claves-api\/"[^>]*aria-current="page"|<a [^>]*aria-current="page"[^>]*href="\/claves-api\/"/);
   });
 });
 

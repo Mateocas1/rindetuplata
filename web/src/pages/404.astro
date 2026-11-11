@@ -1,8 +1,7 @@
 ---
 /**
- * 404: one line at the display role and one way back to the
- * ranking. The title and description still explain the page to a search
- * engine, but the page itself states the one fact and the one next step.
+ * 404: the fact at the display role, one sentence of reading text and the one way back,
+ * the view's single primary action. The title and description still explain the page to a search engine.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
@@ -12,8 +11,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   description="La página que buscás no existe o cambió de dirección. Volvé al ranking de hoy o mirá cómo calculamos cada número."
   noindex
 >
-  <div class="flex max-w-prose flex-col gap-section py-section">
+  <div class="flex max-w-prose flex-col items-start gap-block py-section-lg">
     <h1 class="type-display">No encontramos esta página</h1>
-    <a class="link self-start type-body" href="/">Ver el ranking de hoy</a>
+    <p class="type-body text-lead text-muted">
+      La dirección no existe o cambió. Volvé al ranking de hoy o mirá cómo calculamos cada número.
+    </p>
+    <div class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <a class="btn-primary" href="/">Ver el ranking de hoy</a>
+      <a class="link type-body" href="/metodologia/">Cómo se calcula cada número</a>
+    </div>
   </div>
 </BaseLayout>

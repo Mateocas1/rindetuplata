@@ -2,7 +2,7 @@
  * The active keys of `/claves-api/`.
  *
  * A list of one-line rows in the panel's card, in the shape of the alert list: label, then the display prefix in the
- * quiet mono `type-data` line (all the API keeps to show), the plan and the creation day. Revoking opens an inline
+ * quiet `type-data` line (all the API keeps to show), the plan and the creation day. Revoking opens an inline
  * confirmation that takes over the row; the confirm carries the loss tone and the cancel is a peer action, so the
  * view keeps exactly one primary button, the create form's.
  */

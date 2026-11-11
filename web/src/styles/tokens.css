@@ -3,10 +3,12 @@
  *
  * Two tiers, one direction: hue-named primitives hold the values, role-named
  * semantic tokens are the only colors a component may reference. Direction
- * ("Cobalto Cristal"): graphite neutrals (hue 265-270, low chroma),
+ * (Grafito Cobalto, which supersedes the earlier
+ * "Cobalto Cristal" gestures): graphite neutrals (hue 265-270, low chroma),
  * one cobalt accent (hue 267) with one job, status hues far from it. Depth
  * comes from the surface ladder (surface -> surface-raised -> subtle-surface),
- * not from shadows; one element per page may be frosted glass.
+ * not from shadows. One type family, Archivo, whose width axis gives headlines
+ * and figures their voice; no serif accent, no frosted glass, no glow or grid.
  *
  * Two appearances, one switching mechanism: the `@theme` block holds the light
  * roles and a single `prefers-color-scheme: dark` block repoints them to the
@@ -21,7 +23,7 @@
   /* Drop Tailwind's default palette so only these tokens generate utilities. */
   --color-*: initial;
 
-  /* Primitives: graphite (hue 265-270), the Cobalto Cristal neutrals. Light steps */
+  /* Primitives: graphite (hue 265-270), the Grafito Cobalto neutrals. Light steps */
   --color-graphite-0: oklch(1 0 0);
   --color-graphite-50: oklch(0.979 0.003 265);
   --color-graphite-100: oklch(0.955 0.006 265);
@@ -111,15 +113,15 @@
 
   /*
    * Type scale. Seven roles, each one `type-*` recipe in recipes.css:
-   * label (mono caps), display, section, figure (+ the row step), body (+ the
-   * lead step), data (mono, tabular) and index (the 01-08 gutter, data size).
+   * label (sentence case, sans), display, section, figure (+ the row step),
+   * body (+ the lead step), data (sans, tabular) and index (the 01-08 gutter,
+   * data size).
    * These are the only steps there are: a component takes a role and may
    * vary weight or the muted color, never the size.
    */
-  --text-label: 0.75rem;
-  --text-label--line-height: 1.2;
-  --text-label--letter-spacing: 0.08em;
-  --text-data: 0.8125rem;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.3;
+  --text-data: 0.875rem;
   --text-data--line-height: 1.45;
   --text-section: 1.75rem;
   --text-section--line-height: 1.2;
@@ -132,11 +134,11 @@
   --text-lead--line-height: 1.55;
   --text-display: clamp(2.2rem, 1.5rem + 3vw, 3.4rem);
   --text-display--line-height: 1.05;
-  --text-display--letter-spacing: -0.025em;
+  --text-display--letter-spacing: -0.02em;
   /* The headline figure of a card (today's rate, the simulated result). */
   --text-figure: clamp(2.5rem, 2rem + 2.5vw, 3.75rem);
   --text-figure--line-height: 1;
-  --text-figure--letter-spacing: -0.01em;
+  --text-figure--letter-spacing: -0.02em;
 
   /* Spacing: group inside a block, then the wider rhythm between blocks (>= 2x) */
   --spacing-gutter: 1.25rem;
@@ -161,38 +163,27 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   /*
-   * Type families, self-hosted from @fontsource (OFL-1.1) and bundled by Vite,
-   * so builds stay offline: Archivo for reading text (the default),
-   * Space Grotesk for display and figures, Geist Mono for labels and data, and
-   * Instrument Serif italic for the one accent word per page. The system
-   * stacks cover the moment before they load.
+   * One type family, self-hosted from @fontsource (OFL-1.1) and bundled by
+   * Vite, so builds stay offline: Archivo Variable carries the weight
+   * (100-900) and width (62-125%) axes, so display, section and figure roles
+   * set `font-stretch` instead of reaching for a second family. The system mono
+   * stack is only for code-like strings (API keys); the system sans stack
+   * covers the moment before Archivo loads.
    */
   --font-sans:
     'Archivo Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
-  --font-display: 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 }
 
 /*
- * Surface ladder and glass. Not theme tokens: they carry alpha, and the
- * dark block below must repoint them. Use through the `card`, `glass` and
- * `glass-field` recipes. `tokens.test.ts` measures text and muted on the glass
- * composited over the full glow.
+ * Surface ladder. Not a theme token: it carries alpha, and the dark
+ * block below must repoint it. Use through the `card` recipe.
  */
 :root {
   color-scheme: light dark;
   /* Light: the raised step is white on the canvas, so no inner highlight. */
   --surface-lift: 0 0 0 0 oklch(0 0 0 / 0);
-  /* Frosted glass, one element per page: white over the canvas, a cobalt glow
-     and a hairline grid behind it (raised from the prototype: the light
-     glass was nearly invisible). */
-  --glass-fill: oklch(1 0 0 / 0.58);
-  --glass-line: oklch(0.159 0.011 268 / 0.14);
-  --glass-lift: inset 0 1px 0 oklch(1 0 0 / 0.9);
-  --glow: oklch(0.488 0.232 267 / 0.26);
-  --grid-line: oklch(0.159 0.011 268 / 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -228,10 +219,5 @@
 
     /* Dark: the raised step adds a 1px inner top highlight. */
     --surface-lift: inset 0 1px 0 oklch(1 0 0 / 0.07);
-    --glass-fill: oklch(0.206 0.021 272 / 0.55);
-    --glass-line: oklch(1 0 0 / 0.12);
-    --glass-lift: inset 0 1px 0 oklch(1 0 0 / 0.12);
-    --glow: oklch(0.692 0.161 273 / 0.22);
-    --grid-line: oklch(1 0 0 / 0.06);
   }
 }

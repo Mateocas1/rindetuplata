@@ -86,7 +86,11 @@ public class RankingService {
 		List<RankedEntry> ranked = new ArrayList<>(domain.ranked().size());
 		for (Ranking.Entry entry : domain.ranked()) {
 			ranked.add(entry(byInstrument.get(entry.instrument()), entry.simulation(),
-					rem == null ? null : entry.realReturn(), mep));
+					rem == null ? null : entry.realReturn(),
+					rem == null ? null
+							: Inflation.realEarned(query.amount(), entry.simulation().finalAmount(),
+									domain.inflationOverHorizon()),
+					mep));
 		}
 		if (groupFunds) {
 			ranked = groupFunds(ranked);
@@ -154,12 +158,15 @@ public class RankingService {
 			}
 			Evaluation evaluation = candidate.instrument().evaluate(amount, days);
 			if (evaluation instanceof Simulation simulation) {
-				BigDecimal realReturn = reader.latestExpectedInflation(asOf)
-						.map(rem -> Inflation.realReturn(simulation.nominalReturn(),
-								Inflation.overHorizon(rem.value(), days)))
+				BigDecimal overHorizon = reader.latestExpectedInflation(asOf)
+						.map(rem -> Inflation.overHorizon(rem.value(), days))
 						.orElse(null);
+				BigDecimal realReturn = overHorizon == null ? null
+						: Inflation.realReturn(simulation.nominalReturn(), overHorizon);
+				BigDecimal realEarned = overHorizon == null ? null
+						: Inflation.realEarned(amount, simulation.finalAmount(), overHorizon);
 				MepQuote mep = reader.latestDollarMep(asOf).orElse(null);
-				return new SimulationResult.Simulated(entry(candidate, simulation, realReturn, mep), mep);
+				return new SimulationResult.Simulated(entry(candidate, simulation, realReturn, realEarned, mep), mep);
 			}
 			return new SimulationResult.IneligibleInstrument(id, candidate.name(), (Ineligible) evaluation);
 		}
@@ -425,11 +432,12 @@ public class RankingService {
 	}
 
 	private static RankedEntry entry(Candidate candidate, Simulation simulation, BigDecimal realReturn,
-			MepQuote mep) {
+			BigDecimal realEarned, MepQuote mep) {
 		return new RankedEntry(candidate.id(), candidate.kind(), candidate.name(), candidate.entity(),
 				SourceRegistry.of(candidate.sourceId()), candidate.confidence(), candidate.verifiedAt(),
 				candidate.captureDate(), candidate.dataDate(), candidate.rateUsed(), simulation.finalAmount(),
-				simulation.earned(), simulation.nominalReturn(), realReturn, simulation.conditional().orElse(null),
+				simulation.earned(), simulation.nominalReturn(), realReturn, realEarned,
+				simulation.conditional().orElse(null),
 				candidate.warnings(), 0,
 				mep == null ? null : MepBreakEven.of(simulation.nominalReturn(), mep.buy(), mep.sell()));
 	}

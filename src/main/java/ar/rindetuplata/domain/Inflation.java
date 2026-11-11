@@ -51,4 +51,18 @@ public final class Inflation {
         }
         return BigDecimal.ONE.add(nominalReturn).divide(inflationFactor, Money.MATH).subtract(BigDecimal.ONE);
     }
+
+    /**
+     * Pesos the investment earns above (positive) or below (negative) the expected inflation over the horizon, in
+     * today's pesos: {@code finalAmount / (1 + inflation) − amount}. The division uses {@link Money#MATH}; the
+     * result is rounded once, to centavos ({@link Money#PRESENTED_SCALE}, {@link Money#PRESENTED_ROUNDING}).
+     */
+    public static BigDecimal realEarned(Money amount, Money finalAmount, BigDecimal inflation) {
+        BigDecimal inflationFactor = BigDecimal.ONE.add(inflation);
+        if (inflationFactor.signum() <= 0) {
+            throw new IllegalArgumentException("Inflation must be greater than -100%: " + inflation);
+        }
+        return finalAmount.value().divide(inflationFactor, Money.MATH).subtract(amount.value(), Money.MATH)
+                .setScale(Money.PRESENTED_SCALE, Money.PRESENTED_ROUNDING);
+    }
 }

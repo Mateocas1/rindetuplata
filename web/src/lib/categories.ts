@@ -16,6 +16,8 @@ export interface Category {
   h1: string;
   description: string;
   intro: string;
+  /** When the money can be taken out, shown next to each entry. */
+  liquidity: string;
 }
 
 export const CATEGORIES: Category[] = [
@@ -24,6 +26,7 @@ export const CATEGORIES: Category[] = [
     kind: 'PLAZO_FIJO',
     path: '/plazo-fijo/',
     navLabel: 'Plazos fijos',
+    liquidity: 'Al vencimiento',
     h1: 'Plazos fijos por banco',
     title: 'Plazos fijos: tasas por banco y cuánto ganás | rindetuplata',
     description:
@@ -36,6 +39,7 @@ export const CATEGORIES: Category[] = [
     kind: 'WALLET',
     path: '/billeteras/',
     navLabel: 'Billeteras',
+    liquidity: 'Disponible al instante',
     h1: 'Billeteras remuneradas',
     title: 'Billeteras remuneradas: tasas y cuánto rinden | rindetuplata',
     description:
@@ -48,6 +52,7 @@ export const CATEGORIES: Category[] = [
     kind: 'FUND',
     path: '/fondos/',
     navLabel: 'Fondos',
+    liquidity: 'Rescate en el día',
     h1: 'Fondos money market',
     title: 'Fondos money market: rendimiento por clase | rindetuplata',
     description:
@@ -60,6 +65,7 @@ export const CATEGORIES: Category[] = [
     kind: 'CRYPTO',
     path: '/cripto/',
     navLabel: 'Cripto',
+    liquidity: 'Disponible al instante',
     h1: 'Cripto y fintech en pesos',
     title: 'Cripto y fintech: rendimientos en pesos | rindetuplata',
     description:
@@ -71,4 +77,9 @@ export const CATEGORIES: Category[] = [
 
 export function categoryForKind(kind: string): Category | null {
   return CATEGORIES.find((category) => category.kind === kind) ?? null;
+}
+
+/** Liquidity copy of a kind, shown next to each entry; null for an unknown kind. */
+export function liquidityForKind(kind: string): string | null {
+  return categoryForKind(kind)?.liquidity ?? null;
 }

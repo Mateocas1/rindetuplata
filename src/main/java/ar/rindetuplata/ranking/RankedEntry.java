@@ -12,7 +12,8 @@ import java.util.Objects;
 
 /**
  * One ranked instrument: everything the API needs to render a row without another query. {@code earned}
- * and {@code finalAmount} are the personalized outcome; {@code realReturn} is null when no REM observation exists;
+ * and {@code finalAmount} are the personalized outcome; {@code realReturn} and {@code realEarned} (pesos above or
+ * below the expected inflation, scale 2) are null when no REM observation exists;
  * {@code upTo} is the best conditional outcome, reported as "up to" and never used for the ranking.
  * {@code foldedClasses} is how many sibling classes of the same fund the grouped ranking folded into this row
  * (the best class for the request); it is 0 for every other kind and whenever grouping is off.
@@ -20,7 +21,8 @@ import java.util.Objects;
  */
 public record RankedEntry(String id, RankedKind kind, String name, String entity, SourceView source,
 		Confidence confidence, LocalDate verifiedAt, LocalDate captureDate, LocalDate dataDate, RateUsed rateUsed,
-		Money finalAmount, Money earned, BigDecimal nominalReturn, BigDecimal realReturn, ConditionalOutcome upTo,
+		Money finalAmount, Money earned, BigDecimal nominalReturn, BigDecimal realReturn, BigDecimal realEarned,
+		ConditionalOutcome upTo,
 		List<ValidationFlag> warnings, int foldedClasses, MepBreakEven breakEvenMep) {
 
 	public RankedEntry {
@@ -43,6 +45,6 @@ public record RankedEntry(String id, RankedKind kind, String name, String entity
 
 	RankedEntry withFoldedClasses(int folded) {
 		return new RankedEntry(id, kind, name, entity, source, confidence, verifiedAt, captureDate, dataDate,
-				rateUsed, finalAmount, earned, nominalReturn, realReturn, upTo, warnings, folded, breakEvenMep);
+				rateUsed, finalAmount, earned, nominalReturn, realReturn, realEarned, upTo, warnings, folded, breakEvenMep);
 	}
 }

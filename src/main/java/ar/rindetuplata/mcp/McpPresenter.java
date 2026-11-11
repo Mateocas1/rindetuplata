@@ -116,6 +116,7 @@ final class McpPresenter {
 						entry.rateUsed().kind().name()),
 				JsonScales.money(entry.finalAmount().presented()), JsonScales.money(entry.earned().presented()),
 				JsonScales.rate(entry.nominalReturn()), JsonScales.rate(entry.realReturn()),
+				JsonScales.money(entry.realEarned()),
 				entry.upTo() == null ? null
 						: new UpToView(entry.upTo().condition(),
 								JsonScales.money(entry.upTo().finalAmount().presented())),

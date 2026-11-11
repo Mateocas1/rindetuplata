@@ -12,6 +12,11 @@
  * before them: the build's HTML compression drops that newline and the words
  * would otherwise run together.
  *
+ * Layout: at `lg` a sticky table of contents sits beside the reading
+ * column, which keeps its 40rem measure; below `lg` the same list is a closed
+ * disclosure after the headline. The list is built from `contents`, so every
+ * h2 id is in one place (the build smoke test checks that each one resolves).
+ *
  * Page that must stay script-free: it ships no island and no JSON-LD (checked
  * by the build smoke test).
  *
@@ -33,6 +38,20 @@ const confidenceOrder = [
   'SCRAPED_ENTITY_WEB',
   'CURATED_MANUAL',
 ];
+const contents = [
+  { id: 'que-comparamos', label: 'Qué comparamos' },
+  { id: 'tna-tea', label: 'TNA y TEA: los dos números que ves' },
+  { id: 'rendimiento-real', label: 'Cuánto le ganás a la inflación' },
+  { id: 'dolar-mep', label: 'Contra el dólar MEP' },
+  { id: 'orden', label: 'Cómo se ordena' },
+  { id: 'liquidez-garantia', label: 'Liquidez y garantía de los depósitos' },
+  { id: 'fuentes', label: 'De dónde salen los datos' },
+  { id: 'confianza', label: 'Cuánto confiamos en cada dato' },
+  { id: 'afuera', label: 'Qué queda afuera de la cuenta' },
+  { id: 'neutralidad', label: 'Neutralidad' },
+  { id: 'aviso', label: 'Aviso' },
+];
+const tocLink = 'block py-1 text-muted hover:text-text hover:underline focus-visible:underline underline-offset-2';
 const sources = [
   {
     data: 'Plazo fijo por banco (tasa para clientes y no clientes)',
@@ -78,254 +97,332 @@ const sources = [
   title="Cómo se calcula el ranking | rindetuplata"
   description="De dónde salen las tasas, cómo se pasa de TNA a TEA, cómo se calcula el rendimiento real contra la inflación (REM hoy, INDEC en el histórico) y por qué el ranking es neutral."
 >
-  <div class="flex max-w-prose flex-col gap-section py-section">
-    <header class="flex flex-col gap-block">
-      <p class="type-label">Metodología</p>
-      <h1 class="type-display">Cómo se calcula el <em class="serif-accent">ranking</em></h1>
-      <p class="type-body text-lead text-muted">
-        Todo lo que mostramos sale de datos públicos y de una cuenta que podés repetir. Acá está
-        cada paso, con la fuente y la fecha de cada dato.
-      </p>
-    </header>
-
-    <section class="flex flex-col gap-block" aria-labelledby="que-comparamos">
-      <h2 id="que-comparamos" class="type-section">Qué comparamos</h2>
-      <p class="type-body">
-        Cuatro familias de opciones en pesos: <strong>plazos fijos</strong> por banco,{' '}
-        <strong>billeteras remuneradas</strong>, <strong>fondos money market</strong> y{' '}
-        <strong>rendimientos en cripto y fintech</strong>. Las tres primeras son las que usa la
-        mayoría de los ahorristas; la cuarta queda como comparación porque también paga interés
-        diario en pesos.
-      </p>
-      <p class="type-body">
-        El ranking se arma con <strong>tu monto</strong> y <strong>tu plazo</strong>: simulamos
-        cada opción con esas dos variables y ordenamos por cuánto ganás en pesos, no por la tasa.
-        Por defecto usamos $&nbsp;1.000.000 a 30 días.
-      </p>
-    </section>
-
-    <section class="flex flex-col gap-block" aria-labelledby="tna-tea">
-      <h2 id="tna-tea" class="type-section">TNA y TEA: los dos números que ves</h2>
-      <p class="type-body">
-        La <strong>TNA</strong> (tasa nominal anual) es el número que las entidades publican, sin
-        capitalización. La <strong>TEA</strong> (tasa efectiva anual) es lo que termina rindiendo
-        en un año cuando el interés se va sumando al capital.
-      </p>
-      <p class="type-body">
-        En el ranking la tasa principal es una <strong>TNA</strong>, porque es el número que
-        publica la fuente. El monto que ves ganado ya tiene la cuenta hecha para tu plazo, así que
-        comparás plata contra plata.
-      </p>
-      <details class={detailsClass}>
-        <summary class={summaryClass}>Ver la cuenta de un plazo fijo</summary>
-        <p class="type-body mt-2">
-          Un plazo fijo paga interés simple sobre el plazo: capital × TNA × días ÷ 365. Con 20% de
-          TNA a 30 días: 1.000.000 × 0,20 × 30 ÷ 365 = $&nbsp;16.438,36. Al vencimiento tenés
-          $&nbsp;1.016.438,36.
+  <div class="grid gap-x-16 py-section lg:grid-cols-[13rem_minmax(0,40rem)] lg:justify-center">
+    <div class="flex max-w-prose flex-col gap-section lg:col-start-2 lg:row-start-1">
+      <header class="flex flex-col gap-block">
+        <h1 class="type-display">Cómo se calcula el ranking</h1>
+        <p class="type-body text-lead text-muted">
+          Todo lo que mostramos sale de datos públicos y de una cuenta que podés repetir. Acá está
+          cada paso, con la fuente y la fecha de cada dato.
         </p>
-        <p class="type-body mt-2">
-          Si el plazo es de 60 días o más, lo simulamos renovando cada 30 días a la tasa de hoy: el
-          interés de cada tramo se suma al capital del siguiente. Con 30% de TNA a 180 días, las
-          seis renovaciones rinden 15,74%, contra 14,79% de interés simple. En la realidad la tasa
-          puede cambiar en cada renovación, así que es una estimación.
-        </p>
+      </header>
+
+      <details class="disclosure card px-4 py-3 lg:hidden">
+        <summary class={summaryClass}>En esta página</summary>
+        <nav aria-label="En esta página" class="mt-2">
+          <ol class="type-data flex flex-col">
+            {
+              contents.map((item) => (
+                <li>
+                  <a class={tocLink} href={`#${item.id}`}>
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </nav>
       </details>
-      <details class={detailsClass}>
-        <summary class={summaryClass}>Ver la cuenta de una billetera o un fondo</summary>
-        <p class="type-body mt-2">
-          Las billeteras y los fondos acreditan interés todos los días sobre el saldo, así que el
-          interés se compone: (1 + TNA ÷ 365) elevado a 365, menos 1. La misma TNA de 20% equivale
-          a una TEA de 22,13% en un año.
+
+      <section class="flex flex-col gap-block" aria-labelledby="que-comparamos">
+        <h2 id="que-comparamos" class="type-section">Qué comparamos</h2>
+        <p class="type-body">
+          Cuatro familias de opciones en pesos: <strong>plazos fijos</strong> por banco,{' '}
+          <strong>billeteras remuneradas</strong>, <strong>fondos money market</strong> y{' '}
+          <strong>rendimientos en cripto y fintech</strong>. Las tres primeras son las que usa la
+          mayoría de los ahorristas; la cuarta queda como comparación porque también paga interés
+          diario en pesos.
         </p>
-      </details>
-    </section>
-
-    <section class="flex flex-col gap-block" aria-labelledby="rendimiento-real">
-      <h2 id="rendimiento-real" class="type-section">Cuánto le ganás a la inflación</h2>
-      <p class="type-body">
-        Comparar contra la inflación es la razón de ser del sitio: una tasa alta puede perder
-        poder de compra igual. El <strong>rendimiento real</strong> es la cuenta de esa diferencia:
-        rendimiento nominal contra inflación del mismo plazo.
-      </p>
-      <p class="type-body">
-        Para el ranking de hoy y para el simulador usamos la{' '}
-        <strong>inflación esperada del REM</strong> (el Relevamiento de Expectativas de Mercado del
-        BCRA, variable 29), porque la inflación del mes pasado ya pasó y no dice nada sobre los
-        próximos 30 días. Para el histórico usamos el <strong>IPC mensual del INDEC</strong>{' '}
-        (variable 27), que es el dato consumado.
-      </p>
-      <p class="type-body">
-        El REM publica una expectativa <strong>a 12 meses</strong>. Para tu plazo la componemos en
-        vez de dividirla: (1 + inflación a 12 meses) elevado a (días ÷ 365), menos 1. Cada vista
-        indica qué índice usó y con qué fecha de observación.
-      </p>
-      <p class="type-body">
-        <strong>Por qué el gráfico anualiza los dos.</strong> La TNA es anual y el IPC del INDEC es
-        mensual: en un mismo eje, una tasa de 30% parecería quince veces una inflación de 2%. Por
-        eso el gráfico muestra la tasa efectiva anual (TEA) y la inflación anualizada, que es la
-        del mes compuesta durante 12 meses: (1 + inflación del mes) elevado a 12, menos 1.
-      </p>
-      <details class={detailsClass}>
-        <summary class={summaryClass}>Ver el ejemplo completo</summary>
-        <p class="type-body mt-2">
-          Naranja X, 20% de TNA a 30 días sobre $&nbsp;1.000.000: ganás $&nbsp;16.438,36 (1,64% en
-          el plazo). La inflación esperada del REM es 21,10% a 12 meses, que compuesta para 30
-          días da 1,59%. El rendimiento real es (1 + 0,0164) ÷ (1 + 0,0159) − 1 = +0,06%: le
-          ganás, pero por poco.
+        <p class="type-body">
+          El ranking se arma con <strong>tu monto</strong> y <strong>tu plazo</strong>: simulamos
+          cada opción con esas dos variables y ordenamos por cuánto ganás en pesos, no por la tasa.
+          Por defecto usamos $&nbsp;1.000.000 a 30 días.
         </p>
-      </details>
-    </section>
+      </section>
 
-    <section class="flex flex-col gap-block" aria-labelledby="dolar-mep">
-      <h2 id="dolar-mep" class="type-section">Contra el dólar MEP</h2>
-      <p class="type-body">
-        Cada opción trae también una comparación con el <strong>dólar MEP</strong>: hasta cuánto
-        puede subir el dólar para que la opción te siga rindiendo más. No es un pronóstico de
-        hacia dónde va el dólar: es el punto de equilibrio de la cuenta.
-      </p>
-      <p class="type-body">
-        La cuenta incluye el <strong>spread</strong>. Para pasarte a dólares comprás dólares al
-        precio de <strong>venta</strong> de hoy, y para volver a pesos los vendés al precio de{' '}
-        <strong>compra</strong> del día en que termina el plazo. Por eso la opción te gana
-        mientras el MEP de compra suba menos de (1 + rendimiento) × venta ÷ compra − 1, que es el
-        porcentaje que mostramos. El precio de equilibrio es (1 + rendimiento) × venta. Como la
-        venta es más alta que la compra, el porcentaje queda por encima del rendimiento.
-      </p>
-      <details class={detailsClass}>
-        <summary class={summaryClass}>Ver el ejemplo completo</summary>
-        <p class="type-body mt-2">
-          Con un MEP de $&nbsp;1.534,20 de compra y $&nbsp;1.539,40 de venta, un plazo fijo al
-          30% de TNA rinde 2,47% en 30 días (2,4658% sin redondear). La cuenta da (1 + 0,024658) ×
-          1.539,40 ÷ 1.534,20 − 1 = 2,81%: si el MEP de compra sube menos que eso, el plazo fijo
-          gana. En precio, el equilibrio es $&nbsp;1.577,36; si al vencimiento el MEP de compra
-          está por encima, el dólar rindió más.
+      <section class="flex flex-col gap-block" aria-labelledby="tna-tea">
+        <h2 id="tna-tea" class="type-section">TNA y TEA: los dos números que ves</h2>
+        <p class="type-body">
+          La <strong>TNA</strong> (tasa nominal anual) es el número que las entidades publican, sin
+          capitalización. La <strong>TEA</strong> (tasa efectiva anual) es lo que termina rindiendo
+          en un año cuando el interés se va sumando al capital.
         </p>
-      </details>
-      <p class="type-body">
-        Usamos la última cotización MEP guardada hasta la fecha del ranking (DolarApi, una fuente
-        no oficial) y mostramos su fecha. Si no hay una cotización guardada, no mostramos esta
-        comparación. La cuenta no incluye impuestos ni comisiones por comprar o vender dólares.
-      </p>
-    </section>
+        <p class="type-body">
+          En el ranking la tasa principal es una <strong>TNA</strong>, porque es el número que
+          publica la fuente. El monto que ves ganado ya tiene la cuenta hecha para tu plazo, así que
+          comparás plata contra plata.
+        </p>
+        <details class={detailsClass}>
+          <summary class={summaryClass}>Ver la cuenta de un plazo fijo</summary>
+          <p class="type-body mt-2">
+            Un plazo fijo paga interés simple sobre el plazo: capital × TNA × días ÷ 365. Con 20% de
+            TNA a 30 días: 1.000.000 × 0,20 × 30 ÷ 365 = $&nbsp;16.438,36. Al vencimiento tenés
+            $&nbsp;1.016.438,36.
+          </p>
+          <p class="type-body mt-2">
+            Si el plazo es de 60 días o más, lo simulamos renovando cada 30 días a la tasa de hoy: el
+            interés de cada tramo se suma al capital del siguiente. Con 30% de TNA a 180 días, las
+            seis renovaciones rinden 15,74%, contra 14,79% de interés simple. En la realidad la tasa
+            puede cambiar en cada renovación, así que es una estimación.
+          </p>
+        </details>
+        <details class={detailsClass}>
+          <summary class={summaryClass}>Ver la cuenta de una billetera o un fondo</summary>
+          <p class="type-body mt-2">
+            Las billeteras y los fondos acreditan interés todos los días sobre el saldo, así que el
+            interés se compone: (1 + TNA ÷ 365) elevado a 365, menos 1. La misma TNA de 20% equivale
+            a una TEA de 22,13% en un año.
+          </p>
+        </details>
+      </section>
 
-    <section class="flex flex-col gap-block" aria-labelledby="orden">
-      <h2 id="orden" class="type-section">Cómo se ordena</h2>
-      <ul class="type-body flex list-disc flex-col gap-2 ps-5">
-        <li>Simulamos cada opción con tu monto y tu plazo, y ordenamos por los pesos ganados.</li>
-        <li>
-          Se aplican los topes, las franjas y los mínimos de cada producto: una billetera con tope
-          paga la tasa solo hasta el tope y el resto a 0%.
-        </li>
-        <li>
-          Los plazos fijos usan por defecto la tasa para <strong>no clientes</strong>, que es la
-          que consigue cualquiera. Si marcás "soy cliente de…", usamos las tasas para clientes de
-          esos bancos.
-        </li>
-        <li>
-          Las opciones que no llegan al mínimo de monto o de plazo no se esconden: aparecen
-          aparte, con el motivo.
-        </li>
-        <li>
-          Las filas con datos viejos, con datos inválidos o con tasas que no se pueden calcular
-          también se listan aparte, con su motivo.
-        </li>
-        <li>
-          Si una opción tiene una tasa condicional (por ejemplo, "si sumás $500.000"), el ranking
-          usa la tasa incondicional y te muestra aparte hasta cuánto llegarías con la condición.
-        </li>
-      </ul>
-    </section>
+      <section class="flex flex-col gap-block" aria-labelledby="rendimiento-real">
+        <h2 id="rendimiento-real" class="type-section">Cuánto le ganás a la inflación</h2>
+        <p class="type-body">
+          Comparar contra la inflación es la razón de ser del sitio: una tasa alta puede perder
+          poder de compra igual. El <strong>rendimiento real</strong> es la cuenta de esa diferencia:
+          rendimiento nominal contra inflación del mismo plazo.
+        </p>
+        <p class="type-body">
+          Para el ranking de hoy y para el simulador usamos la{' '}
+          <strong>inflación esperada del REM</strong> (el Relevamiento de Expectativas de Mercado del
+          BCRA, variable 29), porque la inflación del mes pasado ya pasó y no dice nada sobre los
+          próximos 30 días. Para el histórico usamos el <strong>IPC mensual del INDEC</strong>{' '}
+          (variable 27), que es el dato consumado.
+        </p>
+        <p class="type-body">
+          El REM publica una expectativa <strong>a 12 meses</strong>. Para tu plazo la componemos en
+          vez de dividirla: (1 + inflación a 12 meses) elevado a (días ÷ 365), menos 1. Cada vista
+          indica qué índice usó y con qué fecha de observación.
+        </p>
+        <p class="type-body">
+          <strong>Por qué el gráfico anualiza los dos.</strong> La TNA es anual y el IPC del INDEC es
+          mensual: en un mismo eje, una tasa de 30% parecería quince veces una inflación de 2%. Por
+          eso el gráfico muestra la tasa efectiva anual (TEA) y la inflación anualizada, que es la
+          del mes compuesta durante 12 meses: (1 + inflación del mes) elevado a 12, menos 1.
+        </p>
+        <details class={detailsClass}>
+          <summary class={summaryClass}>Ver el ejemplo completo</summary>
+          <p class="type-body mt-2">
+            Naranja X, 20% de TNA a 30 días sobre $&nbsp;1.000.000: ganás $&nbsp;16.438,36 (1,64% en
+            el plazo). La inflación esperada del REM es 21,10% a 12 meses, que compuesta para 30
+            días da 1,59%. El rendimiento real es (1 + 0,0164) ÷ (1 + 0,0159) − 1 = +0,06%: le
+            ganás, pero por poco.
+          </p>
+        </details>
+      </section>
 
-    <section class="flex flex-col gap-block" aria-labelledby="fuentes">
-      <h2 id="fuentes" class="type-section">De dónde salen los datos</h2>
-      <dl class="flex flex-col">
-        {
-          sources.map((source) => (
-            <div class="flex flex-col gap-1 border-t border-border py-4">
-              <dt class="type-body font-medium">{source.data}</dt>
-              <dd class="type-body text-muted">
-                {source.source}. {source.detail}
-              </dd>
-            </div>
-          ))
-        }
-      </dl>
-      <p class="type-body text-muted">
-        Guardamos una captura diaria de las respuestas crudas de las fuentes que no se pueden
-        volver a consultar, así el histórico se puede reconstruir desde el primer día.
-      </p>
-    </section>
+      <section class="flex flex-col gap-block" aria-labelledby="dolar-mep">
+        <h2 id="dolar-mep" class="type-section">Contra el dólar MEP</h2>
+        <p class="type-body">
+          Cada opción trae también una comparación con el <strong>dólar MEP</strong>: hasta cuánto
+          puede subir el dólar para que la opción te siga rindiendo más. No es un pronóstico de
+          hacia dónde va el dólar: es el punto de equilibrio de la cuenta.
+        </p>
+        <p class="type-body">
+          La cuenta incluye el <strong>spread</strong>. Para pasarte a dólares comprás dólares al
+          precio de <strong>venta</strong> de hoy, y para volver a pesos los vendés al precio de{' '}
+          <strong>compra</strong> del día en que termina el plazo. Por eso la opción te gana
+          mientras el MEP de compra suba menos de (1 + rendimiento) × venta ÷ compra − 1, que es el
+          porcentaje que mostramos. El precio de equilibrio es (1 + rendimiento) × venta. Como la
+          venta es más alta que la compra, el porcentaje queda por encima del rendimiento.
+        </p>
+        <details class={detailsClass}>
+          <summary class={summaryClass}>Ver el ejemplo completo</summary>
+          <p class="type-body mt-2">
+            Con un MEP de $&nbsp;1.534,20 de compra y $&nbsp;1.539,40 de venta, un plazo fijo al
+            30% de TNA rinde 2,47% en 30 días (2,4658% sin redondear). La cuenta da (1 + 0,024658) ×
+            1.539,40 ÷ 1.534,20 − 1 = 2,81%: si el MEP de compra sube menos que eso, el plazo fijo
+            gana. En precio, el equilibrio es $&nbsp;1.577,36; si al vencimiento el MEP de compra
+            está por encima, el dólar rindió más.
+          </p>
+        </details>
+        <p class="type-body">
+          Usamos la última cotización MEP guardada hasta la fecha del ranking (DolarApi, una fuente
+          no oficial) y mostramos su fecha. Si no hay una cotización guardada, no mostramos esta
+          comparación. La cuenta no incluye impuestos ni comisiones por comprar o vender dólares.
+        </p>
+      </section>
 
-    <section class="flex flex-col gap-block" aria-labelledby="confianza">
-      <h2 id="confianza" class="type-section">Cuánto confiamos en cada dato</h2>
-      <p class="type-body">
-        Cada fila muestra su nivel de confianza, la fuente y la fecha del dato. Ninguna tasa
-        vieja se muestra como si fuera de hoy.
-      </p>
-      <dl class="flex flex-col">
-        {
-          confidenceOrder.map((code) => (
-            <div class="flex flex-col gap-1 border-t border-border py-4">
-              <dt class="type-body font-medium">{CONFIDENCE_LABELS[code]}</dt>
-              <dd class="type-body text-muted">{CONFIDENCE_DESCRIPTIONS[code]}</dd>
-            </div>
-          ))
-        }
-      </dl>
-      <p class="type-body text-muted">
-        Las tasas de billeteras no tienen una fuente oficial con API. Mientras no exista, las
-        cargamos a mano a partir de información pública y mostramos la fecha de verificación; si
-        un dato queda viejo, se marca como desactualizado y no se muestra como vigente.
-      </p>
-    </section>
+      <section class="flex flex-col gap-block" aria-labelledby="orden">
+        <h2 id="orden" class="type-section">Cómo se ordena</h2>
+        <ul class="type-body flex list-disc flex-col gap-2 ps-5">
+          <li>Simulamos cada opción con tu monto y tu plazo, y ordenamos por los pesos ganados.</li>
+          <li>
+            Se aplican los topes, las franjas y los mínimos de cada producto: una billetera con tope
+            paga la tasa solo hasta el tope y el resto a 0%.
+          </li>
+          <li>
+            Los plazos fijos usan por defecto la tasa para <strong>no clientes</strong>, que es la
+            que consigue cualquiera. Si marcás "soy cliente de…", usamos las tasas para clientes de
+            esos bancos.
+          </li>
+          <li>
+            Las opciones que no llegan al mínimo de monto o de plazo no se esconden: aparecen
+            aparte, con el motivo.
+          </li>
+          <li>
+            Las filas con datos viejos, con datos inválidos o con tasas que no se pueden calcular
+            también se listan aparte, con su motivo.
+          </li>
+          <li>
+            Si una opción tiene una tasa condicional (por ejemplo, "si sumás $500.000"), el ranking
+            usa la tasa incondicional y te muestra aparte hasta cuánto llegarías con la condición.
+          </li>
+        </ul>
+      </section>
 
-    <section class="flex flex-col gap-block" aria-labelledby="afuera">
-      <h2 id="afuera" class="type-section">Qué queda afuera de la cuenta</h2>
-      <ul class="type-body flex list-disc flex-col gap-2 ps-5">
-        <li>
-          <strong>Impuestos.</strong> Las cuentas no incluyen impuestos ni retenciones.
-        </li>
-        <li>
-          <strong>Comisiones y gastos</strong> de cada entidad o fondo.
-        </li>
-        <li>
-          <strong>Condiciones de cada cuenta</strong>: apertura, montos mínimos en cuenta,
-          tenencia mínima, publicidad de la tasa y promociones por tiempo limitado.
-        </li>
-        <li>
-          <strong>Riesgo de cada entidad.</strong> Una tasa más alta suele venir con más riesgo:
-          el ranking ordena números, no evalúa solvencia.
-        </li>
-      </ul>
-      <p class="type-body">
-        Podés revisar la letra chica de cada opción en el sitio de la entidad, que es la fuente
-        final para cualquier decisión.
-      </p>
-    </section>
+      <section class="flex flex-col gap-block" aria-labelledby="liquidez-garantia">
+        <h2 id="liquidez-garantia" class="type-section">Liquidez y garantía de los depósitos</h2>
+        <p class="type-body">
+          <strong>Cuándo podés sacar la plata</strong> depende de la opción:
+        </p>
+        <ul class="type-body flex list-disc flex-col gap-2 ps-5">
+          <li>
+            <strong>Plazo fijo:</strong>{' '}al vencimiento, no antes.
+          </li>
+          <li>
+            <strong>Billeteras y cripto/fintech en pesos:</strong>{' '}disponible al instante.
+          </li>
+          <li>
+            <strong>Fondos money market:</strong>{' '}rescate en el día.
+          </li>
+        </ul>
+        <p class="type-body">
+          <strong>La garantía de los depósitos</strong> cubre los depósitos en pesos en entidades
+          financieras reguladas por el BCRA (bancos y compañías financieras), con un tope por persona
+          y por entidad. Quedan excluidos, entre otros, los plazos fijos pactados a tasas muy por
+          encima de la tasa de referencia del BCRA.
+        </p>
+        <p class="type-body">
+          Las cuotapartes de un fondo común de inversión no son depósitos y no tienen esa garantía.
+          El saldo de una billetera que no es un banco (un proveedor de servicios de pago) no es un
+          depósito en una entidad financiera y tampoco tiene esa garantía, aunque muchas lo invierten
+          en un fondo money market.
+        </p>
+        <p class="type-body">
+          Por eso el ranking no marca la garantía fila por fila: depende de la tasa y de la entidad,
+          y no es parte de la comparación de lo que ganás.
+        </p>
+        <p class="type-body text-muted">
+          Fuente: BCRA, texto ordenado{' '}
+          <a
+            class="link"
+            href="https://www.bcra.gob.ar/archivos/Pdfs/texord/t-seggar.pdf"
+            rel="noopener"
+            >Aplicación del sistema de seguro de garantía de los depósitos</a
+          >. El tope vigente y las exclusiones están ahí, siempre actualizados.
+        </p>
+      </section>
 
-    <section class="flex flex-col gap-block" aria-labelledby="neutralidad">
-      <h2 id="neutralidad" class="type-section">Neutralidad</h2>
-      <ul class="type-body flex list-disc flex-col gap-2 ps-5">
-        <li>No cobramos comisiones de las entidades que comparamos y no hay links de afiliado.</li>
-        <li>El orden sale de la cuenta descrita arriba: si cambian las tasas, cambia el orden.</li>
-        <li>Cada fila indica su fuente, su fecha y su nivel de confianza para que lo verifiques.</li>
-        <li>Ninguna entidad puede pagar para aparecer mejor ubicada.</li>
-      </ul>
-    </section>
+      <section class="flex flex-col gap-block" aria-labelledby="fuentes">
+        <h2 id="fuentes" class="type-section">De dónde salen los datos</h2>
+        <dl class="flex flex-col">
+          {
+            sources.map((source) => (
+              <div class="flex flex-col gap-1 border-t border-border py-4">
+                <dt class="type-body font-medium">{source.data}</dt>
+                <dd class="type-body text-muted">
+                  {source.source}. {source.detail}
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+        <p class="type-body text-muted">
+          Guardamos una captura diaria de las respuestas crudas de las fuentes que no se pueden
+          volver a consultar, así el histórico se puede reconstruir desde el primer día.
+        </p>
+      </section>
 
-    <section class="flex flex-col gap-block" aria-labelledby="aviso">
-      <h2 id="aviso" class="type-section">Aviso</h2>
-      <p class="type-body">
-        rindetuplata es información, no asesoramiento financiero. No recomendamos dónde poner tu
-        plata ni prometemos resultados: mostramos datos públicos con la cuenta a la vista.
-        Cualquier decisión de inversión es tuya.
-      </p>
-      <p class="type-body text-muted">
-        ¿Algo no cierra? El código y las capturas diarias están en{' '}
-        <a class="link" href="https://github.com/Mateocas1/rindetuplata" rel="noopener"
-          >github.com/Mateocas1/rindetuplata</a
-        >.
-      </p>
-    </section>
+      <section class="flex flex-col gap-block" aria-labelledby="confianza">
+        <h2 id="confianza" class="type-section">Cuánto confiamos en cada dato</h2>
+        <p class="type-body">
+          Cada fila muestra su nivel de confianza, la fuente y la fecha del dato. Ninguna tasa
+          vieja se muestra como si fuera de hoy.
+        </p>
+        <dl class="flex flex-col">
+          {
+            confidenceOrder.map((code) => (
+              <div class="flex flex-col gap-1 border-t border-border py-4">
+                <dt class="type-body font-medium">{CONFIDENCE_LABELS[code]}</dt>
+                <dd class="type-body text-muted">{CONFIDENCE_DESCRIPTIONS[code]}</dd>
+              </div>
+            ))
+          }
+        </dl>
+        <p class="type-body text-muted">
+          Las tasas de billeteras no tienen una fuente oficial con API. Mientras no exista, las
+          cargamos a mano a partir de información pública y mostramos la fecha de verificación; si
+          un dato queda viejo, se marca como desactualizado y no se muestra como vigente.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-block" aria-labelledby="afuera">
+        <h2 id="afuera" class="type-section">Qué queda afuera de la cuenta</h2>
+        <ul class="type-body flex list-disc flex-col gap-2 ps-5">
+          <li>
+            <strong>Impuestos.</strong> Las cuentas no incluyen impuestos ni retenciones.
+          </li>
+          <li>
+            <strong>Comisiones y gastos</strong> de cada entidad o fondo.
+          </li>
+          <li>
+            <strong>Condiciones de cada cuenta</strong>: apertura, montos mínimos en cuenta,
+            tenencia mínima, publicidad de la tasa y promociones por tiempo limitado.
+          </li>
+          <li>
+            <strong>Riesgo de cada entidad.</strong> Una tasa más alta suele venir con más riesgo:
+            el ranking ordena números, no evalúa solvencia.
+          </li>
+        </ul>
+        <p class="type-body">
+          Podés revisar la letra chica de cada opción en el sitio de la entidad, que es la fuente
+          final para cualquier decisión.
+        </p>
+      </section>
+
+      <section class="flex flex-col gap-block" aria-labelledby="neutralidad">
+        <h2 id="neutralidad" class="type-section">Neutralidad</h2>
+        <ul class="type-body flex list-disc flex-col gap-2 ps-5">
+          <li>No cobramos comisiones de las entidades que comparamos y no hay links de afiliado.</li>
+          <li>El orden sale de la cuenta descrita arriba: si cambian las tasas, cambia el orden.</li>
+          <li>Cada fila indica su fuente, su fecha y su nivel de confianza para que lo verifiques.</li>
+          <li>Ninguna entidad puede pagar para aparecer mejor ubicada.</li>
+        </ul>
+      </section>
+
+      <section class="flex flex-col gap-block" aria-labelledby="aviso">
+        <h2 id="aviso" class="type-section">Aviso</h2>
+        <p class="type-body">
+          rindetuplata es información, no asesoramiento financiero. No recomendamos dónde poner tu
+          plata ni prometemos resultados: mostramos datos públicos con la cuenta a la vista.
+          Cualquier decisión de inversión es tuya.
+        </p>
+        <p class="type-body text-muted">
+          ¿Algo no cierra? El código y las capturas diarias están en{' '}
+          <a class="link" href="https://github.com/Mateocas1/rindetuplata" rel="noopener"
+            >github.com/Mateocas1/rindetuplata</a
+          >.
+        </p>
+      </section>
+    </div>
+
+    <aside class="hidden lg:col-start-1 lg:row-start-1 lg:block lg:sticky lg:top-20 lg:self-start">
+      <nav aria-label="En esta página">
+        <p class="type-label">En esta página</p>
+        <ol class="type-data mt-2 flex flex-col border-s border-border ps-4">
+          {
+            contents.map((item) => (
+              <li>
+                <a class={tocLink} href={`#${item.id}`}>
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+    </aside>
   </div>
 </BaseLayout>
