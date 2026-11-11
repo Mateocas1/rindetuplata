@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { addRealEarned, realEarned } from '../scripts/realEarned.mjs';
 
 /**
- * `realEarned` (UI clarity T2, D4): the pure function of `scripts/derive-real-earned.mjs`, which derives the
+ * `realEarned`: the pure function of `scripts/derive-real-earned.mjs`, which derives the
  * field for the recorded fixtures with the API's formula, `finalAmount / (1 + overHorizon) - amount`, in exact
  * decimal arithmetic rounded half-even to cents.
  */

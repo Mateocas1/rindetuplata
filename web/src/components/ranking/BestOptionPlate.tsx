@@ -1,11 +1,10 @@
 /**
- * The best option of the query the reader is looking at, as a plain card with the cobalt rail (ui-clarity D14:
- * the rail marks only the best option, the same job as the rail of row 01).
+ * The best option of the query the reader is looking at, as a plain card with the cobalt rail (the rail marks only the best option, the same job as the rail of row 01).
  *
- * It restates the first row of the board as an answer: the pesos earned as the figure, the display name (D13)
- * with its kind and when the money is available (D5), the real result in words (D6, the shared `RealResult`),
- * the final amount (D8: it lives here and on the instrument page, not in the rows), the rate and one line of
- * provenance. Every figure comes from the API payload; the card only formats it (S14).
+ * It restates the first row of the board as an answer: the pesos earned as the figure, the display name
+ * with its kind and when the money is available, the real result in words (the shared `RealResult`),
+ * the final amount (it lives here and on the instrument page, not in the rows), the rate and one line of
+ * provenance. Every figure comes from the API payload; the card only formats it.
  */
 import { liquidityForKind } from '../../lib/categories';
 import { displayName } from '../../lib/displayName';

@@ -126,7 +126,7 @@ describe('ranking explorer presets', () => {
   it('keeps the free amount and term inputs beside the presets', () => {
     const markup = explorer();
 
-    // Text fields with a numeric keyboard (D16): the amount shows "1.000.000", which a number input cannot hold.
+    // Text fields with a numeric keyboard: the amount shows "1.000.000", which a number input cannot hold.
     expect(markup).toMatch(/<input[^>]*id="monto"[^>]*type="text"[^>]*inputmode="numeric"[^>]*value="1.000.000"/i);
     expect(markup).toMatch(/<input[^>]*id="dias"[^>]*type="text"[^>]*inputmode="numeric"/i);
     expect(markup).toContain('Monto en pesos');

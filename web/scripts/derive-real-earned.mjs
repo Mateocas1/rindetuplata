@@ -1,5 +1,5 @@
 /**
- * `node scripts/derive-real-earned.mjs` (UI clarity T2, decision D4): adds `realEarned` to the recorded fixtures.
+ * `node scripts/derive-real-earned.mjs`: adds `realEarned` to the recorded fixtures.
  *
  * The recordings predate the API field, so it is derived here with the API's own formula
  * (`finalAmount / (1 + inflation.overHorizon) - request.amount`, exact decimal arithmetic, cents half-even; see

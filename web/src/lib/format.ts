@@ -64,7 +64,7 @@ export function formatMoney(amount: number): string {
 }
 
 /**
- * Whole pesos, for a difference read at a glance (ui-clarity D6, D8): "$ 3.806".
+ * Whole pesos, for a difference read at a glance: "$ 3.806".
  * The sign goes before the currency symbol: "−$ 2.402".
  */
 export function formatMoneyWhole(amount: number): string {

@@ -192,7 +192,7 @@ const contrastPairs: Array<[string, string, string, number]> = [
 /** Surface-ladder tokens declared outside @theme, repointed in the dark block. */
 const ladderTokens = ['--surface-lift'];
 
-/** D1: the decorative layer is gone; none of these may come back. */
+/** The decorative layer is gone; none of these may come back. */
 const retiredTokens = ['--glass-fill', '--glass-line', '--glass-lift', '--glow', '--grid-line'];
 
 /** The seven text roles of Cobalto Cristal (at most 7), each one `@utility type-*`. */

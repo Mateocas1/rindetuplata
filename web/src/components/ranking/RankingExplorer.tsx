@@ -1,14 +1,14 @@
 /**
- * RankingExplorer (S15, S10, S19) — the home island.
+ * RankingExplorer — the home island.
  *
  * It is server-rendered with the build-time default ranking, so the page works with JavaScript disabled; once
  * hydrated it re-queries `/api/v1/ranking` for the reader's amount, term, kinds and banks, keeps the query string
  * in sync (`?monto=&dias=&tipo=&cliente=`) and reports loading, error and empty states through an always-rendered
  * `role="status"` region.
  *
- * The island opens with the answer to the page's question (ui-clarity D15): one sentence, rendered on the server
+ * The island opens with the answer to the page's question: one sentence, rendered on the server
  * and updated with the query. Then the controls: the amount and the term, each a free field next to its capsule
- * presets on one grid whose label row shares a baseline (D16); the amount field reads in Argentine notation
+ * presets on one grid whose label row shares a baseline; the amount field reads in Argentine notation
  * ("1.000.000") when it is not being edited. The presets are shortcuts over the same query state: picking one goes
  * through `applyAmountPreset` / `applyDaysPreset`, and the reader's own value leaves the control unselected. Kinds
  * and banks stay behind one disclosure; the best option sits beside the controls and the board follows.
@@ -50,7 +50,7 @@ export interface RankingExplorerProps {
 const DEBOUNCE_MS = 400;
 /** The board is the day's best eight; the rest follow behind a disclosure. */
 const BOARD_SIZE = 8;
-// One recipe, one place (T12a): the field shape comes from `field`; its height matches the capsule control
+// One recipe, one place: the field shape comes from `field`; its height matches the capsule control
 // beside it (40px segments + 3px track + 1px border, each side), so the two controls of a row line up.
 const inputClass = 'field h-12 tabular-nums';
 const labelClass = 'type-label';

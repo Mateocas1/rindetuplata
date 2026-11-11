@@ -3,7 +3,7 @@
  *
  * Two tiers, one direction: hue-named primitives hold the values, role-named
  * semantic tokens are the only colors a component may reference. Direction
- * (Grafito Cobalto, `odd/tasks/ui-clarity.md` D1-D3, which supersedes the T13
+ * (Grafito Cobalto, which supersedes the earlier
  * "Cobalto Cristal" gestures): graphite neutrals (hue 265-270, low chroma),
  * one cobalt accent (hue 267) with one job, status hues far from it. Depth
  * comes from the surface ladder (surface -> surface-raised -> subtle-surface),
@@ -112,11 +112,11 @@
   --color-focus: var(--color-graphite-900);
 
   /*
-   * Type scale (T13a). Seven roles, each one `type-*` recipe in recipes.css:
+   * Type scale. Seven roles, each one `type-*` recipe in recipes.css:
    * label (sentence case, sans), display, section, figure (+ the row step),
    * body (+ the lead step), data (sans, tabular) and index (the 01-08 gutter,
    * data size).
-   * These are the only steps there are (T13e): a component takes a role and may
+   * These are the only steps there are: a component takes a role and may
    * vary weight or the muted color, never the size.
    */
   --text-label: 0.8125rem;
@@ -163,8 +163,8 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   /*
-   * One type family (D2), self-hosted from @fontsource (OFL-1.1) and bundled by
-   * Vite, so builds stay offline (S16): Archivo Variable carries the weight
+   * One type family, self-hosted from @fontsource (OFL-1.1) and bundled by
+   * Vite, so builds stay offline: Archivo Variable carries the weight
    * (100-900) and width (62-125%) axes, so display, section and figure roles
    * set `font-stretch` instead of reaching for a second family. The system mono
    * stack is only for code-like strings (API keys); the system sans stack
@@ -177,7 +177,7 @@
 }
 
 /*
- * Surface ladder (T13a). Not a theme token: it carries alpha, and the dark
+ * Surface ladder. Not a theme token: it carries alpha, and the dark
  * block below must repoint it. Use through the `card` recipe.
  */
 :root {

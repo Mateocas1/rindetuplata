@@ -13,9 +13,9 @@
  * 2. A view has one primary action: at most one `btn-primary` in the rendered
  *    markup, and the destructive confirmation confirms through the loss role
  *    while the create form keeps the alerts view's only primary.
- * 3. The direction (T13d) replaced the T12 text steps with the seven `type-*`
- *    roles (the retired steps were deleted in T13e), and a field label wears the
- *    sentence-case sans `type-label` role (T6, D3); no account surface may size
+ * 3. The direction replaced the text steps with the seven `type-*`
+ *    roles (the retired steps were deleted), and a field label wears the
+ *    sentence-case sans `type-label` role; no account surface may size
  *    text by hand, and none may use uppercase, tracking or the mono family (the
  *    API key value is the one `font-mono` string).
  */

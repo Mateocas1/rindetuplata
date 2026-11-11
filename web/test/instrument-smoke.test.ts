@@ -17,7 +17,7 @@ import { RANKING_KINDS, type RankedEntry } from '../src/lib/types';
  * Instrument and category build smoke test.
  *
  * Builds the site in fixture mode and checks the prerendered output: every
- * `href="/instrumentos/…"` on every page resolves to a built file (D1), one page
+ * `href="/instrumentos/…"` on every page resolves to a built file, one page
  * per kind with its H1, an inline SVG chart with a title and a description, the
  * same data as a table, the JSON-LD blocks and no React for the chart; the four
  * category landings with each row linked to a built page; the sitemap with the
@@ -140,7 +140,7 @@ describe('instrument pages', () => {
       const page = instrumentHtml(slug);
       const h1 = /<h1 class="type-display[^"]*">([\s\S]*?)<\/h1>/.exec(page);
       expect(h1, slug).not.toBeNull();
-      // The H1 is the display name (D13); the source's own name stays on the page.
+      // The H1 is the display name; the source's own name stays on the page.
       expect(h1![1].trim(), slug).toBe(displayName(entry.name));
       expect(page, slug).toContain(entry.name);
       expect(page, slug).toContain(formatPercent(entry.rateUsed.fraction));
@@ -160,9 +160,9 @@ describe('instrument pages', () => {
       // ranking's amount earns in the default term, as the protagonist figure.
       expect(page, slug).toContain('class="type-figure');
       expect(page, slug).toContain(formatMoney(entry.earned));
-      // The hero label states the query it answers (D12, D14).
+      // The hero label states the query it answers.
       expect(page, slug).toContain('Con $\u00a01.000.000 a 30 días');
-      // Provenance is one quiet data line, not a wall of small grey prose (L77).
+      // Provenance is one quiet data line, not a wall of small grey prose.
       expect(page, slug).toMatch(/class="type-data text-muted/);
     }
   });
@@ -293,7 +293,7 @@ describe('instrument pages', () => {
     expect(/<h1 class="type-display[^"]*">([\s\S]*?)<\/h1>/.exec(page)![1].trim()).toBe('Reba');
     const text = page.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
     expect(text).toContain('Nombre legal: REBA COMPAÑIA FINANCIERA S.A.');
-    // Kind and liquidity are one quiet line (D5), and the category is named once in the breadcrumb.
+    // Kind and liquidity are one quiet line, and the category is named once in the breadcrumb.
     expect(text).toContain('Plazo fijo · Al vencimiento');
     expect(page).not.toMatch(/CRIPTO|PLAZO FIJO/);
   });

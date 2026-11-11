@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { competitionRanks, formatPosition, gapToBest, toCents } from './rankingPresentation';
 
 /**
- * Ranking presentation (ui-clarity T3). Ranks and gaps are computed in integer
+ * Ranking presentation. Ranks and gaps are computed in integer
  * cents, so float noise never splits a tie or shifts a gap.
  */
 

@@ -1,10 +1,10 @@
 /**
  * Class strings shared by the account islands.
  *
- * Thin aliases over the T13a recipes in `styles/recipes.css` (card, field,
+ * Thin aliases over the recipes in `styles/recipes.css` (card, field,
  * buttons) plus the seven text roles, so every island shares one shape and
  * `tokens.css` stays the single source of color. A field label is the
- * sentence-case sans `type-label` (D3); help and error lines are `type-body` (muted or loss)
+ * sentence-case sans `type-label`; help and error lines are `type-body` (muted or loss)
  * and stay tied to their control with `aria-describedby`. The `field` recipe is
  * 16px on mobile so iOS Safari never zooms.
  */

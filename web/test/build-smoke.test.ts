@@ -557,7 +557,7 @@ describe('prerendered month report', () => {
 
     expect(page).toContain('href="/metodologia/"');
     expect(renderedText(page)).toContain('Cómo medimos');
-    // The one sentence specific to reports stays; the generic disclaimer is the footer's (D11).
+    // The one sentence specific to reports stays; the generic disclaimer is the footer's.
     expect(renderedText(page).replace(/\s+/g, ' ')).toContain(
       'lo que rindió una opción en el pasado no garantiza que lo repita',
     );

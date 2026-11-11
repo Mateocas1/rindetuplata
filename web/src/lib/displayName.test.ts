@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { displayName } from './displayName';
 
 /**
- * Display names (D13: presentation only; the API keeps the source's legal name).
+ * Display names (presentation only; the API keeps the source's legal name).
  * The curated map wins over the generic rules, which only tidy names the map does not know.
  */
 

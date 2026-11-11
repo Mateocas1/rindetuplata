@@ -7,10 +7,10 @@
  * row links to the instrument page. Own H1, intro copy, title, description and
  * breadcrumb.
  *
- * Hierarchy (L77): the H1 is the display role, the intro is the reading role at
+ * Hierarchy: the H1 is the display role, the intro is the reading role at
  * its lead step, and the date and the query the ranking was run with are ONE
  * quiet label line. The board carries its own source caption, per-row
- * provenance and footnote (ui-clarity D18, D11); the footer carries the one
+ * provenance and footnote; the footer carries the one
  * disclaimer. Links are ink with a hairline underline: cobalt stays with the
  * day's leader.
  */
@@ -34,7 +34,7 @@ const ranking = await loadRanking(
   { limit: CATALOG_LIMIT },
 );
 // Every row of a kind recording has a page, but the table gates on the real set
-// instead of assuming it (D1).
+// instead of assuming it.
 const pages = await loadInstrumentPages();
 
 const site = Astro.site ?? new URL('http://localhost:4321');

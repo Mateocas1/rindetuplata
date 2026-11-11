@@ -2,8 +2,8 @@
 /**
  * The table of one monthly report: one row per option measured, in the order the API returns (best real return
  * first). Static markup, no island. The verdict is written in words next to the arrow, so it never depends on colour
- * alone (S10). Mirrors the ranking table's recipe: a sticky first column, sentence-case heads and one hairline per row.
- * Names go through `displayName` (D13); the "Datos" column is one quiet line, "31 de 31 días · Fuente".
+ * alone. Mirrors the ranking table's recipe: a sticky first column, sentence-case heads and one hairline per row.
+ * Names go through `displayName`; the "Datos" column is one quiet line, "31 de 31 días · Fuente".
  */
 import { displayName } from '../../lib/displayName';
 import { formatInteger, formatPercent, formatSignedPercent } from '../../lib/format';

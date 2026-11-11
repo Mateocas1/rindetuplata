@@ -1,7 +1,7 @@
 /**
  * The ranking board (RankingTable), the best-option card and the home answer sentence.
  *
- * T2c: a grouped fund row says how many sibling classes it folded (S2, L5).
+ * A grouped fund row says how many sibling classes it folded.
  *
  * Synthetic data on purpose: the recorded ranking fixtures predate the field. The note is visible text
  * ("+3 clases") and its full meaning continues in an `sr-only` span right after it, so a screen reader reads the
@@ -83,9 +83,9 @@ describe('RankingTable folded classes note', () => {
 });
 
 /**
- * ui-clarity T4: the board reads like an answer. One provenance line per row instead of a "Fuente y fecha" column
- * (D18), positions that share a tie (D7), the gap to the best in whole pesos (D8), the real result in words (D6,
- * D19), display names (D13) and, below `md`, a card list carrying the same rows (D9).
+ * The board reads like an answer: one provenance line per row instead of a "Fuente y fecha" column,
+ * positions that share a tie, the gap to the best in whole pesos, the real result in words, display names
+ * and, below `md`, a card list carrying the same rows.
  */
 const FIXTURES = { WEB_FIXTURES: '1' } as const;
 const plazoFijo = await loadRanking(

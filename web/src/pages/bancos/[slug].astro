@@ -1,9 +1,9 @@
 ---
 /**
- * Bank entity page (T6b, S6; T10a; ui-clarity D12-D14): today's (or, for a bank whose last rate is older than its
+ * Bank entity page: today's (or, for a bank whose last rate is older than its
  * source's newest capture, the last published) non-client and client plazo fijo TNA, the 90-day chart (the instrument
  * history chart, unchanged), how many of the days we saw the bank it paid the highest non-client TNA, and the source
- * and dates. Built at build time with no island; the bank's instrument page is linked only when one was built (D1).
+ * and dates. Built at build time with no island; the bank's instrument page is linked only when one was built.
  * At `lg` the hero (a plain card) and the best-rate block sit side by side, the chart takes the full width.
  */
 import HistoryChart from '../../components/instrument/HistoryChart.astro';
@@ -53,7 +53,7 @@ try {
 const site = Astro.site ?? new URL('http://localhost:4321');
 const canonical = new URL(Astro.url.pathname, site);
 const source = sourceName(bank.sourceId);
-// The H1 and the title show the name people use; the legal name stays once, quietly, under the H1 (D13).
+// The H1 and the title show the name people use; the legal name stays once, quietly, under the H1.
 const name = displayName(bank.name);
 const legalName = name !== bank.name ? bank.name : null;
 const client = bank.clientTna === null ? null : formatPercent(bank.clientTna);

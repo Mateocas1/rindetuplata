@@ -77,7 +77,7 @@ describe('RankingTable break-even', () => {
 
     expect(html).toContain('Ganás en 30 días');
     expect(html).toContain('$\u00a024.657,53');
-    // The final amount lives on the best-option card and the instrument page (D8), never in a row.
+    // The final amount lives on the best-option card and the instrument page, never in a row.
     expect(html).not.toContain('al vencimiento</');
   });
 

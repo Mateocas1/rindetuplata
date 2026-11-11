@@ -1,5 +1,5 @@
 /**
- * The real-result line (ui-clarity D6, D19): pesos above or below expected inflation in words, sign and color,
+ * The real-result line: pesos above or below expected inflation in words, sign and color,
  * the percentage secondary; the percentage alone when the API sent no `realEarned`; "no data" without inflation.
  */
 import { createElement as h } from 'react';

@@ -1,19 +1,19 @@
 /**
- * The ranking board (MVP S15, S11, S10; ui-clarity D6-D9, D13, D18, D19).
+ * The ranking board.
  *
  * Server-rendered, no JavaScript required: the island only re-renders it with fresh data. The pesos earned for
  * the reader's amount and term is the protagonist of every row; the rows rank by it with standard competition
- * positions, so equal earnings share a place ("=04", D7), and every row after the best says how far it is from
- * it in whole pesos (D8). The real result is a line in words from the shared `RealResult` (D6, D19).
+ * positions, so equal earnings share a place ("=04"), and every row after the best says how far it is from
+ * it in whole pesos. The real result is a line in words from the shared `RealResult`.
  *
- * Provenance (S11, D18): the source and the date of every row live in its one quiet secondary line, with the
- * kind and the liquidity (D5); a caption above the board states the common source and the newest date once.
+ * Provenance: the source and the date of every row live in its one quiet secondary line, with the
+ * kind and the liquidity; a caption above the board states the common source and the newest date once.
  *
- * Two views of the same rows (D9): from `md` up a semantic table; below it an ordered list of cards. The hidden
+ * Two views of the same rows: from `md` up a semantic table; below it an ordered list of cards. The hidden
  * view is `display: none`, so assistive technology reads exactly one, and nothing scrolls sideways at 320px.
  * The switch sits at `md`, not `sm`: between 640 and 767px the five columns left the option ~130px wide and
  * wrapped the real-result sentence over three lines, where the card reads in one glance.
- * The cobalt rail marks the best option only (D14); the "Mejor" chip is ink.
+ * The cobalt rail marks the best option only; the "Mejor" chip is ink.
  */
 import type { ReactNode } from 'react';
 import { liquidityForKind } from '../../lib/categories';
@@ -91,7 +91,7 @@ interface Row {
   name: string;
 }
 
-/** "=04" on screen; "4, empate" for assistive technology (D7). */
+/** "=04" on screen; "4, empate" for assistive technology. */
 function Position({ position, tied }: { position: number; tied: boolean }) {
   return (
     <>
@@ -163,7 +163,7 @@ function Fact({ children }: { children: ReactNode }) {
 
 /**
  * The "hasta" offer of a conditional rate, under the row's figure: what it would earn for the term, never the
- * final balance, since the column reads earnings (T7 fix round).
+ * final balance, since the column reads earnings.
  */
 function UpTo({ entry, amount }: { entry: RankedEntry; amount: number }) {
   if (entry.upTo === null) return null;
@@ -190,7 +190,7 @@ function MepDisclosure({ entry, ranking }: { entry: RankedEntry; ranking: Rankin
 
 export interface RankingTableProps {
   ranking: Ranking;
-  /** Slugs the build actually produced; a row outside the set stays plain text (D1). */
+  /** Slugs the build actually produced; a row outside the set stays plain text. */
   pageSlugs: string[];
   /** The home board shows the first options only; the rest follow behind a disclosure. */
   limit?: number;
@@ -232,7 +232,7 @@ export default function RankingTable({
 
   const indexLabel =
     ranking.inflation === null ? 'sin dato de inflación' : inflationIndexLabel(ranking.inflation.index);
-  // S10: the real column names the index it uses, visibly, in its header.
+  // The real column names the index it uses, visibly, in its header.
   const indexHeader =
     ranking.inflation === null
       ? 'Contra la inflación'
@@ -368,7 +368,7 @@ export default function RankingTable({
   );
 }
 
-/** What every amount includes and which inflation the real result uses, once under the board (D11). */
+/** What every amount includes and which inflation the real result uses, once under the board. */
 export function RankingFootnote({ ranking }: { ranking: Ranking }) {
   const { inflation } = ranking;
   const { days } = ranking.request;

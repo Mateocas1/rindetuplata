@@ -1,6 +1,6 @@
 ---
 /**
- * Instrument page (T7c, S3, S10, S11; ui-clarity D5, D6, D12, D14, D16).
+ * Instrument page.
  *
  * One page per instrument any prerendered table can link to (`lib/pages.ts`):
  * ranked or ineligible, never the unranked BCRA rows or the dead fund classes,
@@ -71,7 +71,7 @@ const canonical = new URL(Astro.url.pathname, site);
 const kindName = kindLabel(entry.kind);
 const liquidity = liquidityForKind(entry.kind);
 const name = displayName(entry.name);
-// The source's own name stays on the page once, quietly, when it reads differently (D13).
+// The source's own name stays on the page once, quietly, when it reads differently.
 const legalName = name !== entry.name ? entry.name : null;
 const basis = ranked === null ? null : ranked.rateUsed.basis;
 const ratePercent = ranked === null ? null : formatPercent(ranked.rateUsed.fraction);
@@ -113,7 +113,7 @@ const isStale = ranked !== null && ranked.warnings.some((warning) => warning.cod
 
 // The hero states today's fact: the pesos the default amount earns in the
 // default term as the protagonist figure, the real result right under it in
-// words and tone (D6), and the rate and the term's inflation as data. The
+// words and tone, and the rate and the term's inflation as data. The
 // simulator beside it starts from the same numbers and turns them into the
 // reader's own amount and term.
 const defaultMoney = formatMoneyWhole(DEFAULT_AMOUNT);

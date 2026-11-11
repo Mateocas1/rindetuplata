@@ -1,5 +1,5 @@
 /**
- * `realEarned` (UI clarity T2, decision D4): the pesos an investment earns above (positive) or below (negative) the
+ * `realEarned`: the pesos an investment earns above (positive) or below (negative) the
  * expected inflation over its horizon, in today's pesos.
  *
  *   realEarned = finalAmount / (1 + inflationOverHorizon) - amount

@@ -1,5 +1,5 @@
 /**
- * Display names for banks, wallets and funds (D13: presentation only). The API keeps
+ * Display names for banks, wallets and funds (presentation only). The API keeps
  * the source's legal name; this module only chooses how a name is shown.
  */
 
@@ -82,7 +82,7 @@ function titleCaseWord(word: string, first: boolean): string {
 }
 
 /**
- * Shows a bank, wallet or fund name as people read it (D13). A curated name wins;
+ * Shows a bank, wallet or fund name as people read it. A curated name wins;
  * otherwise a trailing legal suffix is dropped, all-caps names are title-cased, and
  * mixed-case names are kept as they are. Never empty for a non-empty input.
  */

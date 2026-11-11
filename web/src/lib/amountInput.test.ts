@@ -1,5 +1,5 @@
 /**
- * The amount field reads and shows pesos the Argentine way (ui-clarity D16): dots group thousands, a comma
+ * The amount field reads and shows pesos the Argentine way: dots group thousands, a comma
  * starts the cents. Plain digits keep working. The API's range check stays in `tryParseAmount`.
  */
 import { describe, expect, it } from 'vitest';

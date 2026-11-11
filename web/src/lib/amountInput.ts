@@ -1,5 +1,5 @@
 /**
- * The amount field in Argentine notation (ui-clarity D16): "1.000.000" or "1.000,50". Dots only group
+ * The amount field in Argentine notation: "1.000.000" or "1.000,50". Dots only group
  * thousands and a comma starts the cents, so "1000.5" is rejected instead of guessed. The parsed value goes
  * through `tryParseAmount`, which keeps the API's range (greater than 0, at most the API cap).
  */

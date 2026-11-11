@@ -1,5 +1,5 @@
 /**
- * Ranking presentation (ui-clarity T3). The API serves each amount as a number with
+ * Ranking presentation. The API serves each amount as a number with
  * up to two decimals; positions and gaps are computed in integer cents so float noise
  * never splits a tie or shifts a gap. Only the display of an API value uses these helpers.
  */
@@ -19,7 +19,7 @@ export function toCents(value: number): bigint {
 
 /**
  * Standard competition ranking (1-2-2-4) of earned amounts served in descending order.
- * Amounts compare in cents; every member of a tied group is marked `tied` (ui-clarity T3).
+ * Amounts compare in cents; every member of a tied group is marked `tied`.
  */
 export function competitionRanks(earned: number[]): { position: number; tied: boolean }[] {
   const cents = earned.map(toCents);
@@ -48,7 +48,7 @@ export function competitionRanks(earned: number[]): { position: number; tied: bo
 }
 
 /**
- * Pesos an entry earns below the best one, computed in cents (ui-clarity T3):
+ * Pesos an entry earns below the best one, computed in cents:
  * gapToBest(19726.03, 19315.07) → -410.96. The best entry itself gives 0.
  */
 export function gapToBest(bestEarned: number, earned: number): number {
@@ -56,14 +56,14 @@ export function gapToBest(bestEarned: number, earned: number): number {
 }
 
 /**
- * Two-digit position with "=" before a tied one (ui-clarity T3): (4, true) → "=04", (12, false) → "12".
+ * Two-digit position with "=" before a tied one: (4, true) → "=04", (12, false) → "12".
  */
 export function formatPosition(position: number, tied: boolean): string {
   return `${tied ? '=' : ''}${String(position).padStart(2, '0')}`;
 }
 
 /**
- * Pesos earned when an offer ends at `finalAmount` for an invested `amount`, in exact cents (T7 fix round):
+ * Pesos earned when an offer ends at `finalAmount` for an invested `amount`, in exact cents:
  * the API serves a conditional "hasta" offer as a final amount, and a row reads earnings, not balances.
  */
 export function earnedFrom(amount: number, finalAmount: number): number {

@@ -16,7 +16,7 @@ export interface Category {
   h1: string;
   description: string;
   intro: string;
-  /** When the money can be taken out, shown next to each entry (D5). */
+  /** When the money can be taken out, shown next to each entry. */
   liquidity: string;
 }
 
@@ -79,7 +79,7 @@ export function categoryForKind(kind: string): Category | null {
   return CATEGORIES.find((category) => category.kind === kind) ?? null;
 }
 
-/** Liquidity copy of a kind, shown next to each entry (D5); null for an unknown kind. */
+/** Liquidity copy of a kind, shown next to each entry; null for an unknown kind. */
 export function liquidityForKind(kind: string): string | null {
   return categoryForKind(kind)?.liquidity ?? null;
 }

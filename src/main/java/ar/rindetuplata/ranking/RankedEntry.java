@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * One ranked instrument: everything the API needs to render a row without another query (S11, S15). {@code earned}
+ * One ranked instrument: everything the API needs to render a row without another query. {@code earned}
  * and {@code finalAmount} are the personalized outcome; {@code realReturn} and {@code realEarned} (pesos above or
  * below the expected inflation, scale 2) are null when no REM observation exists;
  * {@code upTo} is the best conditional outcome, reported as "up to" and never used for the ranking.

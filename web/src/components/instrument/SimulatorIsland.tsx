@@ -1,5 +1,5 @@
 /**
- * Per-instrument simulator (T7c, S3, S14; ui-clarity D12, D16).
+ * Per-instrument simulator.
  *
  * A React island over `GET /api/v1/simulations`; every number it renders comes
  * from the API (no financial math in the browser). It never starts empty: the

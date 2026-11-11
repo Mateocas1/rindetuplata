@@ -1,10 +1,10 @@
 /**
- * The real result of an option (ui-clarity D6, D19): how many pesos it earns above or below the expected
- * inflation over the horizon, in words, with a sign and the gain or loss tone (S10: never color alone), and
+ * The real result of an option: how many pesos it earns above or below the expected
+ * inflation over the horizon, in words, with a sign and the gain or loss tone (never color alone), and
  * the real percentage as the secondary figure. One component for the ranking rows, the best option and the
  * instrument page, so the three never drift.
  *
- * `realEarned` comes from the API (D4); when an older response has no such field the line says the same thing
+ * `realEarned` comes from the API; when an older response has no such field the line says the same thing
  * with the percentage. Without an inflation observation it says so instead of inventing a value.
  */
 import { formatMoneyWhole, formatSignedPercent } from '../../lib/format';

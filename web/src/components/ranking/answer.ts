@@ -1,12 +1,12 @@
 /**
- * The home answer (ui-clarity D15): the H1 asks "¿Dónde rinde tu plata hoy?" and this one sentence answers it
+ * The home answer: the H1 asks "¿Dónde rinde tu plata hoy?" and this one sentence answers it
  * for the ranking on screen, so it changes with the reader's amount and term.
  *
  * "Hoy, con $ 1.000.000 a 30 días, lo que más rinde es Reba: ganás $ 19.726,03, $ 3.806 por encima de la
  * inflación esperada."
  *
- * Ties at the top are named as ties (D7): two options by name, more as "X y N opciones más". The real result
- * comes in whole pesos from the API's `realEarned` (D4), falls back to the percentage for a response without it,
+ * Ties at the top are named as ties: two options by name, more as "X y N opciones más". The real result
+ * comes in whole pesos from the API's `realEarned`, falls back to the percentage for a response without it,
  * and is left out without an inflation observation. Presentation only: every amount comes from the API.
  */
 import { displayName } from '../../lib/displayName';

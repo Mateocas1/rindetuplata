@@ -5,7 +5,7 @@
  * table reads: the rule is the row header in `type-body`, its instrument in the
  * quiet `type-data` line, and the threshold is the figure the reader came
  * for (`type-data` at the row figure step, semibold) under its sentence-case
- * `type-label` head. A rule of another type (T6c) is named by what it tells the
+ * `type-label` head. A rule of another type is named by what it tells the
  * reader, shows the kind or option it watches, and says when it tells them. The rows stay a `ul`/`li` list — a table would drop the
  * `listitem` role an end-to-end walk of this page relies on — while they copy
  * the ranking table's row treatment: dividers, muted labels, tabular figures.

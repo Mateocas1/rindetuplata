@@ -163,7 +163,7 @@ export const KIND_OPTIONS: Array<{ value: RankedKind; label: string }> = (
 ).map((value) => ({ value, label: KIND_LABELS[value] }));
 
 /**
- * The source as a reader sees it (T7 fix round): a curated rate is named by its confidence level, in Spanish,
+ * The source as a reader sees it: a curated rate is named by its confidence level, in Spanish,
  * instead of the curated source's own English display name.
  */
 export function sourceLabel(entry: { confidence?: string; source: { displayName: string } }): string {
