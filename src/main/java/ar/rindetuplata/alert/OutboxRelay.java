@@ -23,12 +23,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * T6d: the transactional outbox relay (S4). One run claims the oldest due {@code outbox_event} rows and publishes
+ * The transactional outbox relay. One run claims the oldest due {@code outbox_event} rows and publishes
  * each one with publisher confirms: only after the broker acknowledged it is the row marked published. A failure
  * leaves the row for the next run, with {@code attempts} raised and {@code last_error} stored, which makes the
  * delivery at least once; the consumer's {@code processed_event} rows turn that into exactly one email per event.
  *
- * <p>T11b: the claim is a short transaction ({@code FOR UPDATE SKIP LOCKED}, so two relays never claim the same
+ * <p>The claim is a short transaction ({@code FOR UPDATE SKIP LOCKED}, so two relays never claim the same
  * row) that stamps {@code locked_until = now + lease} and commits before anything is published, so no row lock is
  * held while the relay waits for the broker. Every outcome is its own short update. A row is due while it is
  * unpublished, under {@code max-attempts} and not leased; a relay that crashed mid-publish therefore only delays

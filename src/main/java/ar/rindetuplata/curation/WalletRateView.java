@@ -7,7 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
- * One curated wallet rate as the admin API returns it (T6b, S12): the stored document plus the verification age the
+ * One curated wallet rate as the admin API returns it: the stored document plus the verification age the
  * panel shows. {@code daysSinceVerified} is measured against "today" in America/Argentina/Buenos_Aires, the day the
  * writes stamp.
  */

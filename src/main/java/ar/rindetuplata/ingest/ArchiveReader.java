@@ -13,9 +13,9 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Reads the T9 {@code data} branch checkout: {@code raw/yyyy/MM/dd/manifest.json} plus one {@code <source>.json}
+ * Reads the {@code data} branch checkout: {@code raw/yyyy/MM/dd/manifest.json} plus one {@code <source>.json}
  * body per archived source. The manifest carries the capture instant every replayed row is stamped with and the
- * status of each source, so a source that is not {@code ok} is not replayed (S17).
+ * status of each source, so a source that is not {@code ok} is not replayed.
  */
 @Component
 public class ArchiveReader {

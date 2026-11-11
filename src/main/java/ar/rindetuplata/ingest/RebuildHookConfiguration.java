@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 /**
- * Wires the rebuild hook (T4d): the {@link RestClient} that POSTs to the static site's deploy hook, with
+ * Wires the rebuild hook: the {@link RestClient} that POSTs to the static site's deploy hook, with
  * {@code rindetuplata.ingest.rebuild-hook-timeout} on both connect and read, plus the listener
  * {@code dailyIngestionJob} registers.
  */

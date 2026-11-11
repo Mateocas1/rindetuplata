@@ -7,7 +7,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
- * T6b slug rule of the bank entity pages: the lowercase, accent-stripped name with every run of non-alphanumerics
+ * Slug rule of the bank entity pages: the lowercase, accent-stripped name with every run of non-alphanumerics
  * as one dash, unique across banks, and a collision takes a deterministic numeric suffix in instrument id order.
  */
 class BankSlugsTest {

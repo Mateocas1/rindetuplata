@@ -6,8 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
- * The recorded alert payloads of {@code src/test/resources/fixtures/alert/} (T6c): the shape an outbox row held
- * before the alert types (L32 a) and the payloads the new types write. A test that delivers one more than once
+ * The recorded alert payloads of {@code src/test/resources/fixtures/alert/}: the shape an outbox row held
+ * before the alert types and the payloads the new types write. A test that delivers one more than once
  * gives it a fresh event id.
  */
 final class AlertFixtures {

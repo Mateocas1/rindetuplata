@@ -16,7 +16,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * T6d, review finding F1: a request whose key is not valid (malformed or unknown) is charged to the per-address
+ * Review finding F1: a request whose key is not valid (malformed or unknown) is charged to the per-address
  * bucket of the anonymous plan, and once that bucket is empty the answer is the address 429 without any key lookup,
  * so a flood of well-formed random keys is bounded like any other flood and cannot turn into unlimited database reads.
  */

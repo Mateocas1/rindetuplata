@@ -1,5 +1,5 @@
 /**
- * `/claves-api/` island (T6d, S6, L32 b) — client only.
+ * `/claves-api/` island — client only.
  *
  * Reads `GET /api/v1/me` to confirm the session, lists the active keys, lets the reader create one (the key is shown
  * once, in `NewKeyNotice`, and lives only in this component's state) and revoke one with a confirmation. Any 401

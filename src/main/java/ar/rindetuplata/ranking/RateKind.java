@@ -2,7 +2,7 @@ package ar.rindetuplata.ranking;
 
 /** Which stored rate of an instrument the simulation actually used. */
 public enum RateKind {
-	/** The bank's non-client TNA: the S19 default. */
+	/** The bank's non-client TNA: the default. */
 	NON_CLIENT,
 	/** The bank's client TNA. */
 	CLIENT,

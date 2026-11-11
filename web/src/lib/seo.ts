@@ -1,5 +1,5 @@
 /**
- * Structured-data builders (T7c, S14).
+ * Structured-data builders.
  *
  * Plain data, so a page can pass the result to the layout and a test can check
  * it without a browser. The rate stays the API's own number: only the unit the

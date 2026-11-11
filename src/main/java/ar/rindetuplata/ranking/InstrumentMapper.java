@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Pure mappings from stored source shapes to {@code domain} instruments (T5 design notes). No Spring, no SQL:
+ * Pure mappings from stored source shapes to {@code domain} instruments. No Spring, no SQL:
  * every rule here is covered by a plain unit test with hand-computed values.
  */
 final class InstrumentMapper {

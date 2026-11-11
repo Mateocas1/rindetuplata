@@ -11,7 +11,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T4a (L33 a): migration V11 adds the date indexes the monthly report's earliest-history lookup and the backfilled
+ * Migration V11 adds the date indexes the monthly report's earliest-history lookup and the backfilled
  * history need, and nothing else: the primary keys of both tables start with the instrument, so a bare date
  * predicate or {@code min(date)} had no index.
  */

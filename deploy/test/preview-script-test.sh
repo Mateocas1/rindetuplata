@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Tests of `deploy/preview.sh` itself (T14b, S20).
+# Tests of `deploy/preview.sh` itself.
 #
 #   deploy/test/preview-script-test.sh
 #
@@ -111,7 +111,7 @@ case "$*" in
   esac
 EOF
 chmod +x "$scratch/bin/docker"
-# The site build must never run on the host: `up` asks the sidecar instead (fix B of the T14c review).
+# The site build must never run on the host: `up` asks the sidecar instead (fix B of the review).
 cat > "$scratch/bin/npm" <<'EOF'
 #!/usr/bin/env bash
 echo "FAIL: preview.sh built the site on the host (npm $*)" >&2

@@ -12,7 +12,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * T1a: which requests the filter counts, the exact 429 {@code ProblemDetail} and when the {@code X-Build-Token}
+ * Which requests the filter counts, the exact 429 {@code ProblemDetail} and when the {@code X-Build-Token}
  * bypass applies. A blank configured token disables the bypass, even for a blank or missing header.
  */
 class ApiRateLimitFilterTest {
@@ -78,7 +78,7 @@ class ApiRateLimitFilterTest {
 
 	@Test
 	void thePostToTheMcpEndpointIsLimitedLikeTheReadApiAndNoOtherMethodOrPathIs() throws Exception {
-		// T6e (L32 c): the MCP endpoint is public like the read API, so it spends the same per-address bucket.
+		// The MCP endpoint is public like the read API, so it spends the same per-address bucket.
 		ApiRateLimitFilter filter = filter("");
 		assertThat(call(filter, "POST", "/mcp", "1.1.1.1", null).getStatus()).isEqualTo(200);
 		MockHttpServletResponse limited = call(filter, "POST", "/mcp", "1.1.1.1", null);

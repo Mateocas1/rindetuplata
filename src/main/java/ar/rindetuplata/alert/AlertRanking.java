@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The slice of the day's ranking a BEST_CHANGED or WEEKLY_DIGEST rule looks at (T6c, L32 a): the entries of its kind
+ * The slice of the day's ranking a BEST_CHANGED or WEEKLY_DIGEST rule looks at: the entries of its kind
  * filter in ranking order, with the classes of one fund folded into the best one exactly as the public ranking
  * groups them, so a change of class inside one fund is never a change of the best option. The input is the alerts'
  * own ranking ({@code rankAll}: 30 days, non-client, every kind, no page cap), sorted by final amount.

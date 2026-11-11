@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import tools.jackson.databind.JsonNode;
 
 /**
- * T6e (S6, L32 c): the MCP tools accept exactly what {@code GET /api/v1/ranking} and {@code GET /api/v1/simulations}
+ * The MCP tools accept exactly what {@code GET /api/v1/ranking} and {@code GET /api/v1/simulations}
  * accept and reject exactly what they reject, naming the same field. The tool validation mirrors the REST one (the
  * REST request classes are package-private), so this test is what keeps the two from drifting: each boundary comes
  * from the public {@link RankingQuery} constants, never from a literal, and every case is sent to both. It also

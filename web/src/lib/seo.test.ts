@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { breadcrumbJsonLd, financialProductJsonLd, serializeJsonLd } from './seo';
 
 /**
- * JSON-LD builders (T7c, S14): breadcrumbs on instrument and category pages, and
+ * JSON-LD builders: breadcrumbs on instrument and category pages, and
  * a FinancialProduct with the API's own interest rate on instrument pages. Both
  * are plain data so the pages can be checked without a browser.
  */

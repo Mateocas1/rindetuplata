@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 /**
- * T14a (S20): the ready event hands today's ingestion to a background thread, so the HTTP endpoints and health are
+ * The ready event hands today's ingestion to a background thread, so the HTTP endpoints and health are
  * never delayed while it runs.
  */
 class StartupIngestionListenerTest {

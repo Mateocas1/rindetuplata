@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The API-key endpoints of T6d (S6, L32b), for the signed-in user only: security requires a session on
+ * The API-key endpoints, for the signed-in user only: security requires a session on
  * {@code /api/v1/account/**} and a CSRF token on every state-changing request. A key sent in {@code X-Api-Key} never
  * reaches this class as an identity: it only selects the limits of the public read API.
  */

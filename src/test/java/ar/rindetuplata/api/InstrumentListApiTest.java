@@ -16,7 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * T5b rules for {@code GET /api/v1/instruments}: the optional {@code kind} filter, the latest snapshot of every
+ * Rules for {@code GET /api/v1/instruments}: the optional {@code kind} filter, the latest snapshot of every
  * instrument (rate, basis, client rate, capture date, data date, confidence, verification date and flags), the
  * latest quote of a fund class (date and vcp, money scale 2), and the exact JSON scales.
  */
@@ -119,7 +119,7 @@ class InstrumentListApiTest extends ApiIntegrationTest {
 				.andExpect(jsonPath("$[0].flags", hasSize(1)))
 				.andExpect(jsonPath("$[0].flags[0].code").value("TERM_CODE_UNDOCUMENTED"))
 				.andExpect(jsonPath("$[0].flags[0].severity").value("WARNING"))
-				// A rate of zero is kept and flagged INVALID, never dropped (S12).
+				// A rate of zero is kept and flagged INVALID, never dropped.
 				.andExpect(jsonPath("$[?(@.invalid==true)]", hasSize(
 						(int) ApiFixtures.official().stream().filter(record -> record.isInvalid()).count())))
 				.andExpect(content().string(containsString("\"rate\":0.001000")));

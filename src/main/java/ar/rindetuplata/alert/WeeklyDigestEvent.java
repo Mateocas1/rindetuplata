@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The payload of a {@code WEEKLY_DIGEST} outbox event (T6c, L32 a): the top entries of the rule's filter in ranking
+ * The payload of a {@code WEEKLY_DIGEST} outbox event: the top entries of the rule's filter in ranking
  * order, the Monday of the ISO week it covers and, when the top differs from the previous digest's, what it was.
  * {@code realReturn} is null when no inflation expectation is stored.
  */

@@ -9,7 +9,7 @@ import java.util.HexFormat;
 import java.util.regex.Pattern;
 
 /**
- * The shape of an API key (T6d, S6, L32b): {@code rtp_} plus 32 random bytes in unpadded base64url (47 characters).
+ * The shape of an API key: {@code rtp_} plus 32 random bytes in unpadded base64url (47 characters).
  * The database keeps only the lower-case hex SHA-256 of the whole key and its first ten characters for display. A key
  * has 256 bits of entropy, so a plain unsalted SHA-256 is enough: there is nothing to guess and nothing to brute force.
  */

@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * T6a, L29 a: {@code GET /api/v1/reports/monthly} and {@code /api/v1/reports/monthly/{yyyy-MM}} over a September
+ * {@code GET /api/v1/reports/monthly} and {@code /api/v1/reports/monthly/{yyyy-MM}} over a September
  * 2026 history built by hand (the frozen clock says 2026-10-20, so September is the last closed month). Each kind has
  * a worked example: a wallet at a constant and at a changing TNA, a crypto APY, a plazo fijo locked at its first
  * capture, funds as the vcp ratio of two month ends, an FCI-backed wallet, and one instrument per way of being left
@@ -39,7 +39,7 @@ class ReportApiTest extends ApiIntegrationTest {
 	private static final String FUNDS = ArgentinaDatosFundAdapter.SOURCE.id();
 
 	/**
-	 * The month list and every month report are cached by the data version (T4a, L33 a), and the tests seed the tables
+	 * The month list and every month report are cached by the data version, and the tests seed the tables
 	 * directly, so each test starts from a version no other test has used: a rolled-back test never leaves an answer
 	 * that a later one with the same row counts could hit.
 	 */
@@ -134,7 +134,7 @@ class ReportApiTest extends ApiIntegrationTest {
 				.andExpect(jsonPath("$.rows[0].coverage.total").value(31));
 	}
 
-	// --- T8a, L38 a: a month needs measured rate-snapshot history ------------------------------------------------
+	// --- A month needs measured rate-snapshot history ------------------------------------------------
 
 	@Test
 	void aMonthWithOnlyFundQuotesIsNeitherListedNorReportable() throws Exception {

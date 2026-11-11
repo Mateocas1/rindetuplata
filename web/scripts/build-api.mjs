@@ -1,5 +1,5 @@
 /**
- * `npm run build:api` (T7e): the production build of the site against a running API.
+ * `npm run build:api`: the production build of the site against a running API.
  *
  * It is the counterpart of the fixture build the tests use, and it is deliberately not the same
  * command: `API_URL` and `SITE_URL` are both mandatory (there is no silent fallback to

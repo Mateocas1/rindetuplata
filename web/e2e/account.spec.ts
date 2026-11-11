@@ -1,12 +1,12 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
 
 /**
- * End-to-end smoke over the local Compose stack (T7e).
+ * End-to-end smoke over the local Compose stack.
  *
- * It closes the gap T7d left open: nothing executed the account islands against a real API. This spec
+ * It closes a gap: nothing executed the account islands against a real API. This spec
  * drives the product the way a reader does and always through Caddy (one origin): it asks for a magic
  * link on `/ingresar`, takes the link from Mailpit's HTTP API — the only delivery channel of the MVP
- * (S13) —, logs in, creates and deletes an alert, logs out, and checks that `/alertas` without a
+ * —, logs in, creates and deletes an alert, logs out, and checks that `/alertas` without a
  * session sends the reader back to `/ingresar`.
  *
  * `deploy/e2e.sh` builds the API image, brings the stack up and builds the site against it, so this

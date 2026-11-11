@@ -6,7 +6,7 @@ import ar.rindetuplata.source.wallet.FundClassKey;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
-/** T2c name rules (L7): fund identity and the two exclusions are decided from the class name alone. */
+/** Name rules: fund identity and the two exclusions are decided from the class name alone. */
 class FundClassRulesTest {
 
 	@Test

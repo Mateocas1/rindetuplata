@@ -12,7 +12,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * T1a per-IP rate limit through the real security chain: the public read endpoints allow
+ * Per-IP rate limit through the real security chain: the public read endpoints allow
  * {@code rindetuplata.api.rate-limit.capacity} requests per address, then answer a 429 {@code ProblemDetail} with
  * {@code Retry-After}; the {@code X-Build-Token} bypass skips it; other paths are never counted. The clock is
  * frozen, so no token refills during a test, and each test uses its own remote address because the buckets live

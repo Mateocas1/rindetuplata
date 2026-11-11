@@ -9,8 +9,8 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * {@code rindetuplata.auth.*}: where the magic link points, how long a token lives, how many unexpired tokens one
- * email may hold (S13), which emails are admins, whether the session cookie is {@code Secure}, and how many
- * magic-link requests one remote address may make per window (T11a).
+ * email may hold, which emails are admins, whether the session cookie is {@code Secure}, and how many
+ * magic-link requests one remote address may make per window.
  */
 @ConfigurationProperties("rindetuplata.auth")
 public record AccountProperties(

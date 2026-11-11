@@ -1,5 +1,5 @@
 /**
- * Read-only balance bands of one curated wallet rate (S12, T13d).
+ * Read-only balance bands of one curated wallet rate.
  *
  * The same table serves the base schedule and each labelled condition; the
  * caller gives it the accessible name of its region. It reads like the ranking

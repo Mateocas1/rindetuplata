@@ -12,7 +12,7 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 
 /**
- * T6b rules for the curation write path (S12): a PUT creates or replaces a wallet rate, stamps today's verification
+ * Rules for the curation write path: a PUT creates or replaces a wallet rate, stamps today's verification
  * and the admin email, writes an audit row and publishes today's wallet snapshot so the ranking shows it at once; a
  * confirm re-verifies the same tiers; and the audit lists the actions newest first.
  */

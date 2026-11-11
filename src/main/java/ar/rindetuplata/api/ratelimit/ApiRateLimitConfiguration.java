@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Wires the per-address token bucket of the public read API from {@link ApiRateLimitProperties} (T1a) and the
- * per-key buckets and quotas of the API-key plans from {@link ApiPlanProperties} (T6d).
+ * Wires the per-address token bucket of the public read API from {@link ApiRateLimitProperties} and the
+ * per-key buckets and quotas of the API-key plans from {@link ApiPlanProperties}.
  */
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties({ ApiRateLimitProperties.class, ApiPlanProperties.class })

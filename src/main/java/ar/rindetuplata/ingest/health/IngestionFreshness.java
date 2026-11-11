@@ -8,7 +8,7 @@ import java.time.ZonedDateTime;
 import org.springframework.scheduling.support.CronExpression;
 
 /**
- * When the data of a capture date goes stale (L33b): {@code stale-after} past the run the scheduler was expected to
+ * When the data of a capture date goes stale: {@code stale-after} past the run the scheduler was expected to
  * make for that date. The expected run is the first fire of the scheduler's own cron at or after midnight of the date
  * in the scheduler's zone (19:30 in America/Argentina/Buenos_Aires by default), so this class and the scheduler can
  * never disagree about when the day's run happens. With the 36 hours default, one missed run gets a 12 hour grace

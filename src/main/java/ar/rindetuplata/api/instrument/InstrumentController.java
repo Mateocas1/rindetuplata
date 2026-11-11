@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * The instruments of the public API: the catalogue with the latest datum of each instrument, and the history of one
- * instrument over a date range. Both are read-only and state their dates (S11).
+ * instrument over a date range. Both are read-only and state their dates.
  */
 @RestController
 @RequestMapping("/api/v1/instruments")

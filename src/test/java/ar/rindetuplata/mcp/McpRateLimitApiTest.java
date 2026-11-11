@@ -20,7 +20,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * T6e (S6, L32 c): {@code POST /mcp} sits under the read-API rate limit, keyed like the REST API (the remote
+ * {@code POST /mcp} sits under the read-API rate limit, keyed like the REST API (the remote
  * address, one bucket shared with the GET endpoints). The clock is frozen, so no token refills during the test and
  * the single test method spends the bucket of 127.0.0.1 in a known order: capacity 3.
  */

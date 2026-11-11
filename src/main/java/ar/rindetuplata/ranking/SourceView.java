@@ -3,7 +3,7 @@ package ar.rindetuplata.ranking;
 import ar.rindetuplata.source.SourceRef;
 import java.util.Objects;
 
-/** Where a ranked row comes from (S11), as the T3 source declares itself. */
+/** Where a ranked row comes from, as the source declares itself. */
 public record SourceView(String id, String displayName, boolean official) {
 
 	public SourceView {

@@ -9,7 +9,7 @@ import { loadInstrumentPages } from '../src/lib/pages';
 import { instrumentSlug } from '../src/lib/slug';
 
 /**
- * Bank entity pages build smoke test (T6b).
+ * Bank entity pages build smoke test.
  *
  * Builds the site in fixture mode to its own outDir (the other smoke tests build to `dist/` and `.astro/…`; two
  * builds sharing one outDir would race on Astro's `emptyDir`) and checks what the static host would serve:

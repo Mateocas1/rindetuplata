@@ -40,7 +40,7 @@ export interface UpTo {
 }
 
 /**
- * When an instrument beats the dólar MEP (S5, L24 b): it wins if the MEP buy price rises less than `devaluation`
+ * When an instrument beats the dólar MEP: it wins if the MEP buy price rises less than `devaluation`
  * (a fraction); `price` is the break-even MEP buy price in ARS per USD.
  */
 export interface BreakEvenMep {
@@ -78,11 +78,11 @@ export interface RankedEntry {
   warnings: ValidationFlag[];
   /**
    * Sibling classes of the same fund folded into this row (best class for the request); 0 for other kinds.
-   * Optional because the recorded fixtures predate the field (L16): read it as `foldedClasses ?? 0`.
+   * Optional because the recorded fixtures predate the field: read it as `foldedClasses ?? 0`.
    */
   foldedClasses?: number;
   /**
-   * Optional like `foldedClasses`: the recorded fixtures predate it (L16), and the API sends null when no MEP
+   * Optional like `foldedClasses`: the recorded fixtures predate it, and the API sends null when no MEP
    * quote is stored.
    */
   breakEvenMep?: BreakEvenMep | null;
@@ -170,7 +170,7 @@ export interface FundQuotePoint {
   tea: number | null;
 }
 
-/** INDEC monthly inflation, the past index used by history (S10), with its 12-month compounding. */
+/** INDEC monthly inflation, the past index used by history, with its 12-month compounding. */
 export interface MonthlyInflationPoint {
   index: string;
   observationDate: string;

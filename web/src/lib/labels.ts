@@ -1,5 +1,5 @@
 /**
- * Spanish copy for the codes the API returns (S11: every row states its source,
+ * Spanish copy for the codes the API returns (every row states its source,
  * its data date and — when excluded — its reason).
  *
  * Labels live here, not in components, so a new code is one edit and the copy can
@@ -71,7 +71,7 @@ export const RATE_KIND_LABELS: Record<string, string> = {
 };
 
 /**
- * Column-sized names for the ranking's TNA cell (T13e): the long form above is
+ * Column-sized names for the ranking's TNA cell: the long form above is
  * a sentence for the instrument page's prose, and in a 14% column it wrapped
  * into four lines at 1280. Two words each, unit first.
  */
@@ -89,7 +89,7 @@ export const INFLATION_INDEX_LABELS: Record<string, string> = {
   INDEC_CPI_MONTHLY: 'IPC mensual (INDEC)',
 };
 
-/** Short index names, for the column header next to the real-return badge (S10). */
+/** Short index names, for the column header next to the real-return badge. */
 export const INFLATION_INDEX_SHORT_LABELS: Record<string, string> = {
   REM_12M_EXPECTED: 'REM',
   INDEC_CPI_MONTHLY: 'INDEC',
@@ -145,7 +145,7 @@ export function rateKindLabel(kind: string): string {
   return labelFrom(RATE_KIND_LABELS, kind);
 }
 
-/** The same fact at column width, for the ranking row (T13e). */
+/** The same fact at column width, for the ranking row. */
 export function rateKindShortLabel(kind: string): string {
   return labelFrom(RATE_KIND_SHORT_LABELS, kind);
 }

@@ -35,7 +35,7 @@ public class ArgentinaDatosCryptoAdapter implements CryptoYieldSource {
         return parse(SourceHttp.get(client, SOURCE, "/rendimientos"), fetchedAt);
     }
 
-    /** Pure: raw body → records. Also used to replay the T9 archive. */
+    /** Pure: raw body → records. Also used to replay the archive. */
     public static List<CryptoYield> parse(byte[] body, Instant fetchedAt) {
         JsonNode platforms = JsonSupport.array(SOURCE, JsonSupport.readTree(SOURCE, body), null);
         LocalDate today = ValidationRules.localDate(fetchedAt);

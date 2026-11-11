@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T4a (L33 a): the MEP reader takes the latest quote at or before {@code asOf} whatever the source, and on the same
+ * The MEP reader takes the latest quote at or before {@code asOf} whatever the source, and on the same
  * date prefers DolarApi (the live capture) over the ArgentinaDatos history. Ids sort the other way
  * ({@code argentinadatos-...} before {@code dolarapi-...}), so the preference must be explicit, not an accident of
  * the tie break.

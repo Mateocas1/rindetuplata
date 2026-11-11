@@ -20,7 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * T6c rules of the alert-rules API (S3, S13): a logged-in user creates a rule with a percent threshold and reads
+ * Rules of the alert-rules API: a logged-in user creates a rule with a percent threshold and reads
  * it back; a user only ever sees and deletes their own rules (another user's rule is a 404, never a 403 that would
  * confirm it exists); anonymous access is a 401 and a state-changing request without a CSRF token is a 403; an
  * invalid threshold, kind or instrument is a 400 naming the field; the 21st active rule of one user is refused.
@@ -193,7 +193,7 @@ class AlertRulesApiTest extends AlertApiIntegrationTest {
 	/**
 	 * The percent the API takes is stored as the fraction the evaluation compares against: the rule of 25% is
 	 * created through the HTTP API, the day's ranking holds one wallet at 30%, and the AlertTriggered event that
-	 * fires carries the threshold 0.25. The outbox row is the public artifact T6d relays.
+	 * fires carries the threshold 0.25. The outbox row is the public artifact the relay publishes.
 	 */
 	@Test
 	void thePercentBecomesTheFractionTheEvaluationCompares() throws Exception {

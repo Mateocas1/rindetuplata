@@ -37,7 +37,7 @@ public class BcraPlazoFijoAdapter implements OfficialPlazoFijoSource {
         return parse(SourceHttp.get(client, SOURCE, "/PlazosFijos"), fetchedAt);
     }
 
-    /** Pure: raw body → records. Also used to replay the T9 archive (pass the capture instant as {@code fetchedAt}). */
+    /** Pure: raw body → records. Also used to replay the archive (pass the capture instant as {@code fetchedAt}). */
     public static List<OfficialPlazoFijoRate> parse(byte[] body, Instant fetchedAt) {
         JsonNode rows = JsonSupport.array(SOURCE, JsonSupport.readTree(SOURCE, body), "results");
         LocalDate today = ValidationRules.localDate(fetchedAt);

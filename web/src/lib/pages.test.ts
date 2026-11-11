@@ -4,7 +4,7 @@ import { instrumentSlug } from './slug';
 import { RANKING_KINDS } from './types';
 
 /**
- * The instrument page set (T7c, D1).
+ * The instrument page set (D1).
  *
  * A page must exist for every instrument any prerendered table can link to: the
  * union of the global recording and every kind recording. The table asks this

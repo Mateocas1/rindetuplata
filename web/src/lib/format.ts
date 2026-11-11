@@ -1,5 +1,5 @@
 /**
- * Presentation formatters (S14: all financial math lives in the Java API; the
+ * Presentation formatters (all financial math lives in the Java API; the
  * browser only formats the values it receives).
  *
  * Measured facts of this project's Intl (Node 24 / es-AR): money is
@@ -62,7 +62,7 @@ export function formatPercent(fraction: number): string {
 }
 
 /**
- * Percent with an explicit sign, for gains and losses (S10: the sign is text,
+ * Percent with an explicit sign, for gains and losses (the sign is text,
  * never color alone). An exact zero stays unsigned.
  */
 export function formatSignedPercent(fraction: number): string {

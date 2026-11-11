@@ -1,7 +1,7 @@
 /**
- * Class strings shared by the account islands (T7d, T13d).
+ * Class strings shared by the account islands.
  *
- * Thin aliases over the T13a recipes in `styles/recipes.css` (card, field,
+ * Thin aliases over the recipes in `styles/recipes.css` (card, field,
  * buttons) plus the seven Cobalto Cristal text roles, so every island shares one
  * shape and `tokens.css` stays the single source of color. A field label is the
  * mono caps `type-label`; help and error lines are `type-body` (muted or loss)

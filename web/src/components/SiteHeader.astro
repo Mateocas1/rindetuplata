@@ -2,14 +2,14 @@
 /**
  * Site chrome: a sticky header with the wordmark and the public pages (the
  * ranking, the four category landings and the methodology page) and, last, the
- * API-keys page (T6d), which asks for a login itself. The height
+ * API-keys page, which asks for a login itself. The height
  * (3.5rem) must stay in sync with `scroll-padding-block-start` in global.css so
  * anchors and focused elements never land under it. On narrow screens the nav
  * scrolls sideways rather than wrapping, so the header height never changes; its
  * trailing edge fades as a scroll cue, and its links draw an inset focus ring the
- * scroller cannot clip (T12e).
+ * scroller cannot clip.
  *
- * T13b (Cobalto Cristal): the wordmark is set in the display family, the nav is
+ * Cobalto Cristal: the wordmark is set in the display family, the nav is
  * the mono caps `type-label` role separated by whitespace and one hairline under
  * the band, and the current page is marked twice — `aria-current` for assistive
  * technology and an ink bar under the link (a shape, so the state never depends

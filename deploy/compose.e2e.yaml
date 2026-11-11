@@ -1,4 +1,4 @@
-# E2E overlay (T7e): the throwaway stack `deploy/e2e.sh` runs *next to* the developer's own stack.
+# E2E overlay: the throwaway stack `deploy/e2e.sh` runs *next to* the developer's own stack.
 #
 #   docker compose -f compose.yaml -f deploy/compose.e2e.yaml -p rindetuplata-e2e --profile stack ...
 #

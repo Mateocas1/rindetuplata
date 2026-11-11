@@ -8,9 +8,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
 /**
- * Runs the live ingestion once a day, after the T9 capture: today is the day in {@code rindetuplata.ingest.zone},
+ * Runs the live ingestion once a day, after the capture: today is the day in {@code rindetuplata.ingest.zone},
  * never the machine's day. A failure is logged and never kills the scheduler. {@link #runToday()} is the body the
- * optional startup run (T14a) reuses, so both paths ingest and log the same way.
+ * optional startup run reuses, so both paths ingest and log the same way.
  */
 public class IngestionScheduler {
 

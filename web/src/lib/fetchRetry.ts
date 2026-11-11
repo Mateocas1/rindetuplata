@@ -1,5 +1,5 @@
 /**
- * HTTP discipline of the static build (T4d, L36a).
+ * HTTP discipline of the static build.
  *
  * A build used to send about thirty identical ranking requests with no deadline and no second chance: one
  * slow answer hung it, one 502 failed it. Every request now has a deadline (`API_TIMEOUT_MS`, default 15 s),

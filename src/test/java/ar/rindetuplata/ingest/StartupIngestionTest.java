@@ -41,7 +41,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 /**
- * T14a (S20): with {@code rindetuplata.ingest.run-on-startup=true} the application runs today's LIVE ingestion,
+ * With {@code rindetuplata.ingest.run-on-startup=true} the application runs today's LIVE ingestion,
  * today being the day in {@code rindetuplata.ingest.zone} read through the same clock the scheduler uses, once, as
  * soon as it is ready. Running it again for a day whose instance already COMPLETED is the existing idempotency: a
  * no-op. A failing run is logged and the application keeps working.

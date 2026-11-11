@@ -1,4 +1,4 @@
-# History backfill (T4a, S4, L33 a)
+# History backfill
 
 `historyBackfillJob(from, to)` fills the stored history of the days `from..to` (both inclusive) from the public sources
 that keep one, so a fresh deploy does not have to wait weeks for the 7-day fund yield, the MEP and the monthly report.

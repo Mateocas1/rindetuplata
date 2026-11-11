@@ -25,7 +25,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * Shared setup of the T11a concurrency tests: the same application context as {@link AccountIntegrationTest}
+ * Shared setup of the concurrency tests: the same application context as {@link AccountIntegrationTest}
  * (so it is cached and shared) but with no wrapping transaction, because several request threads must really commit
  * and see each other's rows. Every email of these tests ends in {@link #DOMAIN} and is deleted after each test.
  */

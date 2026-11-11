@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * The kinds of alert rule (T6c, S6, L32 a). {@link #THRESHOLD} is the original rule ("avisame si algo pasa del X%
+ * The kinds of alert rule. {@link #THRESHOLD} is the original rule ("avisame si algo pasa del X%
  * anual") and the default for a request without a type and for every row stored before V9.
  */
 public enum AlertType {

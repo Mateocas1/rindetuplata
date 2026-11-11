@@ -19,7 +19,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 /**
- * T4a (L33 a): BCRA monetary statistics take {@code desde} and {@code hasta}, probed live on 2026-11-01 (with the
+ * BCRA monetary statistics take {@code desde} and {@code hasta}, probed live on 2026-11-01 (with the
  * recorded answers): the range is inclusive, the {@code limit} may be at most 3000 (3001 is a 400 "El límite no puede
  * superar los 3000 registros.") and an inverted range is a 400 "Fecha desde no debe ser mayor a la fecha hasta.".
  */

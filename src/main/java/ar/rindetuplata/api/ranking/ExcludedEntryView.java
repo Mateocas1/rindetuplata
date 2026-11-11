@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * An instrument left out of the ranking with its reason and the flags of the row that produced it (S15): the row
+ * An instrument left out of the ranking with its reason and the flags of the row that produced it: the row
  * is returned apart, never silently dropped.
  */
 public record ExcludedEntryView(String id, String kind, String name, SourceView source, LocalDate captureDate,

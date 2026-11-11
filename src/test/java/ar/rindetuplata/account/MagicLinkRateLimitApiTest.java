@@ -14,7 +14,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 
 /**
- * T11a per-IP rate limit (S4, S13): {@code POST /api/v1/auth/magic-link} allows
+ * Per-IP rate limit: {@code POST /api/v1/auth/magic-link} allows
  * {@code rindetuplata.auth.magic-link-per-ip-limit} requests per window per remote address; beyond it the answer is
  * a 429 {@code ProblemDetail} with {@code Retry-After}, with no token and no mail, for known and unknown emails
  * alike, before the per-email cap, and an invalid email still answers 400 and counts. Each test uses its own

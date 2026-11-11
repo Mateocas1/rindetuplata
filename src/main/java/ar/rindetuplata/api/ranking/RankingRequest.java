@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Turns the raw request parameters of the ranking endpoints into a validated {@link RankingQuery} (T5c). A value
+ * Turns the raw request parameters of the ranking endpoints into a validated {@link RankingQuery}. A value
  * the caller got wrong becomes an {@link ApiException} naming the parameter, so the shared advice answers a 400
- * {@code ProblemDetail} that says exactly which one to fix. Missing values take the S15 defaults: $1.000.000, 30
+ * {@code ProblemDetail} that says exactly which one to fix. Missing values take the defaults: $1.000.000, 30
  * days, 50 rows, fund classes grouped, today in the injected clock's zone.
  */
 final class RankingRequest {

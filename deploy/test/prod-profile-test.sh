@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# The `prod` profile reaches the VPS API (T4b, S4, L33b): `compose.yaml` + `deploy/compose.vps.yaml`.
+# The `prod` profile reaches the VPS API: `compose.yaml` + `deploy/compose.vps.yaml`.
 #
 #   deploy/test/prod-profile-test.sh
 #

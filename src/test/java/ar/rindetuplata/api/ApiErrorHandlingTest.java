@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.ResultActions;
 
 /**
- * T5b rules for the shared error handling (T5c reuses it): every failure is an RFC 9457 {@code ProblemDetail}
+ * Rules for the shared error handling: every failure is an RFC 9457 {@code ProblemDetail}
  * ({@code application/problem+json}) whose {@code status}, {@code title}, {@code detail} and {@code instance} are
  * set and whose {@code parameter} names the offending request parameter. Spring flattens the problem's properties
  * onto the body, so the parameter is a top-level field. 400 for a type mismatch, an invalid value, a bad date range

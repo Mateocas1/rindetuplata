@@ -121,7 +121,7 @@ abstract class AccountIntegrationTest {
 				.andExpect(jsonPath("$.title").value(title));
 	}
 
-	/** How many accounts exist. T6a exposes no endpoint that lists users, so this is the only observation. */
+	/** How many accounts exist. The API exposes no endpoint that lists users, so this is the only observation. */
 	protected long accountCount() {
 		return jdbc.sql("select count(*) from app_user").query(Long.class).single();
 	}

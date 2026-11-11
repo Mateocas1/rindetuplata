@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.function.UnaryOperator;
 
 /**
- * The return an instrument actually delivered over one closed month, from the history stored for it (T6a, L29 a).
+ * The return an instrument actually delivered over one closed month, from the history stored for it.
  * Nothing here is a projection: every rule says which stored data a month needs and disqualifies the instrument
  * when that data is missing, instead of guessing it.
  *

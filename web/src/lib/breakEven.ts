@@ -1,5 +1,5 @@
 /**
- * The dólar MEP break-even in words (S5, L24 b). The API does the maths (S14): this only turns its
+ * The dólar MEP break-even in words. The API does the maths: this only turns its
  * `breakEvenMep` and `dollarMep` into the three sentences a row and the simulator show, or into null when either
  * is absent, so nothing is said about the dollar without a stored quote.
  */

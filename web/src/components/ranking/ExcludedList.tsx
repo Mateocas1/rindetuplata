@@ -1,9 +1,9 @@
 /**
- * Ineligible and excluded options (S11, S15).
+ * Ineligible and excluded options.
  *
  * Nothing is silently dropped: an option that cannot be ranked is listed here
  * with its reason in Spanish, grouped by reason so the common one does not hide
- * the rest. It lives behind one disclosure (T13b, L77: progressive disclosure
+ * the rest. It lives behind one disclosure (progressive disclosure
  * instead of a wall of small grey text). The API's own `detail` is
  * developer-facing English, so the copy is built from the reader's own amount
  * and term (see `ineligibleExplanation`).

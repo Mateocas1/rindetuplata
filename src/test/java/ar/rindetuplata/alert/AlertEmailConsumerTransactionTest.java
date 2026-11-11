@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * T11b consumer rules (S4): the {@code processed_event} row is inserted in one transaction with the send. A
+ * Consumer rules: the {@code processed_event} row is inserted in one transaction with the send. A
  * concurrent redelivery of one event waits on the row lock and then sees the duplicate (one mail, one row); a mail
  * failure rolls the row back so the retry sends it; a sequential duplicate sends nothing; an unreadable payload is
  * rejected without requeue. The listener is called directly (no broker), with real threads against Postgres.

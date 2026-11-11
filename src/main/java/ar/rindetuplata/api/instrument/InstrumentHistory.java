@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * The history of one instrument over a closed date range: its rate snapshots per capture date, or its fund quotes
  * with the implied TNA-equivalent, plus the INDEC monthly inflation observations of the same range. The instrument
- * carries its source id, so every row of the response is attributable (S11).
+ * carries its source id, so every row of the response is attributable.
  */
 public record InstrumentHistory(
 		String id,

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 /**
- * Build smoke test for the account pages (T7d).
+ * Build smoke test for the account pages.
  *
  * The three pages are pure markup shells around client-only islands, so there is
  * no logic to unit-test here: this builds the site in fixture mode and checks
@@ -13,7 +13,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
  * index, it carries its H1 and a mount point for its island, and it holds no
  * personal or build-time API data.
  *
- * It builds to its own outDir because the T7b smoke test builds to `dist/` and
+ * It builds to its own outDir because the smoke test builds to `dist/` and
  * Vitest runs test files in parallel; two builds sharing one outDir would race
  * on Astro's `emptyDir`.
  */

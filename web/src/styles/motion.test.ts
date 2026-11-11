@@ -1,5 +1,5 @@
 /**
- * Guards the motion layer (T12d, `animate` + better-ui): press feedback on the
+ * Guards the motion layer (`animate` + better-ui): press feedback on the
  * button recipes, one disclosure recipe for every `<details>`, a dimmed busy
  * region, movement only without a reduced-motion preference, and no color
  * transitions anywhere (so an OS theme switch never smears and the zero-JS

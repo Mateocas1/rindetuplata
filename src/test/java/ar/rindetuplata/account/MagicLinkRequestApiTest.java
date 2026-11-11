@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * T6a magic-link request rules (S13): {@code POST /api/v1/auth/magic-link} answers 202 with the same body whether
+ * Magic-link request rules: {@code POST /api/v1/auth/magic-link} answers 202 with the same body whether
  * or not the email is known, rejects an invalid email with a 400 {@code ProblemDetail}, mails the configured link
  * with a usable token, and stops sending after 3 unexpired tokens for the same email.
  */

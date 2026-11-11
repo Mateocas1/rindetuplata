@@ -9,7 +9,7 @@ import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.boot.health.contributor.Status;
 
 /**
- * The {@code ingestionFreshness} health contributor of the {@code ingestion} group (L33b): {@code UP} while the newest successful LIVE ingestion is inside its
+ * The {@code ingestionFreshness} health contributor of the {@code ingestion} group: {@code UP} while the newest successful LIVE ingestion is inside its
  * window, {@code STALE} past it, and {@code STALE} too when none was ever recorded (an empty store has nothing to
  * rank). {@code STALE} maps to HTTP 200 on {@code /actuator/health}, so Docker's healthcheck, {@code depends_on} and
  * Caddy keep working while the data is old, and to 503 on {@code /actuator/health/ingestion}, which an external

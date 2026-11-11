@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.ResultActions;
 
 /**
- * T5c rules for input validation: every invalid request is an RFC 9457 {@code ProblemDetail} with status 400 whose
+ * Rules for input validation: every invalid request is an RFC 9457 {@code ProblemDetail} with status 400 whose
  * {@code parameter} names the offending request parameter. One test per rule, including a missing required
  * parameter, which the shared advice maps from Spring's own {@code MissingServletRequestParameterException}.
  */

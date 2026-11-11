@@ -1,5 +1,5 @@
 /**
- * The one place a key is ever shown (T6d, L32 b).
+ * The one place a key is ever shown.
  *
  * The API returns the key in the create response only: it stores a hash, so it cannot be shown again. This notice
  * therefore says so, offers a copy button (with the text selectable as the fallback when the clipboard is blocked)

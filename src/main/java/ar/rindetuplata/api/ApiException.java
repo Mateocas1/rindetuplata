@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 
 /**
  * An API-level failure that the shared advice turns into an RFC 9457 {@code ProblemDetail}. It names the offending
- * request parameter, so every 400 and 404 of the public API can say which one is wrong (T5c reuses this).
+ * request parameter, so every 400 and 404 of the public API can say which one is wrong.
  */
 public class ApiException extends RuntimeException {
 

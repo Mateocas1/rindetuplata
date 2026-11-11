@@ -28,7 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
-/** The recorded fixtures the {@code api} tests seed through the T4 store writers, and a few hand-made fund quotes. */
+/** The recorded fixtures the {@code api} tests seed through the store writers, and a few hand-made fund quotes. */
 final class ApiFixtures {
 
 	/** The capture instant of the recorded 2026-10-14 archive, so the flags match production. */

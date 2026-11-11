@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Stores a bank's plazo fijo rates: {@code rate} is the non-client TNA (the S19 default) and {@code client_rate}
+ * Stores a bank's plazo fijo rates: {@code rate} is the non-client TNA (the default) and {@code client_rate}
  * the client one. The term bands are kept as given in {@code details}. One row per (bank, capture date).
  */
 @Component

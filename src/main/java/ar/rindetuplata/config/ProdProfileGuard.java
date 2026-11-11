@@ -18,7 +18,7 @@ import org.springframework.core.PriorityOrdered;
 import org.springframework.core.env.Environment;
 
 /**
- * The startup guard of the {@code prod} profile (L33b, S4): the application refuses to start, naming every offending
+ * The startup guard of the {@code prod} profile: the application refuses to start, naming every offending
  * property at once, when a value is still a local-development default or is insecure on a public host. The checks
  * read the same properties the application binds (relaxed names included, so {@code RINDETUPLATA_AUTH_SECURECOOKIE}
  * counts), and a rejected secret is never printed.

@@ -16,7 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * T3a rule (S3, L22): {@code GET /api/v1/simulations} reads only what the requested instrument needs. The proof is
+ * Rule: {@code GET /api/v1/simulations} reads only what the requested instrument needs. The proof is
  * observable over HTTP: rows of the other kinds that the ranking cannot read (an unknown confidence) are stored, so
  * the full basket throws, and the targeted simulation of an instrument that does not depend on them still answers.
  */

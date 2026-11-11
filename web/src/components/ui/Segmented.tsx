@@ -1,5 +1,5 @@
 /**
- * Capsule segmented control (T13b, the Cobalto Cristal signature device).
+ * Capsule segmented control (the Cobalto Cristal signature device).
  *
  * A real radio group: one `input[type=radio]` per option inside a `fieldset`
  * whose `legend` names the group, so keyboard arrow keys move the selection and
@@ -13,7 +13,7 @@
  * the movement is gated by `motion-safe`. React never animates a number the
  * reader has to read, and the selected value itself is text in the thumb.
  *
- * The segment shows the preset's short form (T13e: at 320/390 the full amount
+ * The segment shows the preset's short form (at 320/390 the full amount
  * touched the thumb's edges) and adds the full value as screen-reader-only label
  * text, so the accessible name starts with what is visible ("$ 1M ($ 1.000.000)",
  * WCAG 2.5.3 label in name) and still states the exact amount.

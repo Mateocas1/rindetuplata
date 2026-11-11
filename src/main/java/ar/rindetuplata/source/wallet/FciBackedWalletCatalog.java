@@ -14,7 +14,7 @@ import org.springframework.core.io.ClassPathResource;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Which wallets are backed by which fund class (S12), from the classpath mapping {@code fci-backed-wallets.json}.
+ * Which wallets are backed by which fund class, from the classpath mapping {@code fci-backed-wallets.json}.
  * A class is mapped only once it is confirmed in the fund response; it is matched by {@link FundClassKey}, under its
  * primary name or any of the optional {@code aliases}.
  */

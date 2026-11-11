@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * T6d dead-letter rule (S4, S13): when the mail cannot be sent the message is retried three times and then
+ * Dead-letter rule: when the mail cannot be sent the message is retried three times and then
  * dead-lettered instead of looping forever, and it never counts as processed, so the operator still sees the event
  * in the dead-letter queue. The broker is real: the dead letter proves the queue's {@code x-dead-letter-*} wiring.
  */

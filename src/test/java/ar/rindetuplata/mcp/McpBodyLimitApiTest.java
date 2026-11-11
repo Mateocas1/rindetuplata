@@ -11,7 +11,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
- * T6e (S6, L32 c, finding F1 of the T6d+T6e verification): the transport refuses a request body over
+ * The transport refuses a request body over
  * {@link McpConfiguration#MAX_REQUEST_BYTES} instead of the SDK's default of 16 MiB, so one request cannot carry
  * millions of ids; a normal call is untouched.
  */

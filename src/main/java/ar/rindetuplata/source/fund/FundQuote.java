@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Daily cuotaparte quote of a money-market fund class. {@code name} is the full class name as the source gives it;
  * {@code fund} and {@code shareClass} are its parts around the first {@code " - "} ({@code shareClass} may be
- * {@code null}). No yield math here: T4 derives it from {@code vcp} deltas.
+ * {@code null}). No yield math here: it is derived later from {@code vcp} deltas.
  */
 public record FundQuote(
         SourceRef source,

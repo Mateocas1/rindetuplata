@@ -1,4 +1,4 @@
-# API keys and plan limits (T6d, S6, L32 b)
+# API keys and plan limits
 
 A signed-in user can create API keys to call the public read API with limits of their own instead of the shared
 per-address bucket. A key never signs anyone in: it only selects the limits.
@@ -42,7 +42,7 @@ limit and wins over a key.
 | `PARTNER` | a key the operator promotes in SQL | 3000 per key | 50 per second | 500000 |
 
 The numbers are configuration, `rindetuplata.api.plans.{free,partner}.{capacity,refill-per-second,daily-quota}`
-(`application.properties`). Buckets and quotas are in memory, so they assume the single API instance (S16): a restart
+(`application.properties`). Buckets and quotas are in memory, so they assume the single API instance: a restart
 resets them. Promoting a key is one SQL statement, documented in [`deploy.md`](deploy.md) ("API keys and plans").
 
 ## Managing keys (signed-in user)

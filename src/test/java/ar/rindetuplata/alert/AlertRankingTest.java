@@ -16,7 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * T6c, L32 a: BEST_CHANGED and WEEKLY_DIGEST see the ranking the way the public page groups it. The classes of one
+ * BEST_CHANGED and WEEKLY_DIGEST see the ranking the way the public page groups it. The classes of one
  * fund fold into the best one, so a change of class inside a fund is not a change of the best option, while two
  * different funds, or a fund and a wallet, are different options.
  */

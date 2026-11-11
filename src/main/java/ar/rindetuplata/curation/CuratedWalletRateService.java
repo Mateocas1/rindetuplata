@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * The curation write path of T6b (S12). A save or a confirm validates the document, stamps the verification day
+ * The curation write path. A save or a confirm validates the document, stamps the verification day
  * ("today" in America/Argentina/Buenos_Aires) and the admin email, writes an audit entry and, in the same
- * transaction, publishes today's wallet snapshot through the T4 {@link WalletRateWriter}, so the ranking shows the
+ * transaction, publishes today's wallet snapshot through the {@link WalletRateWriter}, so the ranking shows the
  * rate without waiting for the next ingestion.
  */
 @Service

@@ -32,16 +32,16 @@ build/
 ### VS Code ###
 .vscode/
 
-### Private preview (T14b, S20) ###
+### Private preview ###
 # Real secrets: the SMTP app password, the database and broker passwords. Only the committed
 # `deploy/preview.env.example` template belongs in the repository.
 deploy/preview.env
 
-# Build root of the private preview (T14c): one directory per site build plus the `current` symlink the
+# Build root of the private preview: one directory per site build plus the `current` symlink the
 # sidecar publishes and Caddy serves (`web/.site`, mounted on /srv in the preview overlay).
 web/.site/
 
-# Database dumps (T4c, F4): the default BACKUP_DIR is /var/backups/rindetuplata, outside the checkout; this keeps
+# Database dumps (F4): the default BACKUP_DIR is /var/backups/rindetuplata, outside the checkout; this keeps
 # a dump out of git for anyone who points BACKUP_DIR at a directory inside it.
 backups/
 

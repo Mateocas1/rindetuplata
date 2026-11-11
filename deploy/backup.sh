@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Daily database backup (T4c, S4): `pg_dump -Fc` through the Compose postgres service into a backup
+# Daily database backup: `pg_dump -Fc` through the Compose postgres service into a backup
 # directory, pruned by age. Installed as a systemd timer (deploy/systemd/), see "Backups" in docs/deploy.md.
 #
 #   deploy/backup.sh
@@ -10,7 +10,7 @@
 # temporary file is removed, the script exits non-zero and nothing is pruned: a failed day can never
 # delete the older dumps that are still good (finding R4 of `review-d018a62efca39d30`).
 #
-# The default directory is outside the checkout on purpose (finding F4 of the T4 verify): inside it a clean of
+# The default directory is outside the checkout on purpose (finding F4 of a review): inside it a clean of
 # untracked files deletes the dumps and every `docker build` sends them as build context.
 #
 # Configuration, all optional (defaults are the VPS layout of docs/deploy.md):

@@ -1,5 +1,5 @@
 /**
- * Query-string state for the home ranking (T7b).
+ * Query-string state for the home ranking.
  *
  * Every value is validated on read, so a hand-edited URL can only ever ask the
  * API for something valid: an unusable amount, term, kind or client id falls

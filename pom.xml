@@ -80,7 +80,7 @@
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
-		<!-- T6e (S6, L32 c): the official MCP Java SDK, stateless Streamable HTTP server and (in tests) its client. -->
+		<!-- The official MCP Java SDK, stateless Streamable HTTP server and (in tests) its client. -->
 		<dependency>
 			<groupId>io.modelcontextprotocol.sdk</groupId>
 			<artifactId>mcp-core</artifactId>

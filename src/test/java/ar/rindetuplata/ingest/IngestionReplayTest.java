@@ -25,7 +25,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 /**
- * T4c replay rules: the real 2026-10-14 archive writes the archived kinds with the manifest instant and REPLAY
+ * Replay rules: the real 2026-10-14 archive writes the archived kinds with the manifest instant and REPLAY
  * source runs; a source that is not ok or absent is {@code MISSING_IN_ARCHIVE} while the others are written; a
  * missing manifest fails the job naming the path. The same context has
  * {@code rindetuplata.ingest.enabled=false}, which must leave the scheduler unregistered.

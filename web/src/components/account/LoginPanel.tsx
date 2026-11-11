@@ -1,5 +1,5 @@
 /**
- * `/ingresar` island (S13, T7d) — client only.
+ * `/ingresar` island — client only.
  *
  * Two flows in one panel. An email submit posts to `POST /api/v1/auth/magic-link`
  * and always answers with the same confirmation copy, mirroring the API's 202 so

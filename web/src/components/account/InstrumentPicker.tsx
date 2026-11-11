@@ -1,12 +1,12 @@
 /**
- * Searchable instrument list for an alert rule (T7d).
+ * Searchable instrument list for an alert rule.
  *
  * A plain search input plus a list of buttons, not a fake combobox: the ARIA
  * combobox pattern brings a key map and `aria-activedescendant` this list does
  * not need, and native buttons keep the keyboard path intact. The result count
  * is announced politely, and the chosen option collapses to a panel chip with a
  * way back ("Quitar"), a quiet ink inline action: cobalt stays for the view's
- * one primary action (T13d).
+ * one primary action.
  */
 import { useMemo, useState } from 'react';
 import type { InstrumentSummary } from '../../lib/account';

@@ -30,7 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * T4a (L33 a): {@code months()} and {@code report(month)} are served from a bounded LRU keyed by the data version (and
+ * {@code months} and {@code report(month)} are served from a bounded LRU keyed by the data version (and
  * by today's date for the list, since a month closes at midnight). The repository stands for the database: counting
  * its calls shows what was recomputed. A failure is never cached, and the cache never holds more than its cap.
  */

@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * T6d relay rules (S4): an unpublished outbox row is published and marked as published, and one run claims at most
+ * Relay rules: an unpublished outbox row is published and marked as published, and one run claims at most
  * fifty rows, oldest first, so a backlog drains in order and never starves the day's newest events. The consumer is
  * off here, so the published messages stay in the queue and can be read back.
  */

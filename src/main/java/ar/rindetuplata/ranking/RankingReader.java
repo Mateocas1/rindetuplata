@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Read queries over the T4 tables (T5 design notes). Kinds never share a capture date: for every kind and source,
+ * Read queries over the tables. Kinds never share a capture date: for every kind and source,
  * its latest {@code capture_date} at or before {@code asOf} is used, so a source that failed today falls back to
  * its last good day and its row shows its own dates.
  */
@@ -214,7 +214,7 @@ class RankingReader {
 	}
 
 	/**
-	 * The latest usable dólar MEP quote at or before {@code asOf} (S5, L24 b), whatever the source (T4a, L33 a): the
+	 * The latest usable dólar MEP quote at or before {@code asOf}, whatever the source: the
 	 * newest capture date, and on the same date DolarApi (the live capture) before the ArgentinaDatos history, then the
 	 * source id so the answer is deterministic. A quote with a non-positive price is skipped, since the break-even
 	 * divides by it.
@@ -239,7 +239,7 @@ class RankingReader {
 				.optional();
 	}
 
-	/** The latest BCRA REM expected 12-month inflation at or before {@code asOf} (S10). */
+	/** The latest BCRA REM expected 12-month inflation at or before {@code asOf}. */
 	Optional<StoredInflation> latestExpectedInflation(LocalDate asOf) {
 		return jdbc.sql("""
 				select value, observation_date

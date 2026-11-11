@@ -1,12 +1,12 @@
 /**
- * `/admin/tasas` island (S12, T7d) — client only.
+ * `/admin/tasas` island — client only.
  *
  * Curated wallet rates: today's document, how long ago it was verified (stale
  * ones flagged, never shown as current), an edit form, a one-click confirm and
  * the audit trail per wallet. A 403 becomes the "Sin permiso" state; a 401
  * leaves for `/ingresar`.
  *
- * T12c/T13d: one `card` per wallet, the tier tables read like the ranking table
+ * One `card` per wallet, the tier tables read like the ranking table
  * (mono caps `type-label` heads, mono tabular `type-data` figures, right-aligned
  * numbers), each wallet carries one quiet mono provenance line, and every notice
  * — the confirmation, a failure, the 403 — goes through the shared surfaces.

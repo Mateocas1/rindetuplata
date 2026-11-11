@@ -23,9 +23,9 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T6c rules of the alert evaluation (S3, S4): the day's ranking is compared against every active rule and the
+ * Rules of the alert evaluation: the day's ranking is compared against every active rule and the
  * crossing is edge-triggered. An entry above the threshold but not yet matched inserts one {@code alert_match} and
- * one {@code AlertTriggered} outbox row with the fields T6d's email needs; the same date evaluated again adds
+ * one {@code AlertTriggered} outbox row with the fields the email needs; the same date evaluated again adds
  * nothing; an entry that drops below deletes its match and rising again later fires a new event; the rule's kind
  * and instrument narrow what can match; an inactive rule is ignored.
  */

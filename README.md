@@ -201,24 +201,24 @@ The ingestion ran on 2026-11-01 (every snapshot has that capture date; fund quot
 2026-10-30). `GET /api/v1/ranking` then returns 232 ranked rows with funds grouped (638 with `groupFunds=false`) and 14
 excluded. The 2026-10-14 snapshot in the section above is a different, live recording.
 
-**Before and after**. Before (baseline, no T3a): commit `19e19f0`, 8 ranking + 4 simulation + 2 revalidation virtual users for 60 s
+**Before and after**. Before (baseline, no cache or ETag): commit `19e19f0`, 8 ranking + 4 simulation + 2 revalidation virtual users for 60 s
 (14 concurrent users, no think time, so req/s is the capacity of the application), JVM `-Xms1g -Xmx1g`, AMD Ryzen 5 7600
 (6 cores, 12 threads), 14 GB RAM, Linux 7.2.8, Temurin 21.0.13, PostgreSQL 18 and the application on the same machine
-as k6 (a shared development machine: expect a few percent of run-to-run noise). After: commit `45b4f77` (T3a), the
+as k6 (a shared development machine: expect a few percent of run-to-run noise). After: commit `45b4f77`, the
 same data, machine, VUs, duration and command (`OUT_DIR=perf/results perf/run.sh after`).
 
 | Endpoint | Run | Requests | req/s | p50 | p95 | p99 | Errors |
 |---|---|---|---|---|---|---|---|
 | `GET /api/v1/ranking` | before | 4,856 | 80.7 | 108.1 ms | 138.8 ms | 161.4 ms | 0.00% |
-| | after (T3a) | 288,193 | 4,795.2 | 1.2 ms | 2.3 ms | 3.3 ms | 0.00% |
+| | after | 288,193 | 4,795.2 | 1.2 ms | 2.3 ms | 3.3 ms | 0.00% |
 | `GET /api/v1/simulations` | before | 2,355 | 39.1 | 99.1 ms | 128.4 ms | 151.1 ms | 0.00% |
-| | after (T3a) | 81,018 | 1,348.1 | 2.5 ms | 4.9 ms | 6.2 ms | 0.00% |
+| | after | 81,018 | 1,348.1 | 2.5 ms | 4.9 ms | 6.2 ms | 0.00% |
 | `GET /api/v1/ranking` with `If-None-Match` | before | 544 | 9.0 | 107.5 ms | 136.7 ms | 158.0 ms | 0.00% (0 of 544 answered 304: no ETag yet) |
-| | after (T3a) | 46,763 | 778.1 | 1.0 ms | 1.8 ms | 2.6 ms | 0.00% (46,763 of 46,763 answered 304) |
+| | after | 46,763 | 778.1 | 1.0 ms | 1.8 ms | 2.6 ms | 0.00% (46,763 of 46,763 answered 304) |
 | All requests | before | 7,759 | 128.9 | | | | 0.00%, 0 × 429 |
-| | after (T3a) | 415,978 | 6,921.4 | | | | 0.00%, 0 × 429 |
+| | after | 415,978 | 6,921.4 | | | | 0.00%, 0 × 429 |
 
-Before T3a a single-instrument simulation cost as much as the whole ranking (99 ms against 108 ms at the median)
+Before this change a single-instrument simulation cost as much as the whole ranking (99 ms against 108 ms at the median)
 because `simulate()` built the full ranking. After it, the simulation reads only its instrument and the ranking is
 served from the in-process cache after its first computation per data version and query, so the two endpoints went
 from about 100 ms to 1-3 ms at the median, and every revalidation was a `304`.

@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * The evaluation of T6c (S3, S4, L32 a): it ranks the day the ingestion just wrote with the public defaults
+ * The evaluation: it ranks the day the ingestion just wrote with the public defaults
  * ($1.000.000 over 30 days, non-client, every kind, as of the job's data date) once, without truncating it to a page,
  * so a rule on an instrument ranked beyond the public cap still sees it, and hands each active rule that ranking
  * according to its {@link AlertType}. Each rule is reconciled in its own transaction; a rule that fails is logged and

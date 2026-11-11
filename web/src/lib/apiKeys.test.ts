@@ -15,7 +15,7 @@ import {
 } from './apiKeys';
 
 /**
- * Typed API-key calls and the copy around them (T6d, S6, L32 b). Every unsafe call goes through the shared client,
+ * Typed API-key calls and the copy around them. Every unsafe call goes through the shared client,
  * so the CSRF token is fetched first and a ProblemDetail becomes a typed `ApiProblem`; this file pins the exact path,
  * method and body of the three calls the `/claves-api/` page makes.
  */

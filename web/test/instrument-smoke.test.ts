@@ -13,7 +13,7 @@ import { instrumentPath, instrumentSlug } from '../src/lib/slug';
 import { RANKING_KINDS, type RankedEntry } from '../src/lib/types';
 
 /**
- * Instrument and category build smoke test (T7c).
+ * Instrument and category build smoke test.
  *
  * Builds the site in fixture mode and checks the prerendered output: every
  * `href="/instrumentos/…"` on every page resolves to a built file (D1), one page
@@ -140,11 +140,11 @@ describe('instrument pages', () => {
       expect(page, slug).toContain(`<h1 class="type-display`);
       expect(page, slug).toContain(entry.name);
       expect(page, slug).toContain(formatPercent(entry.rateUsed.fraction));
-      // The rate and its unit are separate readout cells, never run together (T13c).
+      // The rate and its unit are separate readout cells, never run together.
       expect(page, slug).toContain(`<dt class="type-label">${entry.rateUsed.basis}</dt>`);
       expect(page, slug).toContain(`<dd class="type-data">${formatPercent(entry.rateUsed.fraction)}</dd>`);
       expect(page, slug).toContain(entry.source.displayName);
-      // Source and data date travel in one quiet provenance line (T13c, L77).
+      // Source and data date travel in one quiet provenance line.
       expect(page, slug).toContain(`· dato del ${formatDate(entry.dataDate)}`);
     }
   });
@@ -157,7 +157,7 @@ describe('instrument pages', () => {
       expect(page, slug).toContain('class="type-figure');
       expect(page, slug).toContain(formatMoney(entry.earned));
       expect(page, slug).toContain('en 30 días con');
-      // Provenance is one quiet data line, not a wall of small grey prose (L77).
+      // Provenance is one quiet data line, not a wall of small grey prose.
       expect(page, slug).toMatch(/class="type-data text-muted/);
     }
   });
@@ -197,7 +197,7 @@ describe('instrument pages', () => {
       expect(tag, slug).toContain(`width="${CHART_WIDTH}"`);
       expect(tag, slug).toContain(`height="${CHART_HEIGHT}"`);
       expect(tag, slug).not.toContain('w-full');
-      // Inside the row-reverse scroller (T12e) the svg is a flex item: shrink-0 keeps its 640px.
+      // Inside the row-reverse scroller the svg is a flex item: shrink-0 keeps its 640px.
       expect(tag, slug).toMatch(/class="[^"]*\bshrink-0\b/);
       // 13px from --text-data: the labels sit on a 1:1 surface, never a scaled one.
       expect(page, slug).toContain('fill-muted type-data');

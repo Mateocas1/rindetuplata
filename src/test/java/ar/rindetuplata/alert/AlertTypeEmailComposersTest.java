@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * T6c, L32 a: one composer per alert type, each in Spanish in the voice of today's email (voseo, plain text, the
+ * One composer per alert type, each in Spanish in the voice of today's email (voseo, plain text, the
  * link to manage the alerts and the informational disclaimer). The events are the recorded payloads of
  * {@code fixtures/alert/}, so the test also pins the payload shape the evaluation writes and the consumer reads.
  */

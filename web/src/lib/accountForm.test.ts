@@ -25,7 +25,7 @@ import {
 import type { InstrumentSummary, WalletRate } from './account';
 
 /**
- * Value handling of the account forms (T7d). These are the only place a typed
+ * Value handling of the account forms. These are the only place a typed
  * value is converted, so components stay thin and the unit conventions live in
  * one tested file: percent inputs are percents, amounts are ARS, and the API's
  * `parameter` names are the error keys (a 400 attaches to the same field).

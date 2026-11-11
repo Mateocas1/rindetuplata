@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 /**
- * T6b rules for the admin write path validation (S12): every rule answers a 400 {@code ProblemDetail} that names the
+ * Rules for the admin write path validation: every rule answers a 400 {@code ProblemDetail} that names the
  * offending field, an unknown id on confirm or audit is a 404, and a state-changing request without CSRF is a 403.
  */
 class CurationValidationApiTest extends CurationIntegrationTest {

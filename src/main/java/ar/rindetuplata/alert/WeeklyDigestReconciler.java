@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static java.time.temporal.TemporalAdjusters.previousOrSame;
 
 /**
- * "Resumen semanal" (T6c, L32 a): at most one digest per rule per ISO week (Monday start). The first evaluation whose
+ * "Resumen semanal": at most one digest per rule per ISO week (Monday start). The first evaluation whose
  * data date falls in a week without one sends it; the data date is already an Argentine calendar date, so no zone
  * conversion applies. The {@code alert_digest} primary key (rule, week) is the guarantee: the row and the outbox
  * event are inserted in one transaction, and a second evaluation of that week conflicts on the key and sends nothing.

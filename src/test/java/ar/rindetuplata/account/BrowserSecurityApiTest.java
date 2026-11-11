@@ -13,7 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 /**
- * T6a browser rules (S4, S13): the public GETs stay open to anonymous callers, a state-changing request without a
+ * Browser rules: the public GETs stay open to anonymous callers, a state-changing request without a
  * CSRF token is 403, logout answers 204 and ends the session, and CORS accepts preflights from the configured
  * origin only.
  */

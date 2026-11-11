@@ -1,4 +1,4 @@
-# Weekly dependency updates (T4e, S4, L36b): one grouped PR per ecosystem for minor and patch updates, a
+# Weekly dependency updates: one grouped PR per ecosystem for minor and patch updates, a
 # separate PR per major update, and a small open-PR limit so the review queue stays readable.
 version: 2
 updates:

@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
 /**
- * T11b poison rule (S4): an unreadable body lands in the dead-letter queue on its first delivery, with no retries
+ * Poison rule: an unreadable body lands in the dead-letter queue on its first delivery, with no retries
  * and no mail. The retry interval is five seconds, so three retries would take at least fifteen: the message must
  * be in the DLQ well before the first retry would even start.
  */

@@ -7,7 +7,7 @@ import java.util.OptionalLong;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** T11a: the fixed-window counter behind the per-IP limit, including the sweep that bounds its memory. */
+/** The fixed-window counter behind the per-IP limit, including the sweep that bounds its memory. */
 class MagicLinkRateLimiterTest {
 
 	private final MutableClock clock = new MutableClock();

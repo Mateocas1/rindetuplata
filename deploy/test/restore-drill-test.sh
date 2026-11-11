@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# The documented VPS Compose commands load the whole project (T4c, S4, finding F2 of the T4 verify).
+# The documented VPS Compose commands load the whole project (finding F2 of a review).
 #
 #   deploy/test/restore-drill-test.sh        (needs the docker CLI; nothing is started, no daemon needed for config)
 #

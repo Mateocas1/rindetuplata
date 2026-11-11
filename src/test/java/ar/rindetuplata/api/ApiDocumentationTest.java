@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Rule: {@code GET /v3/api-docs} answers 200 with the published document, titled "rindetuplata API", version "v1",
- * carrying the informational non-advice disclaimer (S8 L-G), and listing every public path (T5b instruments and
- * history, T5c ranking and simulations).
+ * carrying the informational non-advice disclaimer, and listing every public path (instruments and
+ * history, ranking and simulations).
  */
 class ApiDocumentationTest extends ApiIntegrationTest {
 

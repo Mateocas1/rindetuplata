@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * Wires the scheduled relay (T6d). With {@code rindetuplata.outbox.relay-enabled=false} neither the scheduler bean
+ * Wires the scheduled relay. With {@code rindetuplata.outbox.relay-enabled=false} neither the scheduler bean
  * nor the scheduling infrastructure is registered here, so a test that does not exercise the delivery never talks
  * to a broker; the relay bean itself stays available for a test that calls it directly.
  */

@@ -14,7 +14,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * T6c, L32 a: the evaluation of the three new rule types after a COMPLETED ingestion, through the real API and the
+ * The evaluation of the three new rule types after a COMPLETED ingestion, through the real API and the
  * real ranking. Every case asserts the outbox rows it leaves (type, payload, how many) and the state it keeps for
  * the next evaluation, because both decide whether the saver is told once, twice or never.
  */

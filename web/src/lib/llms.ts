@@ -1,5 +1,5 @@
 /**
- * `llms.txt` body (T6e, S6, L32 c), in the llmstxt.org format: an H1 with the site name, a blockquote summary and
+ * `llms.txt` body, in the llmstxt.org format: an H1 with the site name, a blockquote summary and
  * H2 sections of `- [name](url): notes` links, with the `Optional` section last. It names the site and its
  * sections, the public API with its OpenAPI document, and the MCP endpoint of the API.
  *

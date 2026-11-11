@@ -16,7 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * The realized nominal return of an instrument over a closed month (T6a, L29 a), with hand-computed values: wallets
+ * The realized nominal return of an instrument over a closed month, with hand-computed values: wallets
  * and crypto compound daily at the latest known rate of each day, a plazo fijo locks the rate of its first capture as
  * one term over the month's days, a fund is the vcp ratio of two month ends. Expected values come from an independent
  * high-precision computation, rounded half-even to six decimals.

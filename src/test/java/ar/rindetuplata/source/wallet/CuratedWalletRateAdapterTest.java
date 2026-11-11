@@ -21,7 +21,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T6b rules for the curated wallet rates of S12: V4 seeds the Naranja X row the classpath seed used to hold and the
+ * Rules for the curated wallet rates: V4 seeds the Naranja X row the classpath seed used to hold and the
  * adapter reads it from the table with the same {@code WalletRate} output, the same confidence and the same 7-day
  * STALE rule. The pure document parser stays, because it is the shape V4 seeds and the admin API accepts.
  */

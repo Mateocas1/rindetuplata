@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * The cached front of {@link RankingService#rank} for the public API (T3a, L22). A result is reused only for the same
+ * The cached front of {@link RankingService#rank} for the public API. A result is reused only for the same
  * {@linkplain DataVersion data version} and the same resolved query ({@code asOf} included, so the day rollover is a
  * new key), in a bounded in-process {@link LruCache}. The caller reads the version once per request and passes it to
  * {@link #rank}, so the ETag it sends and the entry it reads are the same version. Concurrent misses of one key

@@ -5,7 +5,7 @@ import { llmsTxt } from '../src/lib/llms';
 import { GET } from '../src/pages/llms.txt';
 
 /**
- * `llms.txt` (T6e, S6, L32 c), in the llmstxt.org format: an H1 with the site name, a blockquote summary,
+ * `llms.txt`, in the llmstxt.org format: an H1 with the site name, a blockquote summary,
  * H2 sections of `- [name](url): notes` links, and the `Optional` section last. The site and API hosts come from
  * the build (`SITE_URL`, `PUBLIC_API_URL`), so no localhost can leak into a production build, and every link
  * must point at something that exists: a site page in `src/pages`, an API path in the recorded OpenAPI document.

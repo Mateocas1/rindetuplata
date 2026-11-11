@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 /**
  * The authorities of an email: every account is {@code ROLE_USER}; an email in
  * {@code rindetuplata.auth.admin-emails} (compared normalized) is also {@code ROLE_ADMIN}, which opens
- * {@code /api/v1/admin/**} (T6a, S12).
+ * {@code /api/v1/admin/**}.
  */
 @Component
 public class AccountRoles {

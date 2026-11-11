@@ -14,7 +14,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
- * V9 (T6c, S6, L32 a): every rule stored before the migration becomes a {@code THRESHOLD} rule with its threshold,
+ * V9: every rule stored before the migration becomes a {@code THRESHOLD} rule with its threshold,
  * kind, instrument and match state untouched, and the table then refuses a row whose fields do not fit its type.
  * The schema is migrated to V8 first, the legacy rows are inserted the way V5 allowed them, then V9 is applied.
  */

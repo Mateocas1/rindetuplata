@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T4a (L33 a): backfill writes are insert-only, so a row that is already stored (live data) is never overwritten, and
+ * Backfill writes are insert-only, so a row that is already stored (live data) is never overwritten, and
  * the one {@code source_run} row per source and day that a backfill records replaces only an earlier BACKFILL row,
  * never a LIVE or REPLAY one.
  */

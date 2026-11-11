@@ -17,8 +17,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /**
- * Public facade of the daily ingestion for T5/T6 and the scheduler: one job instance per data date, live or
- * replayed from the T9 archive. A date whose instance already COMPLETED is a no-op reported as such; a date whose
+ * Public facade of the daily ingestion for the API and the scheduler: one job instance per data date, live or
+ * replayed from the archive. A date whose instance already COMPLETED is a no-op reported as such; a date whose
  * instance FAILED restarts it, and only its unfinished steps run again. Unexpected internal errors (a missing
  * manifest, a defect in a step) surface as a FAILED result with the failure messages, never as an exception to the
  * caller.

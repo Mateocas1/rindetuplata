@@ -15,7 +15,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * What each tool answers (T6e, S6, L32 c). The rows are the very view records of the REST API, so a model reads the
+ * What each tool answers. The rows are the very view records of the REST API, so a model reads the
  * same fields a client of {@code /api/v1} does; each result adds the {@code dataDate} of the newest datum it
  * rests on and its {@code source} (the sources, for a ranking), which are {@code null} only when the answer rests on
  * no datum (an empty history, no closed month, an instrument the simulation could not use).

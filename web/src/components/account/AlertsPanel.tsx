@@ -1,15 +1,15 @@
 /**
- * `/alertas` island (S3, S13, T7d) — client only.
+ * `/alertas` island — client only.
  *
  * Reads `GET /api/v1/me`, then lists the session's rules, lets the reader create
- * one of four types (T6c: a threshold with optional kind and instrument and the
+ * one of four types (a threshold with optional kind and instrument and the
  * rate as a percent, a change of the best option, a drop of one rate, a weekly
  * digest) and delete one with a confirmation. Any 401 leaves for `/ingresar`:
  * a page with no session has nothing to show.
  *
  * The panel owns the session, the data and the requests; `AlertCreateForm` and
  * `AlertRuleList` render the two sections, and the notices go through the shared
- * `StatusNotice`/`ProblemNotice` surfaces (T12c).
+ * `StatusNotice`/`ProblemNotice` surfaces.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { accountApi, type AlertRule, type InstrumentSummary } from '../../lib/account';

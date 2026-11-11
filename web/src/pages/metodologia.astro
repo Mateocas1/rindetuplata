@@ -1,16 +1,16 @@
 ---
 /**
- * Methodology page (S10, S11, S8 L-F/L-G). Informational copy only: what we
+ * Methodology page. Informational copy only: what we
  * compare, how each number is derived, which inflation index is used for which
  * view, where the data comes from, how much we trust each source, what is left
  * out of the maths, and the neutrality statement.
  *
- * Long-form reading (T13c): section titles take the `type-section` role and the
+ * Long-form reading: section titles take the `type-section` role and the
  * prose the `type-body` role at the page's 40rem measure, so nothing collapses
- * into one small grey register (L77); the worked examples stay collapsed. Inline
+ * into one small grey register; the worked examples stay collapsed. Inline
  * emphasis and links carry an explicit `{' '}` where the source line breaks
  * before them: the build's HTML compression drops that newline and the words
- * would otherwise run together (T13e).
+ * would otherwise run together.
  *
  * Page that must stay script-free: it ships no island and no JSON-LD (checked
  * by the build smoke test).
@@ -24,7 +24,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { CONFIDENCE_DESCRIPTIONS, CONFIDENCE_LABELS } from '../lib/labels';
 
 // Worked examples sit on the page surface: the `card` recipe carries the edge,
-// the `disclosure` recipe the collapsed panel (T12b, T12d).
+// the `disclosure` recipe the collapsed panel.
 const detailsClass = 'disclosure card px-4 py-3';
 const summaryClass = 'type-label hover:text-text';
 const confidenceOrder = [

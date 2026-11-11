@@ -1,7 +1,7 @@
 package ar.rindetuplata.alert;
 
 /**
- * The T6d event contract (S4, S13): the names the topology, the relay and the consumer share, so no part of the
+ * The event contract: the names the topology, the relay and the consumer share, so no part of the
  * delivery chain can drift from the others by a typo.
  */
 public final class AlertEvents {

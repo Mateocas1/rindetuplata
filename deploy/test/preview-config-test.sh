@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Exposure tests of the preview overlay (T14b, S20): `compose.yaml` + `deploy/compose.preview.yaml`.
+# Exposure tests of the preview overlay: `compose.yaml` + `deploy/compose.preview.yaml`.
 #
 #   deploy/test/preview-config-test.sh
 #
@@ -17,11 +17,11 @@
 #     with a fixed hostname, so `down` keeps the data;
 #   - `web` publishes exactly one port, on 127.0.0.1;
 #   - the preview Caddyfile (noindex) is the one mounted, and it serves `/srv/current`, the build the
-#     sidecar published, so a rebuild is never visible as a half-written site (fix B of the T14c
+#     sidecar published, so a rebuild is never visible as a half-written site (fix B of the
 #     review);
 #   - the preview Caddyfile trusts the Funnel's `X-Forwarded-*` headers from the private ranges and
 #     tells the API the request was HTTPS, so every visitor is not one magic-link bucket and the API
-#     does not see a plain-http request (fix A of the T14c review);
+#     does not see a plain-http request (fix A of the review);
 #   - the API gets the SMTP account, `secure-cookie=true`, the Funnel-derived URLs, the admin emails,
 #     the startup ingestion and the sidecar rebuild hook;
 #   - the rebuild sidecar publishes no port and mounts the repository's `web/`;

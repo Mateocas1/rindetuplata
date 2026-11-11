@@ -1,7 +1,7 @@
 /**
- * The dólar MEP break-even sentence (S5, L24 b): the API computes the numbers, the browser only words them.
+ * The dólar MEP break-even sentence: the API computes the numbers, the browser only words them.
  *
- * Synthetic data on purpose (L16): the recorded ranking fixtures predate the field. The quote is the repository
+ * Synthetic data on purpose: the recorded ranking fixtures predate the field. The quote is the repository
  * fixture of the API tests (buy 1534.20, sell 1539.40, reported 2026-10-13T20:57Z).
  */
 import { describe, expect, it } from 'vitest';

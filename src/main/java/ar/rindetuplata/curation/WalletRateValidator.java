@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Validation of the admin wallet-rate API (T6b, S12). Every rejected value becomes a 400 {@code ProblemDetail} whose
+ * Validation of the admin wallet-rate API. Every rejected value becomes a 400 {@code ProblemDetail} whose
  * {@code parameter} names the field to fix: the id pattern, a name, at least one tier, the TNA percent range, a
  * non-negative floor, a ceiling above its floor, and tiers that are ordered and do not overlap.
  */

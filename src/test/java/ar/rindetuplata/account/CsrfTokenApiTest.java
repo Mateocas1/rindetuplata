@@ -21,7 +21,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * T7a browser CSRF contract (S4, S13, S14): the SPA never reads cookies, so it asks for a token at
+ * Browser CSRF contract: the SPA never reads cookies, so it asks for a token at
  * {@code GET /api/v1/auth/csrf} and sends it as the {@code X-XSRF-TOKEN} header. With Spring Security's SPA CSRF
  * support the header is compared as the raw token while the {@code CsrfToken} request attribute is XOR-masked, so
  * the endpoint must publish the raw one. A successful login rotates the token, so the frontend refetches it.
@@ -101,7 +101,7 @@ class CsrfTokenApiTest extends AccountIntegrationTest {
 	}
 
 	/**
-	 * The chosen T7a contract: a successful login rotates the CSRF token and clears its cookie, so the SPA refetches
+	 * The chosen contract: a successful login rotates the CSRF token and clears its cookie, so the SPA refetches
 	 * {@code GET /api/v1/auth/csrf} (named in the login OpenAPI description) before its next state-changing request.
 	 * The stale in-memory token must not pass.
 	 */

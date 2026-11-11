@@ -1,6 +1,6 @@
 package ar.rindetuplata.source;
 
-/** Which persona a product serves (S9). Only {@link #SAVER} feeds the MVP ranking; the rest are kept, not deleted. */
+/** Which persona a product serves. Only {@link #SAVER} feeds the MVP ranking; the rest are kept, not deleted. */
 public enum Segment {
     SAVER,
     /** Legal entities ("PPJJ"). */

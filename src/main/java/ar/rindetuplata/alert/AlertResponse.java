@@ -5,7 +5,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 
 /**
- * One alert rule as the API shows it (T6c): its type, and the threshold presented as the percent the user wrote, not
+ * One alert rule as the API shows it: its type, and the threshold presented as the percent the user wrote, not
  * as the stored fraction, with the same 2-decimal rounding the rest of the API uses for presented money. Only a
  * THRESHOLD rule has a threshold; the others show null.
  */

@@ -4,9 +4,9 @@ import { ACCOUNT_PATHS } from '../src/lib/sitemapPaths.js';
 import { GET } from '../src/pages/robots.txt';
 
 /**
- * `robots.txt` (T7e, finding R3).
+ * `robots.txt` (finding R3).
  *
- * The account pages are `noindex` (T7d) and stay out of the sitemap, but they
+ * The account pages are `noindex` and stay out of the sitemap, but they
  * must stay crawlable: a `Disallow` would stop the crawler before it could read
  * the `noindex`, and the page would stay in the index. The host comes from
  * `SITE_URL`; there is no localhost fallback that could publish a sitemap URL

@@ -1,4 +1,4 @@
-// T3b: load test of the public read API (GET /api/v1/ranking, GET /api/v1/simulations, ranking revalidation).
+// Load test of the public read API (GET /api/v1/ranking, GET /api/v1/simulations, ranking revalidation).
 // Run it through perf/run.sh, which starts the application with real data; to point it at another instance:
 //   BASE_URL=http://127.0.0.1:8080 BUILD_TOKEN=<bypass token> k6 run perf/read-api.js
 //
@@ -7,8 +7,8 @@
 //   ranking       RANKING_VUS virtual users, a fixed weighted mix of amount/days/kind/groupFunds combinations
 //   simulation    SIMULATION_VUS virtual users, instruments of every kind cycled with a few amount/days pairs
 //   revalidation  REVALIDATE_VUS virtual users: GET the default ranking, then repeat it with If-None-Match set to the
-//                 ETag of the first answer. Before T3a there is no ETag, so the repeat is an ordinary 200; after
-//                 T3a the repeat must be a 304. Both statuses are accepted for this endpoint only.
+//                 ETag of the first answer. Without ETag support the repeat is an ordinary 200; with it
+//                 the repeat must be a 304. Both statuses are accepted for this endpoint only.
 //
 // Rate limit: every request carries X-Build-Token (the application's rindetuplata.api.rate-limit.bypass-token), the
 // same bypass the static site build uses. A 429 is never a success: it is an error in every endpoint's error rate and

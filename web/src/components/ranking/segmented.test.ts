@@ -1,7 +1,7 @@
 /**
- * Capsule segmented control and its wiring into the ranking explorer (T13b).
+ * Capsule segmented control and its wiring into the ranking explorer.
  *
- * The control is a real radio group (the prototype's signature device, L80):
+ * The control is a real radio group (the prototype's signature device):
  * plain `input[type=radio]`, one checked option, the group named by its
  * `legend`, and the selected segment painted with the `thumb` role. These are
  * the markup rules the design must keep, and the reason an island renders them

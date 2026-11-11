@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * The alert-rules API of T6c (S3, S13, S6 L32 a). A rule belongs to the authenticated email and has a type
+ * The alert-rules API. A rule belongs to the authenticated email and has a type
  * (THRESHOLD when the request names none); each type accepts only its own fields. For a THRESHOLD rule the threshold
  * arrives as a percent and is stored as the fraction the evaluation compares against. Values the caller got wrong
  * (an unknown type or kind, a field the type does not take, a missing required one, an instrument of the wrong kind)

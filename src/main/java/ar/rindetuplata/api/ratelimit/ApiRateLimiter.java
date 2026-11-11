@@ -13,10 +13,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * A token bucket per remote address for the public read endpoints (T1a, S1). The first request of an address finds a
+ * A token bucket per remote address for the public read endpoints. The first request of an address finds a
  * full bucket of {@code capacity} tokens; each request takes one and the bucket gets {@code refillPerSecond} back
  * every second, never above its capacity. An empty bucket answers how many seconds remain until one token is back,
- * and a refused request takes nothing. State is in memory because the API runs as one instance (S16): a second
+ * and a refused request takes nothing. State is in memory because the API runs as one instance: a second
  * instance would need a shared store. Buckets that have refilled completely are swept at most once per refill-to-full
  * period, and the sweep is claimed with a compare-and-set so a request that finds none due takes no lock.
  * The number of tracked buckets is capped at {@code maxTrackedAddresses}: a new address that arrives at the cap
@@ -135,7 +135,7 @@ public class ApiRateLimiter {
 	/**
 	 * Like {@link #tryAcquire} but takes nothing: empty when the address has a token (or no bucket yet), otherwise the
 	 * seconds until it has one. The API-key path asks it before a key lookup, so an address that has spent its
-	 * bucket on refused keys costs no database read (T6d, F1).
+	 * bucket on refused keys costs no database read (F1).
 	 */
 	public OptionalLong peek(String address) {
 		Bucket bucket = buckets.get(bucketKey(address));

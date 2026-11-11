@@ -1,5 +1,5 @@
 /**
- * Typed account calls for the three account pages (T7d).
+ * Typed account calls for the three account pages.
  *
  * They all go through the shared client in `api.ts`, so the session cookie,
  * the CSRF token before unsafe methods and the ProblemDetail -> `ApiProblem`
@@ -15,7 +15,7 @@ export interface MagicLinkResponse {
   status: string;
 }
 
-/** The kinds of alert rule (T6c, L32 a); `THRESHOLD` is the original one and the API's default. */
+/** The kinds of alert rule; `THRESHOLD` is the original one and the API's default. */
 export type AlertType = 'THRESHOLD' | 'BEST_CHANGED' | 'RATE_DROP' | 'WEEKLY_DIGEST';
 
 export interface AlertRule {

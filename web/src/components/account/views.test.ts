@@ -1,11 +1,11 @@
 /**
- * Rendered-markup rules for the account views (T12c).
+ * Rendered-markup rules for the account views.
  *
  * The account islands are client-only, so a Node render is the cheapest way to
  * assert on their markup: `renderToStaticMarkup` runs no effect, which is
  * exactly the states under test (a notice, a resting list, a form).
  *
- * Two rules live here, both stated by the T12c design notes:
+ * Two rules live here, both stated by the design notes:
  *
  * 1. A notice never carries its meaning in colour alone: every status surface
  *    renders an `aria-hidden` icon beside a visible title, and no panel may
@@ -13,8 +13,8 @@
  * 2. A view has one primary action: at most one `btn-primary` in the rendered
  *    markup, and the destructive confirmation confirms through the loss role
  *    while the create form keeps the alerts view's only primary.
- * 3. The direction (T13d) replaced the T12 text steps with the seven `type-*`
- *    roles (the retired steps were deleted in T13e), and a field label wears the
+ * 3. The direction replaced the text steps with the seven `type-*`
+ *    roles (the retired steps were deleted), and a field label wears the
  *    mono caps `type-label` role; no account surface may size text by hand.
  */
 import { readFileSync, readdirSync } from 'node:fs';

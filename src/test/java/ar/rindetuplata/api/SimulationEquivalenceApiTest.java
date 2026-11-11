@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * T3a rule (S3, L22): the targeted {@code simulate()} answers exactly what the full basket answers, for every
+ * Rule: the targeted {@code simulate} answers exactly what the full basket answers, for every
  * instrument id. The reference is {@link RankingService#rankAll}, which is {@code rank} over every kind with fund
  * classes ungrouped and no page cap (the public page tops out at {@link RankingQuery#MAX_LIMIT}, the recorded
  * day ranks about 400). The data is the recorded 2026-10-14 fixtures plus hand-made classes for the cases the

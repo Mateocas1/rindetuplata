@@ -1,5 +1,5 @@
 /**
- * `robots.txt` as a build-time endpoint (T7e) instead of a static file in `public/`: in static output
+ * `robots.txt` as a build-time endpoint instead of a static file in `public/`: in static output
  * the route is prerendered, and the body takes its host from `SITE_URL` (astro.config.mjs). There is
  * no localhost fallback: a build without `SITE_URL` fails here instead of publishing a sitemap URL
  * that points at the build machine. `npm run build:api` requires `SITE_URL` before it even gets this

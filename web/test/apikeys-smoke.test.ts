@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 /**
- * Build smoke test for `/claves-api/` (T6d, S6, L32 b).
+ * Build smoke test for `/claves-api/`.
  *
  * The page is a markup shell around a client-only island, so this builds the site in fixture mode and checks what the
  * static host would serve: the page exists, keeps itself out of the index, carries its H1 and the mount points of its

@@ -10,7 +10,7 @@ import {
 import { CATEGORIES } from './categories';
 
 /**
- * The pre-render gate (T4d, L36a): before any page is rendered the default
+ * The pre-render gate: before any page is rendered the default
  * ranking must be fresh, big enough, and every category page must have rows, or
  * the build fails naming the check and the previous site keeps being served.
  * Fixture mode skips only the age check.

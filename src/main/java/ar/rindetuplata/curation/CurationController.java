@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The admin curation panel API of T6b (S12). Every path is under {@code /api/v1/admin/**}, so Spring Security
+ * The admin curation panel API. Every path is under {@code /api/v1/admin/**}, so Spring Security
  * requires {@code ROLE_ADMIN}; the actor of every write is the authenticated admin email. Errors are the shared
  * RFC 9457 {@code ProblemDetail} bodies that name the offending field.
  */

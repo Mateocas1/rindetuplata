@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * The stable key of a fund class. ArgentinaDatos publishes no class id (L7), so a class is identified by its display
+ * The stable key of a fund class. ArgentinaDatos publishes no class id, so a class is identified by its display
  * name; the key makes the match survive harmless edits of that name: case, accents and runs of whitespace.
  */
 public final class FundClassKey {

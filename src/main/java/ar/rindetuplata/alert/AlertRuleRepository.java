@@ -61,7 +61,7 @@ public class AlertRuleRepository {
 	}
 
 	/**
-	 * Locks the user's {@code app_user} row until the surrounding transaction ends (T11b): creates of one user queue
+	 * Locks the user's {@code app_user} row until the surrounding transaction ends: creates of one user queue
 	 * up behind it, so the count that follows sees every rule committed before it.
 	 */
 	public void lockUser(String email) {

@@ -11,7 +11,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 /**
- * T6d (S6, L32b): what a presented key is worth. An unknown or revoked key is refused before any limit; a valid one
+ * What a presented key is worth. An unknown or revoked key is refused before any limit; a valid one
  * has a bucket per key and plan and a quota per Argentine day, and a request the bucket refuses never counts
  * towards the quota.
  */

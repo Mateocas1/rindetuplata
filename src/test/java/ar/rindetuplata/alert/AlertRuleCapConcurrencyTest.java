@@ -29,7 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * T11b rule (S4, S13): the 20-active-rule cap holds under concurrency. 25 simultaneous creates by one logged-in
+ * Rule: the 20-active-rule cap holds under concurrency. 25 simultaneous creates by one logged-in
  * user over the HTTP stack leave exactly 20 active rows; the other five answer the existing 400 ProblemDetail.
  * The test is not transactional on purpose: every request commits on its own connection, like production.
  */

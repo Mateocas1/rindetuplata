@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 
-/** T1a: the token bucket behind the per-IP limit of the public read API, including the sweep that bounds memory. */
+/** The token bucket behind the per-IP limit of the public read API, including the sweep that bounds memory. */
 class ApiRateLimiterTest {
 
 	private final TestClock clock = new TestClock();

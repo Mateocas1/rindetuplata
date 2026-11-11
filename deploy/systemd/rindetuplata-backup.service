@@ -1,4 +1,4 @@
-# Daily database backup (T4c): runs deploy/backup.sh once and exits. Triggered by rindetuplata-backup.timer.
+# Daily database backup: runs deploy/backup.sh once and exits. Triggered by rindetuplata-backup.timer.
 #
 # Install (docs/deploy.md, "Backups"): this assumes the checkout at /srv/rindetuplata; change
 # WorkingDirectory and ExecStart if it lives elsewhere. Optional overrides (BACKUP_DIR,

@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 /**
- * The catalog behind the public ranking (S15, T5 design notes): it turns the stored snapshots of each kind into
+ * The catalog behind the public ranking: it turns the stored snapshots of each kind into
  * {@code domain} instruments, simulates them through {@link Ranking#of} for the user's amount and days, and returns
  * plain result records. Every instrument the user cannot reach is returned with its reason, never dropped.
  *
@@ -141,7 +141,7 @@ public class RankingService {
 
 	/**
 	 * The same simulation as of a given date, the way {@link #rank} resolves {@code asOf}. It reads only what the id
-	 * needs (T3a, L22; {@link #collectFor}) and answers what the full basket of every kind answers for that id.
+	 * needs ({@link #collectFor}) and answers what the full basket of every kind answers for that id.
 	 */
 	public SimulationResult simulate(long instrumentId, Money amount, int days, boolean client, LocalDate asOf) {
 		String id = String.valueOf(instrumentId);
@@ -172,7 +172,7 @@ public class RankingService {
 	}
 
 	/**
-	 * What {@link #collect} would hold for this id, without reading the other instruments (T3a, L22): the one stored
+	 * What {@link #collect} would hold for this id, without reading the other instruments: the one stored
 	 * snapshot of a bank, wallet or crypto row, or the one series of a fund class. The collectors are the ones the
 	 * full basket uses, called in the same order, so the answer cannot drift from the ranking's. Two rules of the
 	 * full basket need more than the row itself, and only for the ids they touch:

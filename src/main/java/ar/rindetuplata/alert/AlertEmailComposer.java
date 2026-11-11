@@ -6,9 +6,9 @@ import java.math.RoundingMode;
 import org.springframework.stereotype.Component;
 
 /**
- * Composes the alert email (T6d, S13): which rule fired, which instrument crossed it, the rate and the threshold in
+ * Composes the alert email: which rule fired, which instrument crossed it, the rate and the threshold in
  * percent, the data date and the source behind the number, the link to manage the alerts and the same informational
- * disclaimer as the rest of the product (S8 L-G). Plain text and in Spanish, like the magic link of T6a.
+ * disclaimer as the rest of the product. Plain text and in Spanish, like the magic link.
  */
 @Component
 public class AlertEmailComposer {
@@ -40,7 +40,7 @@ public class AlertEmailComposer {
 	}
 
 	/**
-	 * How the ranked rate is named (T7a): a bank's or wallet's TNA is a TNA, but a money-market fund or a crypto
+	 * How the ranked rate is named: a bank's or wallet's TNA is a TNA, but a money-market fund or a crypto
 	 * yield is an observed rate shown as its TNA equivalent, and the email must not mislabel it.
 	 */
 	static String rateLabel(String kind) {
@@ -51,7 +51,7 @@ public class AlertEmailComposer {
 	}
 
 	/**
-	 * A TNA fraction as the percent a saver reads, rounded to two decimals {@code HALF_EVEN} (T7a):
+	 * A TNA fraction as the percent a saver reads, rounded to two decimals {@code HALF_EVEN}:
 	 * {@code 0.30} becomes {@code 30%}, {@code 0.287549} becomes {@code 28.75%}.
 	 */
 	static String percent(BigDecimal fraction) {

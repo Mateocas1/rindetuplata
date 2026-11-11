@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * {@code rindetuplata.ingest.*}: whether the daily scheduler runs and whether the application also ingests once at
- * startup, when and in which zone it fires, where the T9 raw archive of the {@code data} branch is checked out for
+ * startup, when and in which zone it fires, where the raw archive of the {@code data} branch is checked out for
  * replays, and the static-site rebuild hook.
  */
 @ConfigurationProperties("rindetuplata.ingest")
@@ -21,12 +21,12 @@ public record IngestionProperties(
 		@DefaultValue("10s") Duration rebuildHookTimeout,
 		@DefaultValue("false") boolean runOnStartup) {
 
-	/** The zone the scheduler uses to decide which day "today" is (S17: the capture runs from Argentina). */
+	/** The zone the scheduler uses to decide which day "today" is (the capture runs from Argentina). */
 	public ZoneId zoneId() {
 		return ZoneId.of(zone);
 	}
 
-	/** A checkout of the T9 {@code data} branch; {@code raw/yyyy/MM/dd/manifest.json} lives under it. */
+	/** A checkout of the {@code data} branch; {@code raw/yyyy/MM/dd/manifest.json} lives under it. */
 	public Path archiveRoot() {
 		return Path.of(archiveDir);
 	}

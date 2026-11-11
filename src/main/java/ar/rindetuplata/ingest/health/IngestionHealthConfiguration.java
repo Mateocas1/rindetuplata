@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * Wires the {@code ingestion} health indicator and its age gauge (L33b, S4). The bean name makes the contributor
+ * Wires the {@code ingestion} health indicator and its age gauge. The bean name makes the contributor
  * {@code ingestionFreshness}: Spring Boot refuses a contributor and a health group of the same name, and the group
  * must be {@code ingestion} to serve {@code /actuator/health/ingestion}.
  */

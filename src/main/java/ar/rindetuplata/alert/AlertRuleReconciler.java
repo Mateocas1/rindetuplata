@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Reconciles one THRESHOLD rule against the day's ranked entries, in one transaction (T6c, S4): every entry above the
+ * Reconciles one THRESHOLD rule against the day's ranked entries, in one transaction: every entry above the
  * threshold that has no match yet inserts the {@code alert_match} and one {@code AlertTriggered} outbox row, and
  * every match whose instrument is no longer above (or no longer ranked) is deleted, which re-arms the rule. The
  * match and its event are written together, so a crash can never leave a fired alert with no event to relay.

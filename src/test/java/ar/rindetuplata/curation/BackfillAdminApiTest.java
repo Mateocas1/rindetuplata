@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * T4a (S4, L33 a): {@code POST /api/v1/admin/backfill?from=&to=} is admin-only (session, ROLE_ADMIN, CSRF). It answers
+ * {@code POST /api/v1/admin/backfill?from=&to=} is admin-only (session, ROLE_ADMIN, CSRF). It answers
  * 202 with the job id, 409 while a run is going and a 400 ProblemDetail naming {@code from} or {@code to} for an
  * inverted range, more than 366 days or a {@code to} after yesterday (the frozen day is 2026-10-20, so yesterday is
  * 2026-10-19). A rejected request starts nothing and stores nothing.

@@ -1,7 +1,7 @@
 name: Deploy tests
 
-# The deploy scripts and Compose files have tests that need only Docker, Node (with web/'s dependencies) and Python, all on the runner
-# (T4e, S4, L36b). The scripts are picked up by a glob, so a new deploy/test/*-test.sh runs without editing
+# The deploy scripts and Compose files have tests that need only Docker, Node (with web/'s dependencies) and Python, all on the runner.
+# The scripts are picked up by a glob, so a new deploy/test/*-test.sh runs without editing
 # this file.
 on:
   push:

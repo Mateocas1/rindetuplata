@@ -7,13 +7,13 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * One ranked instrument as {@code GET /api/v1/ranking} returns it (S11, S15): the personalized outcome
+ * One ranked instrument as {@code GET /api/v1/ranking} returns it: the personalized outcome
  * ({@code finalAmount}, {@code earned}, {@code nominalReturn} and, when a REM observation exists, {@code realReturn})
  * with the rate actually used, the dates and source of the datum, its confidence and its WARNING flags.
  * {@code realReturn} and {@code upTo} are null when the caller has to show "no data" instead of inventing one.
  * {@code foldedClasses} is how many sibling classes of the same fund a grouped ranking folded into this row; 0 for
- * every other row and when {@code groupFunds=false}. {@code breakEvenMep} says when the entry beats the dólar MEP
- * (S5, L24 b); it is null, never invented, when no MEP quote is stored.
+ * every other row and when {@code groupFunds=false}. {@code breakEvenMep} says when the entry beats the dólar MEP;
+ * it is null, never invented, when no MEP quote is stored.
  */
 public record RankedEntryView(
 		String id,

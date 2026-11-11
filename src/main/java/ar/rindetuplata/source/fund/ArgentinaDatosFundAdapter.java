@@ -20,7 +20,7 @@ import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 
 /**
- * ArgentinaDatos: {@code GET /fci/mercadoDinero/{ultimo,penultimo}} and, for the backfill (T4a),
+ * ArgentinaDatos: {@code GET /fci/mercadoDinero/{ultimo,penultimo}} and, for the backfill,
  * {@code GET /fci/mercadoDinero/yyyy/MM/dd}. Dates lag and dead classes are present.
  */
 public class ArgentinaDatosFundAdapter implements FundSource, FundHistorySource {

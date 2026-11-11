@@ -1,11 +1,11 @@
 /**
- * Editable balance bands of a curated wallet rate (T7d).
+ * Editable balance bands of a curated wallet rate.
  *
  * One row per tier (floor, ceiling, TNA percent), reused for the base schedule
  * and for each condition's schedule. Errors are keyed by the API's own
  * `parameter` names, so a 400 from `PUT /wallet-rates/{id}` lands on the same
  * input. Empty floor or ceiling means "no bound", which is what the API stores
- * as null. Labels use the one field label style of the account pages (T12c).
+ * as null. Labels use the one field label style of the account pages.
  */
 import type { TierFormState } from '../../lib/accountForm';
 import { formatInteger } from '../../lib/format';

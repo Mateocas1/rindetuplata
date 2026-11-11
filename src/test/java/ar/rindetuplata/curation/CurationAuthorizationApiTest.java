@@ -11,7 +11,7 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 
 /**
- * T6b authorization and listing rules (S12): {@code GET /api/v1/admin/wallet-rates} is admin-only and every entry
+ * Authorization and listing rules: {@code GET /api/v1/admin/wallet-rates} is admin-only and every entry
  * carries its {@code verifiedAt} and {@code daysSinceVerified}; a plain user is a 403 and an anonymous caller a 401.
  */
 class CurationAuthorizationApiTest extends CurationIntegrationTest {

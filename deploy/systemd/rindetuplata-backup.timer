@@ -1,4 +1,4 @@
-# Daily at 03:30 local time (T4c). Persistent=true runs a backup missed while the box was off as soon as it
+# Daily at 03:30 local time. Persistent=true runs a backup missed while the box was off as soon as it
 # is back, instead of waiting for the next night.
 [Unit]
 Description=Daily rindetuplata database backup

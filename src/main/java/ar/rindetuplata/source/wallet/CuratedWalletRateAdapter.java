@@ -18,7 +18,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Wallet rates curated by hand (S12). T6b moved the source of truth from the T3 classpath seed to the
+ * Wallet rates curated by hand. The source of truth moved from the classpath seed to the
  * {@code curated_wallet_rate} table of V4, which the admin panel writes; the adapter reads it and produces the same
  * {@link WalletRate} output, with the same {@code CURATED_MANUAL} confidence and the same 7-day STALE rule.
  *

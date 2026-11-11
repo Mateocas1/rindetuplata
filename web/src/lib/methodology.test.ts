@@ -1,5 +1,5 @@
 /**
- * The methodology explains the dólar MEP break-even in a section of its own (S5, L24 b), with the same worked
+ * The methodology explains the dólar MEP break-even in a section of its own, with the same worked
  * example the API tests pin (30% TNA over 30 days against buy 1534,20 and sell 1539,40). Read from the page source:
  * the build smoke test checks the built page, this one checks the copy that has to stay in step with the API.
  */

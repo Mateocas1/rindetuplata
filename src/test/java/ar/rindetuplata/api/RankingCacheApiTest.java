@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.web.servlet.ResultActions;
 
 /**
- * T3a rules (S3, L22): the public ranking is cached per data version and resolved query. A cached answer is only
+ * Rules: the public ranking is cached per data version and resolved query. A cached answer is only
  * ever served while the data is the same; a new ingestion run or a curation write must show up on the next request,
  * because a stale cache would give wrong numbers silently. The cache is bounded, and {@code rankAll} (alerts) never
  * uses it. "Behind the version" changes stored data with no writer footprint, which is what exposes a cache hit.

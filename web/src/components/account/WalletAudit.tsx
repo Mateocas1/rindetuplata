@@ -1,11 +1,11 @@
 /**
- * Audit trail of one curated wallet rate (S12, T7d).
+ * Audit trail of one curated wallet rate.
  *
  * Mounted only when the reader opens the disclosure, so the panel does not
  * fetch every wallet's history up front. Each entry states the action, who did
  * it and when, with the stored document available on demand: a past action
- * stays readable after the rate changes. The table itself is `WalletAuditTable`
- * (T13d), a markup half a test can render; this half owns the fetch.
+ * stays readable after the rate changes. The table itself is `WalletAuditTable`,
+ * a markup half a test can render; this half owns the fetch.
  */
 import { useEffect, useState } from 'react';
 import { accountApi, type AuditEntry } from '../../lib/account';

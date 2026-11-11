@@ -24,7 +24,7 @@ class IngestionSchedulerConfiguration {
 	}
 
 	/**
-	 * T14a (S20): with {@code rindetuplata.ingest.run-on-startup=true} the application runs today's LIVE ingestion
+	 * With {@code rindetuplata.ingest.run-on-startup=true} the application runs today's LIVE ingestion
 	 * once, in the background, as soon as it is ready. It stays off by default; the scheduler's own clock and zone
 	 * decide which day "today" is.
 	 */

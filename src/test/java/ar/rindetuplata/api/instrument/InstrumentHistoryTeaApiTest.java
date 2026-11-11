@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T1c (S1): every point of the history is also served on one comparable, effective-annual basis. A rate point
+ * Every point of the history is also served on one comparable, effective-annual basis. A rate point
  * carries {@code tea} (TNA compounded the way its instrument compounds; an effective basis passes through), a fund
  * quote carries the TEA of {@code FundYield}, and a monthly inflation point carries {@code annualized} = (1 + m)^12 - 1.
  * Expected values are computed independently with Python {@code Decimal} at 50 digits, rounded HALF_EVEN to scale 6.

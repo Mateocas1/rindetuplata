@@ -28,7 +28,7 @@ public class InstrumentService {
 	/** The longest window a client may ask for, counted inclusively. */
 	public static final int MAX_WINDOW_DAYS = 366;
 
-	/** The label of the monthly index the history carries (BCRA variable 27, the INDEC CPI, S10). */
+	/** The label of the monthly index the history carries (BCRA variable 27, the INDEC CPI). */
 	public static final String INDEC_CPI_MONTHLY = "INDEC_CPI_MONTHLY";
 
 	private final InstrumentQueryRepository repository;

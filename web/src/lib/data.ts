@@ -1,5 +1,5 @@
 /**
- * Build-time data access (T7b, T7c).
+ * Build-time data access.
  *
  * Pages read the Java API while building (`API_URL`); with `WEB_FIXTURES=1`
  * they read the recorded JSON in `web/fixtures/` instead, so tests and CI never
@@ -9,10 +9,10 @@
  * Fixture mode serves only requests that were actually recorded, matched exactly
  * on amount, days, kinds, clientOf and limit: an unrecorded request fails the
  * build with the list of recordings instead of quietly shipping numbers that do
- * not match the request (S11).
+ * not match the request.
  *
  * Against the API every GET has a deadline (`API_TIMEOUT_MS`), transient failures are retried a bounded number
- * of times and an identical request is sent once per build; see `fetchRetry.ts` (T4d, L36a).
+ * of times and an identical request is sent once per build; see `fetchRetry.ts`.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -29,7 +29,7 @@ export interface BuildDataOptions {
   limit?: number;
   /** Fixtures directory override, so a test can exercise a missing directory. */
   fixturesDir?: string;
-  /** Replaces the wait between retries, so a test never really waits (T4d). */
+  /** Replaces the wait between retries, so a test never really waits. */
   sleep?: (ms: number) => Promise<void>;
 }
 
@@ -216,7 +216,7 @@ export async function loadRanking(
 /**
  * The instrument catalogue: the same default ranking, with the wide limit, so a
  * page exists for every ranked or ineligible instrument of the day and never for
- * the unranked rows of `instruments.json` (T7c).
+ * the unranked rows of `instruments.json`.
  */
 export async function loadRankingCatalog(options: BuildDataOptions = {}): Promise<Ranking> {
   return loadRanking(
@@ -290,8 +290,8 @@ export async function loadHistory(
 
 /**
  * Every bank that reports a plazo fijo rate, ranked or not: the ones that only
- * offer a client rate are exactly the ones a reader needs for "soy cliente de…"
- * (S19). Alphabetical and deduplicated.
+ * offer a client rate are exactly the ones a reader needs for "soy cliente de…".
+ * Alphabetical and deduplicated.
  */
 export async function loadBanks(options: BuildDataOptions = {}): Promise<BankOption[]> {
   const ranking = await loadRanking(

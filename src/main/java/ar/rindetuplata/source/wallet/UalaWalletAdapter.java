@@ -20,7 +20,7 @@ import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Ualá remunerated account, scraped from the entity web. Reads the live page ({@link #parseHtml}) or the T9
+ * Ualá remunerated account, scraped from the entity web. Reads the live page ({@link #parseHtml}) or the archived
  * {@code html-rate} extract ({@link #parseExtract}); both go through the same snippet rules. The unconditional rate
  * is the "entre $X y $Y ... N% TNA" snippet; "Si ... sube hasta N% TNA" snippets become labeled conditions;
  * headline snippets ("hasta 24%") are ignored.
@@ -55,7 +55,7 @@ public class UalaWalletAdapter implements WalletRateSource {
         return fromSnippets(HtmlRateSnippets.extract(new String(html, StandardCharsets.UTF_8)), fetchedAt);
     }
 
-    /** Pure: T9 archive extract ({@code {"matches": [...]}}) → wallet rate. */
+    /** Pure: archive extract ({@code {"matches": [...]}}) → wallet rate. */
     public static WalletRate parseExtract(byte[] extract, Instant fetchedAt) {
         JsonNode matches = JsonSupport.array(SOURCE, JsonSupport.readTree(SOURCE, extract), "matches");
         List<String> snippets = new ArrayList<>();

@@ -3,9 +3,9 @@ import { problemMessage, simulationOutcome } from './simulator';
 import type { Simulation } from './types';
 
 /**
- * Simulator outcome mapping (T7c, S11, S8 L-G): the API's status codes and
+ * Simulator outcome mapping: the API's status codes and
  * ProblemDetail parameters become one Spanish, informational message. The
- * API's own English `detail` is never rendered (L52).
+ * API's own English `detail` is never rendered.
  */
 const simulated: Simulation = {
   status: 'SIMULATED',

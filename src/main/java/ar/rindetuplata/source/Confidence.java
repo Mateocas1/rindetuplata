@@ -1,6 +1,6 @@
 package ar.rindetuplata.source;
 
-/** How much a rate can be trusted, by how it was obtained (S12). */
+/** How much a rate can be trusted, by how it was obtained. */
 public enum Confidence {
     /** Automatic and published by the authority (BCRA). */
     OFFICIAL_AUTOMATIC,

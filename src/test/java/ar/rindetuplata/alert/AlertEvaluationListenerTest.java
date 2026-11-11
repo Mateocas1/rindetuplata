@@ -18,9 +18,9 @@ import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 
 /**
- * T6c unit rules of the alert evaluation listener (S3, S4): it evaluates once after a COMPLETED
+ * Unit rules of the alert evaluation listener: it evaluates once after a COMPLETED
  * {@code dailyIngestionJob}, for the job's own data date; a FAILED job is never evaluated; an evaluator that
- * throws is logged and the job status is untouched, because the ingestion already wrote its data. T4a (L33 a): alerts
+ * throws is logged and the job status is untouched, because the ingestion already wrote its data. Alerts
  * are about today, so a completed job evaluates only when its data date is today in America/Argentina/Buenos_Aires;
  * a replay or a late run of a past date never compares old data with newer alert state.
  */

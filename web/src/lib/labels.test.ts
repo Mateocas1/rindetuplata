@@ -18,7 +18,7 @@ import {
 /**
  * Every code the API can return must render as Spanish copy, and an unknown code
  * must fall back to the code itself: a new reason shipped by the API shows a raw
- * code, never the string "undefined" (S11: every excluded row states its reason).
+ * code, never the string "undefined" (every excluded row states its reason).
  */
 describe('kindLabel', () => {
   it('names each ranked kind in Spanish', () => {

@@ -15,7 +15,7 @@ import {
 } from './entities';
 
 /**
- * Bank entity pages data (T6b). Fixture mode reads the synthetic recordings under `web/fixtures/entities/`
+ * Bank entity pages data. Fixture mode reads the synthetic recordings under `web/fixtures/entities/`
  * (listed in its README); live mode reads the Java API and sends the build token like the rest of the build.
  */
 const FIXTURES = { WEB_FIXTURES: '1' } as const;

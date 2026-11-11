@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * T6d (S6, L32b): a key on the public read API through the real security chain. A valid key is served with a bucket
+ * A key on the public read API through the real security chain. A valid key is served with a bucket
  * of its own, an unknown or revoked one is a 401 {@code ProblemDetail} at once, and a key never authenticates a
  * user: the account, alert, curation and admin endpoints answer exactly as they do to an anonymous caller.
  */

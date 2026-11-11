@@ -1,4 +1,4 @@
-# Alert rules (T6c, S6, L32 a)
+# Alert rules
 
 A signed-in user owns up to **20 active rules**, whatever their type. `POST /api/v1/alerts` takes a `type`; a request
 without one is a `THRESHOLD` rule, as before V9, and every rule stored before V9 became `THRESHOLD`. `GET /api/v1/alerts`

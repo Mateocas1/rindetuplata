@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * "Cambió la mejor opción" (T6c, L32 a): fires when the top entry of the rule's filter differs from the top stored by
+ * "Cambió la mejor opción": fires when the top entry of the rule's filter differs from the top stored by
  * the previous evaluation. The first evaluation stores the baseline and fires nothing; a day on which the filter ranks
  * nothing changes nothing; evaluating the same data again finds the stored top equal and fires nothing. Funds are
  * compared as the public ranking groups them ({@link AlertRanking}). The state and the event are one transaction.

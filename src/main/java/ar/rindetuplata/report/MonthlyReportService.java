@@ -27,9 +27,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * The monthly "who beat inflation" report (T6a, L29 a). A month is reportable only when it has ended (in the Argentine
+ * The monthly "who beat inflation" report. A month is reportable only when it has ended (in the Argentine
  * day the injected clock reports), INDEC has published its inflation and at least one instrument from the daily rate
- * snapshots (plazo fijo, wallet or crypto) is measured over the whole month: a row, not a left-out entry (T8a, L38 a).
+ * snapshots (plazo fijo, wallet or crypto) is measured over the whole month: a row, not a left-out entry.
  * Fund quotes alone do not make a month reportable, so a backfill of FCI history never lists a month that has no
  * plazo fijo, rate wallet or crypto in it; fund rows still appear in a month the rate history covers. Each
  * instrument's nominal return comes from {@link MonthlyYield}; the real return is measured against the INDEC rate
@@ -37,7 +37,7 @@ import org.springframework.stereotype.Service;
  * wallet, the way the ranking does.
  *
  * <p>Building a month reads the stored history around it, which grows with every backfill, so the answers are cached
- * (T4a, L33 a) in bounded in-process LRUs: the month list under the {@linkplain DataVersion data version} and
+ * in bounded in-process LRUs: the month list under the {@linkplain DataVersion data version} and
  * today's date (a month closes at midnight), a month's report under the data version and the month (a closed month
  * stays closed). The version is read once per call before anything is computed, so an entry is never labelled newer
  * than the data it holds; a write that lands in between only makes the next call recompute. A failure is never

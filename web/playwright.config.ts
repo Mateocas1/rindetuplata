@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 /**
- * End-to-end smoke runner (T7e).
+ * End-to-end smoke runner.
  *
  * It drives the product on the local Compose stack through Caddy — one origin, the same shape as the
  * deployed site — so it covers what the Vitest build smokes cannot: the account islands talking to the

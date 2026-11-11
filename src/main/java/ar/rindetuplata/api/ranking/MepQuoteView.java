@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 /**
- * The dólar MEP quote every {@code breakEvenMep} of the response was computed from (S5, L24 b), once at the top: the
+ * The dólar MEP quote every {@code breakEvenMep} of the response was computed from, once at the top: the
  * latest stored quote at or before the request's {@code asOf}. Prices are ARS per USD at scale 2. {@code buy} is
  * what the market pays for a dollar and {@code sell} what it charges; {@code quoteDate} is the capture date the
  * quote is stored under and {@code updatedAt} the instant the source reports (null when it gave none).

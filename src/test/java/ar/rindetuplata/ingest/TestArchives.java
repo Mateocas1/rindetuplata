@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * A temporary checkout of the T9 {@code data} branch for the replay tests, built once per JVM from the recorded
+ * A temporary checkout of the {@code data} branch for the replay tests, built once per JVM from the recorded
  * 2026-10-14 archive:
  *
  * <ul>

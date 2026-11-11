@@ -18,7 +18,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * T3a rules (S3, L22) for the two public read endpoints: a weak {@code ETag} built from the data version and the
+ * Rules for the two public read endpoints: a weak {@code ETag} built from the data version and the
  * normalized query, {@code Cache-Control: public, no-cache}, and a {@code 304} without ranking work for a matching
  * {@code If-None-Match}. The tag changes when the data or the query changes and not otherwise; error responses
  * carry neither. "No ranking work" is observable: a poisoned fund row makes any ranking throw, yet a matching

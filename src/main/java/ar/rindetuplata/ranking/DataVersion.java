@@ -4,12 +4,12 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 /**
- * The version of everything the public ranking is computed from (T3a, L22), read from the database on every call so
+ * The version of everything the public ranking is computed from, read from the database on every call so
  * that every writer invalidates it with no event bus and no shared in-memory flag, across restarts and instances.
  *
  * <p>It is one cheap aggregate over what writers leave behind: the {@code source_run} rows (the daily job, the
  * startup ingestion and any backfill record one per source and day, and re-recording a day replaces the row with a
- * later {@code recorded_at}; a backfill (T4a) never replaces a live row, so it also records one row of its own per
+ * later {@code recorded_at}; a backfill never replaces a live row, so it also records one row of its own per
  * run, which keeps the version moving when it only fills gaps under days that already had a run), the curated wallet
  * rates and their audit trail (a save or a confirm writes both and publishes the rate snapshot), and the newest instrument id (a first-seen instrument). The ranking tables
  * themselves are not scanned: they grow with every day and fund class, and the contract is that a writer of ranking

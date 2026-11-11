@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * The SMTP adapter of the {@link Mailer} port, over Boot's auto-configured {@link JavaMailSender}. Local
- * development points it at Mailpit (T6d adds it to Compose); tests replace the port with a recording fake.
+ * development points it at Mailpit (Compose runs it); tests replace the port with a recording fake.
  */
 @Component
 public class SmtpMailer implements Mailer {

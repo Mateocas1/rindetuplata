@@ -4,7 +4,7 @@ import ar.rindetuplata.source.SourceException;
 import java.util.List;
 
 /**
- * Primary macro source with a secondary behind it (S5). The observations keep their own {@code source}, so a
+ * Primary macro source with a secondary behind it. The observations keep their own {@code source}, so a
  * consumer can tell the secondary answered.
  */
 public class FallbackMacroSource implements MacroSource {

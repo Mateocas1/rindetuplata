@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 /**
  * Which fund classes the ranking cannot offer to the general public, decided from the class name alone because the
- * source publishes no currency or eligibility field (L7): classes in a foreign currency, whose cuotaparte is not
+ * source publishes no currency or eligibility field: classes in a foreign currency, whose cuotaparte is not
  * pesos, and the tax-regularization classes of Ley 27.743.
  */
 public final class FundClassRules {

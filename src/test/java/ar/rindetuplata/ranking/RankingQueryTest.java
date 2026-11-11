@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import org.junit.jupiter.api.Test;
 
-/** T5a ranking input defaults and validation (T5 design notes). */
+/** Ranking input defaults and validation. */
 class RankingQueryTest {
 
 	@Test

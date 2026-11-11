@@ -7,7 +7,7 @@ import java.time.LocalDate;
 /**
  * One bank in {@code GET /api/v1/entities/banks}: its slug, its instrument id and the latest valid plazo fijo
  * snapshot at or before today. Rates are TNA fractions at scale 6; {@code nonClientTna} is null when the bank offers
- * no plazo fijo to non-clients and {@code clientTna} when it publishes no client rate (S11 states the dates).
+ * no plazo fijo to non-clients and {@code clientTna} when it publishes no client rate (the page states the dates).
  * {@code current} says whether the snapshot is from the newest capture day of the bank's source.
  */
 @Schema(description = "A bank with the latest valid plazo fijo rates stored at or before today.")

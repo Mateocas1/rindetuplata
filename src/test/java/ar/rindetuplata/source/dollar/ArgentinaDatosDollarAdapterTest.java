@@ -24,7 +24,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 /**
- * T4a (L33 a): the ArgentinaDatos MEP series {@code /cotizaciones/dolares/bolsa}, one row per calendar day, read once
+ * The ArgentinaDatos MEP series {@code /cotizaciones/dolares/bolsa}, one row per calendar day, read once
  * per backfill run under its own source id so it never collides with the DolarApi rows the daily job stores.
  */
 class ArgentinaDatosDollarAdapterTest {

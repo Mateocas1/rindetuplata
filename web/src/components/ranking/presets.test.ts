@@ -1,8 +1,8 @@
 /**
- * Preset wiring of the ranking explorer (T13b).
+ * Preset wiring of the ranking explorer.
  *
  * The Cobalto Cristal prototype proposed a capsule segmented control for the
- * amount and the term (L80). In the product those presets are shortcuts over
+ * amount and the term. In the product those presets are shortcuts over
  * the reader's own query: picking one has to change the query the island sends
  * to `/api/v1/ranking` (the same one the free inputs produce), never a specimen
  * of the control. These are the rules that make that true:

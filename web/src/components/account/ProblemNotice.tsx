@@ -1,5 +1,5 @@
 /**
- * The one failure box of the account pages (T7d, T12c): an urgent, untied
+ * The one failure box of the account pages: an urgent, untied
  * failure announced with `role="alert"`, in Spanish, never the API's English
  * `detail`.
  *

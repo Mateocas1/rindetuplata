@@ -10,7 +10,7 @@ import { fixtureFileFor } from '../src/lib/data';
 import type { RankedKind } from '../src/lib/types';
 
 /**
- * The real `astro build` against a fake API (T4d, L36a): the pre-render gate refuses a stale, thin or
+ * The real `astro build` against a fake API: the pre-render gate refuses a stale, thin or
  * category-less ranking before any page is rendered (exit code, message naming the check, no page
  * requested, nothing written), fixture mode skips only the age check, and a complete build sends every
  * identical request once and rides out a transient 503.

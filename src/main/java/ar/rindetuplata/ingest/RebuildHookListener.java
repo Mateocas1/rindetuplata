@@ -9,8 +9,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 /**
- * T4d: after {@code dailyIngestionJob} COMPLETES, POSTs once to the static site's deploy hook
- * ({@code rindetuplata.ingest.rebuild-hook-url}) so the CDN publishes the day's data (S16, S14). An unset or blank
+ * After {@code dailyIngestionJob} COMPLETES, POSTs once to the static site's deploy hook
+ * ({@code rindetuplata.ingest.rebuild-hook-url}) so the CDN publishes the day's data. An unset or blank
  * URL is a no-op; a FAILED job never rebuilds; a hook that answers an error or times out is logged and never
  * changes the job, because the ingestion already wrote its data and a hook failure is not an ingestion failure.
  */

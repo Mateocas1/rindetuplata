@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * T6d consumer rules (S13, S8 L-G): the alert email explains what fired and where the number came from, and the
+ * Consumer rules: the alert email explains what fired and where the number came from, and the
  * same event delivered twice sends exactly one email and leaves exactly one {@code processed_event} row, because
  * the relay is at least once and a duplicated delivery must never spam the saver.
  */
@@ -86,7 +86,7 @@ class AlertEmailConsumerIntegrationTest {
 	}
 
 	/**
-	 * Back-compat (T6c, L32 a): an outbox row stored in today's AlertTriggered shape, with no type, is delivered
+	 * Back-compat: an outbox row stored in today's AlertTriggered shape, with no type, is delivered
 	 * through the new dispatch as exactly today's email, word for word.
 	 */
 	@Test

@@ -1,5 +1,5 @@
 /**
- * History chart geometry (T7c, S10, S14).
+ * History chart geometry.
  *
  * The instrument page plots the effective annual rate (TEA) the API returned
  * against the INDEC inflation annualized by the API, both on one comparable

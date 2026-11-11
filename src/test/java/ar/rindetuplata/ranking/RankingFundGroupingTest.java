@@ -34,7 +34,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T2c rules (S2, L5, L7): the public ranking shows one row per fund, the best class for the request, with the number
+ * Rules: the public ranking shows one row per fund, the best class for the request, with the number
  * of folded siblings; grouping happens before the page limit and never in {@code rankAll} or a simulation; classes in
  * a foreign currency and tax-amnesty classes are excluded per class with their own reason.
  */

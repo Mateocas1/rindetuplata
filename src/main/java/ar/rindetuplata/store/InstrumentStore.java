@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Upserts the instrument a source record belongs to. One row per (kind, source, natural key); the upsert refreshes
- * the display fields and widens {@code first_seen}/{@code last_seen}, never narrows them (T4 design notes).
+ * the display fields and widens {@code first_seen}/{@code last_seen}, never narrows them.
  */
 @Component
 public class InstrumentStore {

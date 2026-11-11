@@ -1,4 +1,4 @@
-# Local development stack (T1, T6d, T7e).
+# Local development stack.
 #
 # `docker compose up -d postgres` starts only the services without a
 # profile: postgres, rabbitmq and mailpit, for `./mvnw spring-boot:test-run` and the Astro dev server.
@@ -34,7 +34,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
-  # T6d: the alert events. The application talks AMQP on 5672; 15672 is the management UI (guest/guest locally).
+  # The alert events. The application talks AMQP on 5672; 15672 is the management UI (guest/guest locally).
   rabbitmq:
     image: rabbitmq:4-management
     ports:
@@ -45,13 +45,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
-  # T6d: local SMTP catcher for the magic link and the alert emails. The UI is on 8025.
+  # Local SMTP catcher for the magic link and the alert emails. The UI is on 8025.
   mailpit:
     image: axllent/mailpit
     ports:
       - "127.0.0.1:1025:1025"
       - "127.0.0.1:8025:8025"
-  # T7e: the API image. Everything it needs is here as environment variables (Spring relaxed binding);
+  # The API image. Everything it needs is here as environment variables (Spring relaxed binding);
   # no secret is committed and the defaults are local-only values.
   api:
     profiles: ["stack"]
@@ -70,7 +70,7 @@ services:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_MAIL_HOST: mailpit
       SPRING_MAIL_PORT: "1025"
-      # One origin (L48): the magic link, the alert page and the allowed browser origin all point at
+      # One origin: the magic link, the alert page and the allowed browser origin all point at
       # the web service, which is where the reader actually is.
       RINDETUPLATA_AUTH_MAGICLINKURL: ${RINDETUPLATA_AUTH_MAGICLINKURL:-http://localhost:4321/ingresar}
       RINDETUPLATA_ALERT_MANAGEURL: ${RINDETUPLATA_ALERT_MANAGEURL:-http://localhost:4321/alertas}
@@ -79,7 +79,7 @@ services:
       RINDETUPLATA_AUTH_SECURECOOKIE: ${RINDETUPLATA_AUTH_SECURECOOKIE:-false}
       # Harmless placeholder: an admin address nobody uses locally. Override it to reach /admin/tasas.
       RINDETUPLATA_AUTH_ADMINEMAILS: ${RINDETUPLATA_AUTH_ADMINEMAILS:-admin@example.com}
-  # T7e: Caddy serves web/dist read-only and proxies /api/* to the API, so the browser sees one origin.
+  # Caddy serves web/dist read-only and proxies /api/* to the API, so the browser sees one origin.
   web:
     profiles: ["stack"]
     image: caddy:2-alpine

@@ -4,7 +4,7 @@ import ar.rindetuplata.account.MailMessage;
 import org.springframework.stereotype.Component;
 
 /**
- * The email of a RATE_DROP rule (T6c, L32 a): which plazo fijo or wallet lowered its rate, from what to what, when
+ * The email of a RATE_DROP rule: which plazo fijo or wallet lowered its rate, from what to what, when
  * the previous rate was seen, and the data date and source behind the new one. Plain text, in Spanish.
  */
 @Component

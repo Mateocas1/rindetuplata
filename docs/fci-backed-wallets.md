@@ -1,14 +1,14 @@
 # FCI-backed wallets
 
 A wallet is FCI-backed when its own terms say the remunerated balance is invested in one money-market fund class.
-The ranking does not read a wallet rate for it: it reads the daily share value of that class (trailing 7-day yield,
-S2) and shows the wallet once, as a `WALLET`, instead of also listing the class as a `FUND`.
+The ranking does not read a wallet rate for it: it reads the daily share value of that class (trailing 7-day yield)
+and shows the wallet once, as a `WALLET`, instead of also listing the class as a `FUND`.
 
 The mapping lives in `src/main/resources/fci-backed-wallets.json` (`id`, `name`, `fund`, optional `aliases`). The
-source publishes no class id (L7), so a class is matched by its normalized name (`FundClassKey`). A mapped class that
+source publishes no class id, so a class is matched by its normalized name (`FundClassKey`). A mapped class that
 the source stops publishing reads `FUND_CLASS_NOT_FOUND`.
 
-## Admission rule (T5a, L24)
+## Admission rule
 
 A wallet is added only when **both** checks pass, and the URL of the second is recorded here:
 
@@ -18,13 +18,13 @@ A wallet is added only when **both** checks pass, and the URL of the second is r
 
 A candidate that fails either check is not added. The verbatim rows of the classes that were confirmed live are kept
 in `src/test/resources/fixtures/argentinadatos/fci-mercado-dinero-wallet-classes-2026-11-01.json` (the older
-recorded fixtures are not re-recorded, L16); `FciBackedWalletCatalogTest` checks every mapping against them.
+recorded fixtures are not re-recorded); `FciBackedWalletCatalogTest` checks every mapping against them.
 
 ## Mapped wallets
 
 | Wallet | Class (as ArgentinaDatos publishes it) | Official source naming the class | Checked |
 |---|---|---|---|
-| Mercado Pago | `Mercado Fondo - Clase A` | Existing mapping (T3), unchanged | 2026-11-01 live |
+| Mercado Pago | `Mercado Fondo - Clase A` | Existing mapping, unchanged | 2026-11-01 live |
 | Personal Pay | `Delta Pesos - Clase X` | https://www.personal.com.ar/pay/cuentas-remuneradas ("Personal Pay ofrece Rendimientos por medio del FCI Delta Pesos Clase X"; fund rules at https://deltaam.com.ar/fondos_de_inversion/delta-pesos/) | 2026-11-01 |
 
 ## Candidates checked and not added (2026-11-01)

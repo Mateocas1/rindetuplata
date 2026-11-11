@@ -10,7 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * T6b unit rules for the admin write-path validation (S12): every rejected value names the field it came from, so
+ * Unit rules for the admin write-path validation: every rejected value names the field it came from, so
  * the shared advice turns it into a 400 that says which parameter to fix.
  */
 class WalletRateValidatorTest {

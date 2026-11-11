@@ -25,7 +25,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T3a rules (S3, L22): the data version is read from the database and moves whenever a writer of ranking data
+ * Rules: the data version is read from the database and moves whenever a writer of ranking data
  * does: a first or a replaced {@code source_run} row (the daily job, the startup ingestion, a backfill all record
  * one), a curated wallet rate saved or confirmed, or an instrument seen for the first time. It stays put when
  * nothing was written, so a cache keyed by it is reused until the data changes.
@@ -92,7 +92,7 @@ class DataVersionTest {
 
 	@Test
 	void anAuditEntryCommittedAfterOneWithAHigherIdStillChangesTheVersion() {
-		// Two overlapping curation saves: the one with the lower id commits last (T3a verify, F1).
+		// Two overlapping curation saves: the one with the lower id commits last.
 		insertAudit(1_000_000);
 		String before = version.current();
 

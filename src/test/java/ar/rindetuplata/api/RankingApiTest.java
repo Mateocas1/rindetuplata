@@ -17,9 +17,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * T5c rules for {@code GET /api/v1/ranking} (S3, S15, S19): the request echo, the personalized amounts and their
- * order, the S19 client switch, the NOT_OFFERED_TO_NON_CLIENTS exclusion, the kind filter, the limit with totals,
- * and the REM inflation (S10) present versus absent.
+ * Rules for {@code GET /api/v1/ranking}: the request echo, the personalized amounts and their
+ * order, the client switch, the NOT_OFFERED_TO_NON_CLIENTS exclusion, the kind filter, the limit with totals,
+ * and the REM inflation present versus absent.
  */
 class RankingApiTest extends RankingApiIntegrationTest {
 
@@ -68,9 +68,9 @@ class RankingApiTest extends RankingApiIntegrationTest {
 				.andExpect(jsonPath("$.excluded[0].id").value("mercado-pago"))
 				.andExpect(jsonPath("$.excluded[0].kind").value("WALLET"))
 				.andExpect(jsonPath("$.excluded[0].name").value("Mercado Pago"))
-				// T2d: the fixture has no Mercado Fondo class, which is now FUND_CLASS_NOT_FOUND, not a short history.
+				// The fixture has no Mercado Fondo class, which is now FUND_CLASS_NOT_FOUND, not a short history.
 				.andExpect(jsonPath("$.excluded[0].reason").value("FUND_CLASS_NOT_FOUND"))
-				// T5a: nor a Delta Pesos - Clase X, the class of Personal Pay.
+				// Nor a Delta Pesos - Clase X, the class of Personal Pay.
 				.andExpect(jsonPath("$.excluded[?(@.id=='personal-pay')].reason").value(contains("FUND_CLASS_NOT_FOUND")))
 				.andExpect(jsonPath("$.totals.ranked").value(3))
 				.andExpect(jsonPath("$.totals.ineligible").value(0))
@@ -116,7 +116,7 @@ class RankingApiTest extends RankingApiIntegrationTest {
 				.andExpect(jsonPath("$.excluded[0].dataDate").value("2026-10-14"))
 				.andExpect(jsonPath("$.excluded[0].reason").value("NOT_OFFERED_TO_NON_CLIENTS"))
 				.andExpect(jsonPath("$.excluded[0].flags").value(empty()))
-				// T2d: same missing Mercado Fondo class as above.
+				// Same missing Mercado Fondo class as above.
 				.andExpect(jsonPath("$.excluded[1].reason").value("FUND_CLASS_NOT_FOUND"))
 				.andExpect(jsonPath("$.excluded[?(@.id=='personal-pay')].reason").value(contains("FUND_CLASS_NOT_FOUND")))
 				.andExpect(jsonPath("$.totals.ranked").value(0))

@@ -1,6 +1,6 @@
 /**
  * The best option of the query the reader is looking at, as the one frosted
- * glass card of the page (T13b, L80).
+ * glass card of the page.
  *
  * It restates the first row of the board: the same fact, so the cobalt it
  * spends (the 2px rail on its start edge) is the same job as the serif "plata"
@@ -8,7 +8,7 @@
  * cobalt glow and hairline grid its `glass-field` parent paints, and the parent
  * that clips the overflow is the hero band in the page.
  *
- * Every figure comes from the API payload; the card only formats it (S14).
+ * Every figure comes from the API payload; the card only formats it.
  */
 import {
   formatDate,

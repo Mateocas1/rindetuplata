@@ -8,9 +8,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /**
- * T7a alert-email rules (S13, S8 L-G): the rate a saver reads is a percent rounded to two decimals {@code HALF_EVEN}
+ * Alert-email rules: the rate a saver reads is a percent rounded to two decimals {@code HALF_EVEN}
  * (never a long fraction), its label says {@code TNA} for a plazo fijo or a wallet and {@code TNA equivalente} for a
- * fund or crypto yield, and the rest of the Spanish copy stays as T6d wrote it.
+ * fund or crypto yield, and the rest of the Spanish copy stays as it was.
  */
 class AlertEmailComposerTest {
 

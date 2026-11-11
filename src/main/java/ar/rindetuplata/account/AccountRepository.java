@@ -11,9 +11,9 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 /**
- * The accounts table and the one-time-token count of T6a, through {@link JdbcClient}. The count lives here because
+ * The accounts table and the one-time-token count, through {@link JdbcClient}. The count lives here because
  * Spring Security's {@link org.springframework.security.authentication.ott.JdbcOneTimeTokenService} only generates
- * and consumes tokens; the 3-unexpired-token cap (S13) needs this read of its table.
+ * and consumes tokens; the 3-unexpired-token cap needs this read of its table.
  */
 @Component
 public class AccountRepository {

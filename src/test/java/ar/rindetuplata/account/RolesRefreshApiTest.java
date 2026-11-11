@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * T11a (S4): the authorities of a session are recomputed from the configured admin emails on every request, so an
+ * The authorities of a session are recomputed from the configured admin emails on every request, so an
  * email removed from {@code rindetuplata.auth.admin-emails} loses {@code /api/v1/admin/**} and its {@code ROLE_ADMIN}
  * in {@code GET /api/v1/me} without a new login, while the session keeps working. The test bean
  * {@link MutableAccountRoles} stands for that configuration change.

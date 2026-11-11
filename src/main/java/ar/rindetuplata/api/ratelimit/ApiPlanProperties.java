@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * {@code rindetuplata.api.plans.*} (T6d, S6, L32b): the limits of the two plans of an API key. The anonymous plan
+ * {@code rindetuplata.api.plans.*}: the limits of the two plans of an API key. The anonymous plan
  * (no key) stays the per-address bucket of {@code rindetuplata.api.rate-limit.*}. {@code FREE} is every key a user
  * creates; {@code PARTNER} is a key the operator promoted in SQL. A field left out takes the documented default.
  */

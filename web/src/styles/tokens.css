@@ -1,9 +1,9 @@
 /**
- * rindetuplata design tokens (Tailwind 4 `@theme`, S14, T7b, T12a, T13a).
+ * rindetuplata design tokens (Tailwind 4 `@theme`).
  *
  * Two tiers, one direction: hue-named primitives hold the values, role-named
  * semantic tokens are the only colors a component may reference. Direction
- * (T13, L80 "Cobalto Cristal"): graphite neutrals (hue 265-270, low chroma),
+ * ("Cobalto Cristal"): graphite neutrals (hue 265-270, low chroma),
  * one cobalt accent (hue 267) with one job, status hues far from it. Depth
  * comes from the surface ladder (surface -> surface-raised -> subtle-surface),
  * not from shadows; one element per page may be frosted glass.
@@ -110,10 +110,10 @@
   --color-focus: var(--color-graphite-900);
 
   /*
-   * Type scale (T13a). Seven roles, each one `type-*` recipe in recipes.css:
+   * Type scale. Seven roles, each one `type-*` recipe in recipes.css:
    * label (mono caps), display, section, figure (+ the row step), body (+ the
    * lead step), data (mono, tabular) and index (the 01-08 gutter, data size).
-   * These are the only steps there are (T13e): a component takes a role and may
+   * These are the only steps there are: a component takes a role and may
    * vary weight or the muted color, never the size.
    */
   --text-label: 0.75rem;
@@ -157,12 +157,12 @@
   --container-page: 68rem;
   --container-prose: 40rem;
 
-  /* Motion (T12d): better-ui's exact curve for state changes */
+  /* Motion: better-ui's exact curve for state changes */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   /*
    * Type families, self-hosted from @fontsource (OFL-1.1) and bundled by Vite,
-   * so builds stay offline (S16): Archivo for reading text (the default),
+   * so builds stay offline: Archivo for reading text (the default),
    * Space Grotesk for display and figures, Geist Mono for labels and data, and
    * Instrument Serif italic for the one accent word per page. The system
    * stacks cover the moment before they load.
@@ -176,7 +176,7 @@
 }
 
 /*
- * Surface ladder and glass (T13a). Not theme tokens: they carry alpha, and the
+ * Surface ladder and glass. Not theme tokens: they carry alpha, and the
  * dark block below must repoint them. Use through the `card`, `glass` and
  * `glass-field` recipes. `tokens.test.ts` measures text and muted on the glass
  * composited over the full glow.
@@ -186,7 +186,7 @@
   /* Light: the raised step is white on the canvas, so no inner highlight. */
   --surface-lift: 0 0 0 0 oklch(0 0 0 / 0);
   /* Frosted glass, one element per page: white over the canvas, a cobalt glow
-     and a hairline grid behind it (raised from the prototype, L81: the light
+     and a hairline grid behind it (raised from the prototype: the light
      glass was nearly invisible). */
   --glass-fill: oklch(1 0 0 / 0.58);
   --glass-line: oklch(0.159 0.011 268 / 0.14);
@@ -210,7 +210,7 @@
     --color-accent-surface: var(--color-cobalt-950);
     --color-on-accent: var(--color-graphite-900);
 
-    /* A light graphite pill with canvas ink: never grey-on-grey (L81). */
+    /* A light graphite pill with canvas ink: never grey-on-grey. */
     --color-thumb: var(--color-graphite-300);
     --color-on-thumb: var(--color-graphite-900);
 

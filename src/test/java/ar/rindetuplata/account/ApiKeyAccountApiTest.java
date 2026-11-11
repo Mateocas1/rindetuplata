@@ -30,7 +30,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * T6d (S6, L32b): create (shown once), list and revoke under {@code /api/v1/account/api-keys} for the signed-in
+ * Create (shown once), list and revoke under {@code /api/v1/account/api-keys} for the signed-in
  * user, with the session and CSRF rules of the other account endpoints, at most 3 active keys, and nothing but the
  * SHA-256 and a display prefix in the database.
  */

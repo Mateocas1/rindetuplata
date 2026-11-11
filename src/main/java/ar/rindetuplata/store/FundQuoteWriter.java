@@ -59,7 +59,7 @@ public class FundQuoteWriter {
 	}
 
 	/**
-	 * Insert-only variant for the backfill (T4a, L33 a): a quote whose class and date are already stored is skipped,
+	 * Insert-only variant for the backfill: a quote whose class and date are already stored is skipped,
 	 * so live data always wins. The result counts the rows this call really inserted.
 	 */
 	@Transactional

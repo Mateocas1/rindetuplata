@@ -3,7 +3,7 @@ import { CATEGORIES, categoryForKind } from './categories';
 import { RANKING_KINDS } from './types';
 
 /**
- * Category landing pages (T7c): one per kind, each with its own path, nav label,
+ * Category landing pages: one per kind, each with its own path, nav label,
  * title and intro copy. The instrument page and the header nav read the same map,
  * so a new kind cannot get an instrument page without a category page.
  */

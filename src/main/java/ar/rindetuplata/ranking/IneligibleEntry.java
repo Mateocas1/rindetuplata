@@ -4,7 +4,7 @@ import ar.rindetuplata.domain.Ineligible;
 import java.time.LocalDate;
 import java.util.Objects;
 
-/** An instrument the requested amount or term does not reach, with the domain reason and its detail (S15). */
+/** An instrument the requested amount or term does not reach, with the domain reason and its detail. */
 public record IneligibleEntry(String id, RankedKind kind, String name, SourceView source, LocalDate captureDate,
 		LocalDate dataDate, Ineligible ineligible) {
 

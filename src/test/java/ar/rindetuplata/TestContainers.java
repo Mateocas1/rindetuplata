@@ -7,7 +7,7 @@ import org.testcontainers.utility.DockerImageName;
 /**
  * The containers every test configuration declares. Each start is retried: Docker publishes a container port on a
  * random ephemeral host port, which can collide with an ephemeral port the test JVM already holds for an outgoing
- * connection ("bind: address already in use"; frequent under rootless Docker, L20 of odd/tasks/post-mvp.md), and a
+ * connection ("bind: address already in use"; frequent under rootless Docker), and a
  * single failed start would otherwise fail every test of that context.
  */
 public final class TestContainers {

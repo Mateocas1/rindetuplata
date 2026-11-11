@@ -1,6 +1,6 @@
 ---
 /**
- * Instrument history chart (T7c, S10, S14).
+ * Instrument history chart.
  *
  * Rendered at build time as an inline SVG: no island, no client JavaScript. The
  * geometry comes from `lib/chart.ts`; this component only draws it and repeats
@@ -38,7 +38,7 @@ const ratePointCount = rateSeries?.points.length ?? 0;
 const rateColor = 'text-accent';
 const inflationColor = 'text-muted';
 /**
- * The date labels are anchored inside the plot box (T13e): centred on the tick,
+ * The date labels are anchored inside the plot box: centred on the tick,
  * the first one runs under the pinned y-axis and the last one past the right
  * padding, and a label half out of the frame is a clipped label.
  */
@@ -64,13 +64,13 @@ const description =
           Deslizá el gráfico para ver todo el período.
         </p>
         {/*
-          The chart is drawn at its intrinsic pixel size (T12b): a viewBox that
+          The chart is drawn at its intrinsic pixel size: a viewBox that
           scaled with the container would scale the axis labels with it, from a
           legible 13px (`type-data`) down to single digits on a phone. Fixed
           pixels plus a labelled scroll region keeps every label at its token
           size on every screen.
 
-          The y-axis is a separate strip pinned outside the scroller (T13e):
+          The y-axis is a separate strip pinned outside the scroller:
           the region starts on the latest data, so at 320px the scale used to
           scroll away with it. The strip is `aria-hidden` — the chart's `<desc>`
           and the table below repeat every number — and it paints the card's own

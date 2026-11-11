@@ -1,5 +1,5 @@
 /**
- * Audit trail of one curated wallet rate (S12, T13d).
+ * Audit trail of one curated wallet rate.
  *
  * A table read the way the ranking table reads: the action is the row header in
  * `type-body`, actor, date and the stored document are mono `type-data` under

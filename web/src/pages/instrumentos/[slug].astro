@@ -1,6 +1,6 @@
 ---
 /**
- * Instrument page (T7c, S3, S10, S11).
+ * Instrument page.
  *
  * One page per instrument any prerendered table can link to (`lib/pages.ts`):
  * ranked or ineligible, never the unranked BCRA rows or the dead fund classes,
@@ -100,7 +100,7 @@ const isStale = ranked !== null && ranked.warnings.some((warning) => warning.cod
 
 // The hero states today's fact the way the reference plate does: the pesos the
 // default amount earns in the default term as the protagonist figure, the rate
-// and its kind as data, and one quiet provenance line (L77). The simulator
+// and its kind as data, and one quiet provenance line. The simulator
 // below turns that default into the reader's own amount and term.
 const defaultMoney = formatMoney(DEFAULT_AMOUNT);
 const defaultTerm = formatDays(DEFAULT_DAYS);

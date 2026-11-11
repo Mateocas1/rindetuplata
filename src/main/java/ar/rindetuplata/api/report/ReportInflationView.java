@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/** The INDEC monthly inflation the real returns of the report were measured against, with its source (S10, S11). */
+/** The INDEC monthly inflation the real returns of the report were measured against, with its source. */
 public record ReportInflationView(
 		String index,
 		@Schema(description = "The month's inflation as a fraction (1.9% is 0.019), scale 6.") BigDecimal value,

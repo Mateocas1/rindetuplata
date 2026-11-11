@@ -1,4 +1,4 @@
-# Private preview overlay (T14b, S20): the local stack, on the internet through Tailscale Funnel.
+# Private preview overlay: the local stack, on the internet through Tailscale Funnel.
 #
 #   docker compose --project-name rindetuplata-preview --env-file deploy/preview.env \
 #     -f compose.yaml -f deploy/compose.preview.yaml --profile stack up -d --wait
@@ -25,8 +25,8 @@
 #     point `SPRING_MAIL_HOST`/`SPRING_MAIL_PORT` at it (see docs/deploy.md).
 #   - The API is production-shaped: STARTTLS SMTP, `secure-cookie=true`, magic link, alert page and
 #     allowed browser origin all derived from one `PREVIEW_URL` (one origin, so the `SameSite=Lax`
-#     session cookie and the CSRF token travel), an ingestion on startup (T14a: no data on a fresh
-#     volume before the 19:30 cron) and the T4d rebuild hook pointing at the `rebuilder` sidecar.
+#     session cookie and the CSRF token travel), an ingestion on startup (no data on a fresh
+#     volume before the 19:30 cron) and the rebuild hook pointing at the `rebuilder` sidecar.
 #   - `web` (Caddy) is published on `127.0.0.1:${WEB_PORT:-4321}` **only**: the Funnel process connects
 #     to the loopback address, so nothing else on the LAN can reach it. It serves
 #     `deploy/Caddyfile.preview` (the local Caddyfile plus `noindex` and the Funnel's forwarded headers)
@@ -75,7 +75,7 @@ services:
       # Port 587 speaks STARTTLS; a provider on 465 wants SSL (`..._SMTP_SSL_ENABLE=true`) instead.
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
       RINDETUPLATA_MAIL_FROM: "${RINDETUPLATA_MAIL_FROM:?set RINDETUPLATA_MAIL_FROM in deploy/preview.env}"
-      # One origin (S20): the Funnel URL is the only URL the reader ever visits.
+      # One origin: the Funnel URL is the only URL the reader ever visits.
       RINDETUPLATA_AUTH_MAGICLINKURL: "${PREVIEW_URL:?set PREVIEW_URL in deploy/preview.env}/ingresar"
       RINDETUPLATA_ALERT_MANAGEURL: "${PREVIEW_URL:?set PREVIEW_URL in deploy/preview.env}/alertas"
       RINDETUPLATA_WEB_ALLOWEDORIGINS: "${PREVIEW_URL:?set PREVIEW_URL in deploy/preview.env}"
@@ -83,11 +83,11 @@ services:
       # CSRF cookies must be Secure; the false default of the base file is a development value.
       RINDETUPLATA_AUTH_SECURECOOKIE: "true"
       RINDETUPLATA_AUTH_ADMINEMAILS: "${RINDETUPLATA_AUTH_ADMINEMAILS:?set RINDETUPLATA_AUTH_ADMINEMAILS in deploy/preview.env}"
-      # T14a: a fresh volume has no data before the 19:30 cron, and the site is rendered from the API.
+      # A fresh volume has no data before the 19:30 cron, and the site is rendered from the API.
       RINDETUPLATA_INGEST_RUNONSTARTUP: "true"
-      # T4d: after a COMPLETED ingestion the site is rebuilt by the sidecar below.
+      # After a COMPLETED ingestion the site is rebuilt by the sidecar below.
       RINDETUPLATA_INGEST_REBUILDHOOKURL: "http://rebuilder:8787/"
-      # Optional (T1a): the secret the rebuilder sends as `X-Build-Token` so a site build skips the
+      # Optional: the secret the rebuilder sends as `X-Build-Token` so a site build skips the
       # per-address rate limit of the public read API. Blank (the default) disables the bypass.
       RINDETUPLATA_API_RATELIMIT_BYPASSTOKEN: "${API_BUILD_TOKEN:-}"
 
@@ -108,7 +108,7 @@ services:
       - ./web/.site:/srv:ro
       - ./deploy/Caddyfile.preview:/etc/caddy/Caddyfile:ro
 
-  # The T4d rebuild hook target. It answers `POST /` immediately and runs the site build
+  # The rebuild hook target. It answers `POST /` immediately and runs the site build
   # (`astro build --outDir .site/build-<n>`, one build at a time with one queued rerun) in the
   # background. A build that exits 0 is published by swapping `web/.site/current` with one `rename`;
   # a build that fails leaves the previous one serving, and only the last two builds are kept. The
@@ -135,14 +135,14 @@ services:
       # How many finished builds stay on disk; the current one plus the previous one is enough to roll
       # back to the site that served before a bad build.
       REBUILDER_KEEP_BUILDS: "2"
-      # A hook the API sent before this sidecar listened is lost; one build at start covers it (T14c).
+      # A hook the API sent before this sidecar listened is lost; one build at start covers it.
       REBUILDER_BUILD_ON_START: "true"
       # Inside the network: `web` is Caddy, so the build talks to the same one origin the browser does
       # and the generated pages get the same API responses the site serves.
       API_URL: "http://web"
       # Canonicals, sitemap and robots.txt must name the public Funnel URL, never localhost.
       SITE_URL: "${PREVIEW_URL:?set PREVIEW_URL in deploy/preview.env}"
-      # Optional (T1a): sent to the API as `X-Build-Token`; must equal the API's bypass token above.
+      # Optional: sent to the API as `X-Build-Token`; must equal the API's bypass token above.
       API_BUILD_TOKEN: "${API_BUILD_TOKEN:-}"
       # npm writes its logs under $HOME; /tmp is the only directory an unprivileged user is sure of.
       HOME: "/tmp"

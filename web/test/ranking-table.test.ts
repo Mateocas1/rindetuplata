@@ -1,7 +1,7 @@
 /**
- * T2c: a grouped fund row says how many sibling classes it folded (S2, L5).
+ * A grouped fund row says how many sibling classes it folded.
  *
- * Synthetic data on purpose (L16): the recorded ranking fixtures predate the field. The note is visible text
+ * Synthetic data on purpose: the recorded ranking fixtures predate the field. The note is visible text
  * ("+3 clases") and its full meaning continues in an `sr-only` span right after it, so a screen reader reads the
  * visible words first (WCAG 2.5.3) and nothing is announced through an `aria-label`.
  */

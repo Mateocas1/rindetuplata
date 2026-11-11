@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Restore one named dump into the live database (T4c, S4). Destructive: it replaces every table the dump
+# Restore one named dump into the live database. Destructive: it replaces every table the dump
 # contains, so it refuses to run without an explicit --confirm.
 #
 #   deploy/restore.sh --confirm rindetuplata-2026-11-01.dump     # a name inside BACKUP_DIR

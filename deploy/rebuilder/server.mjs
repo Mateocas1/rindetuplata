@@ -1,12 +1,12 @@
 /**
- * Rebuild sidecar of the private preview (T14b/T14c, S20).
+ * Rebuild sidecar of the private preview.
  *
- * The API POSTs its rebuild hook (`rindetuplata.ingest.rebuild-hook-url`, T4d) after a COMPLETED daily
+ * The API POSTs its rebuild hook (`rindetuplata.ingest.rebuild-hook-url`) after a COMPLETED daily
  * ingestion, and the site is a prerendered Astro build, so something has to run the site build when the
  * day's data lands. On the VPS that "something" is the CDN's deploy hook; on the owner's machine it is
  * this dependency-free HTTP server.
  *
- * Build layout (fix B of the T14c review): every build writes a directory of its own,
+ * Build layout (fix B of the review): every build writes a directory of its own,
  * `web/.site/build-<n>`, and only a build that exited 0 is published by swapping the
  * `web/.site/current` symlink. Caddy serves `web/.site` on `/srv` with `root /srv/current`, so a rebuild
  * is invisible to visitors: they keep getting the previous build while the new one runs, a failed build
@@ -50,7 +50,7 @@ const webDir = process.env.WEB_DIR ?? '/app/web';
 const apiUrl = process.env.API_URL ?? '';
 const siteUrl = process.env.SITE_URL ?? '';
 const keepBuilds = Number(process.env.REBUILDER_KEEP_BUILDS ?? '2');
-// T14c: the API's startup ingestion can finish before this sidecar listens, and its hook is then lost
+// The API's startup ingestion can finish before this sidecar listens, and its hook is then lost
 // (the API does not retry). One build at startup covers that window; a hook that arrives later queues.
 const buildOnStart = process.env.REBUILDER_BUILD_ON_START === 'true';
 

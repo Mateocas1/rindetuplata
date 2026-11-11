@@ -18,7 +18,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.testcontainers.rabbitmq.RabbitMQContainer;
 
 /**
- * T6d topology (S4): the alert events need a topic exchange, a durable email queue bound to the routing key, and a
+ * Topology: the alert events need a topic exchange, a durable email queue bound to the routing key, and a
  * dead-letter exchange with its own queue wired to the first one, because a message the consumer rejects must land
  * somewhere instead of looping. The management API is read to prove the {@code x-dead-letter-*} arguments are the
  * ones the design names, and a publish/receive pair proves the bindings work.

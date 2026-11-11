@@ -6,7 +6,7 @@ export default getViteConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
-    // e2e/ is the Playwright smoke (T7e): a different runner and a real stack, never collected here.
+    // e2e/ is the Playwright smoke: a different runner and a real stack, never collected here.
     exclude: [...configDefaults.exclude, 'e2e/**'],
     // Two smoke tests shell out to `astro build` and both write `dist`; run the
     // files one at a time so the two builds never share the output directory.

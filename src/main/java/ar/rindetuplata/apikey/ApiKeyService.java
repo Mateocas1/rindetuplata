@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * API keys of T6d (S6, L32b). Creating runs in one transaction that first locks the user's {@code app_user} row,
+ * API keys. Creating runs in one transaction that first locks the user's {@code app_user} row,
  * so concurrent creates of one user are serialized and the cap of {@link #MAX_ACTIVE_KEYS} holds exactly. Only the
  * SHA-256 and a display prefix are stored; the plaintext goes back in the one create response. A key of somebody
  * else, an unknown one and an already revoked one are all the same 404 on revoke. The same class resolves a

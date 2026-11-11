@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { instrumentPageHref, instrumentPath, instrumentSlug, slugify } from './slug';
 
 /**
- * Instrument slugs (T7c): the URL of an instrument page is the slugified display
+ * Instrument slugs: the URL of an instrument page is the slugified display
  * name plus the API id, so the URL is readable and still unique when two
  * instruments share a name.
  */

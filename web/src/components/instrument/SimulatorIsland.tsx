@@ -1,5 +1,5 @@
 /**
- * Per-instrument simulator (T7c, S3, S14).
+ * Per-instrument simulator.
  *
  * A React island over `GET /api/v1/simulations`; every number it renders comes
  * from the API (no financial math in the browser). The form validates before it
@@ -23,7 +23,7 @@ import BreakEvenNote from '../ranking/BreakEvenNote';
 
 export interface Props {
   instrumentId: string;
-  /** Label of the inflation index the API's real return uses (S10). */
+  /** Label of the inflation index the API's real return uses. */
   inflationIndexLabel: string;
   defaultAmount?: number;
   defaultDays?: number;
@@ -32,7 +32,7 @@ export interface Props {
 const inputClass = 'field tabular-nums';
 const labelClass = 'flex flex-col gap-1 type-label';
 
-/** The sign is text; the tone only reinforces it, never replaces it (S10). */
+/** The sign is text; the tone only reinforces it, never replaces it. */
 function realReturnTone(value: number | null): string {
   if (value === null || value === 0) return 'text-muted';
   return value > 0 ? 'text-gain' : 'text-loss';
@@ -46,7 +46,7 @@ export function SimulatedResult({
   inflationIndexLabel,
 }: {
   entry: Extract<SimulationOutcome, { status: 'simulated' }>['entry'];
-  /** The MEP quote `entry.breakEvenMep` used; the dollar line is hidden without it (S5, L24 b). */
+  /** The MEP quote `entry.breakEvenMep` used; the dollar line is hidden without it. */
   dollarMep?: MepQuote | null;
   amount: number;
   days: number;

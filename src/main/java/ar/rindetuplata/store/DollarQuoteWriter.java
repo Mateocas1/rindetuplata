@@ -40,7 +40,7 @@ public class DollarQuoteWriter {
 	}
 
 	/**
-	 * Insert-only variant for the backfill (T4a, L33 a): each quote is stored under its own day and skipped when that
+	 * Insert-only variant for the backfill: each quote is stored under its own day and skipped when that
 	 * source already has a row for it. The result counts the rows this call really inserted.
 	 */
 	@Transactional

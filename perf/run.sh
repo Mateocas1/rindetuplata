@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# T3b: load test of the public read API, with the same data and the same load every run, so "before" and "after"
-# (T3a: targeted simulate, ranking cache, ETag) are comparable.
+# Load test of the public read API, with the same data and the same load every run, so "before" and "after"
+# (targeted simulate, ranking cache, ETag) are comparable.
 #
 #   perf/run.sh before      # label of the result files
 #   perf/run.sh after

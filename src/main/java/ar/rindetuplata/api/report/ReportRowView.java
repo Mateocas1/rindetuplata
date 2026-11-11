@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 
 /**
- * One instrument measured over the month (T6a, S11). The returns are fractions at scale 6, half-even.
+ * One instrument measured over the month. The returns are fractions at scale 6, half-even.
  * {@code foldedClasses} is how many sibling classes of the same fund were folded into this row; 0 for every other row.
  */
 public record ReportRowView(

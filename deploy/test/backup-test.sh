@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Tests of `deploy/backup.sh` and `deploy/restore.sh` (T4c, S4).
+# Tests of `deploy/backup.sh` and `deploy/restore.sh`.
 #
 #   deploy/test/backup-test.sh        (needs a running Docker daemon and the postgres:18-alpine image)
 #

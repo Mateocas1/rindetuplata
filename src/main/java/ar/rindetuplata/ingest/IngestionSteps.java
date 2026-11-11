@@ -40,10 +40,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * The body of every step of {@code dailyIngestionJob}, one method per data kind. Each method obtains its records
- * (fetch live or replay the T9 archive), writes them and records the {@code source_run} row of every source.
+ * (fetch live or replay the archive), writes them and records the {@code source_run} row of every source.
  *
  * <p>A {@link SourceException} is the failure of one source: it is recorded as {@code FAILED} and never blocks the
- * other sources or kinds (S5). Any other exception is a defect and fails its step, so the job becomes restartable.
+ * other sources or kinds. Any other exception is a defect and fails its step, so the job becomes restartable.
  * A kind that the archive does not hold (funds, macro, dollar) is skipped in {@link RunMode#REPLAY}.
  */
 @Component
@@ -188,7 +188,7 @@ public class IngestionSteps {
 		}
 	}
 
-	/** Every injected wallet rate source (S12): live fetches all of them, replay only the archived Ualá extract. */
+	/** Every injected wallet rate source: live fetches all of them, replay only the archived Ualá extract. */
 	public void wallets(LocalDate dataDate, RunMode mode) {
 		if (mode == RunMode.REPLAY) {
 			replayWallets(dataDate);

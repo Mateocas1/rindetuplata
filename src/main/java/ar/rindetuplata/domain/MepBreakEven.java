@@ -5,7 +5,7 @@ import java.math.RoundingMode;
 import java.util.Objects;
 
 /**
- * The dollar MEP break-even of an instrument (S5, L24 b). Buying dollars costs the MEP {@code sell} today and
+ * The dollar MEP break-even of an instrument. Buying dollars costs the MEP {@code sell} today and
  * leaving them costs the MEP {@code buy} at the end, so an instrument with nominal return {@code r} beats the MEP
  * when the MEP buy price rises less than {@code devaluation = (1 + r) * sell / buy - 1}; {@code price} is the
  * break-even MEP buy price, {@code (1 + r) * sell}. The spread is part of the answer, not ignored: with the usual

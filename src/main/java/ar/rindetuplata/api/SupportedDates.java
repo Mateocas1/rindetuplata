@@ -6,7 +6,7 @@ import java.time.LocalDate;
  * The calendar the public API and the MCP tools accept for a date parameter: {@code 0001-01-01} to
  * {@code 9999-12-31}, the documented {@code yyyy-MM-dd} form. {@link LocalDate} parses years up to
  * {@code +999999999}, but PostgreSQL's {@code date} stops at year 5874897 and the fund series arithmetic overflows
- * long before, so a date outside the range is rejected before any work instead of failing as a 500 (T8d).
+ * long before, so a date outside the range is rejected before any work instead of failing as a 500.
  */
 public final class SupportedDates {
 

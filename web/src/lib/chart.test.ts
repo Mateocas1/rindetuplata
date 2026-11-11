@@ -6,7 +6,7 @@ import { buildChart, seriesFromHistory, type ChartSeriesInput } from './chart';
 import type { InstrumentHistory } from './types';
 
 /**
- * History chart geometry (T7c, S10): the scales, tick positions and path strings
+ * History chart geometry: the scales, tick positions and path strings
  * the instrument page draws as an inline SVG at build time. d3 does the geometry;
  * the component only applies classes, so the chart ships zero client JavaScript.
  */

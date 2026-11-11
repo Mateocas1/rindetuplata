@@ -6,7 +6,7 @@ import ar.rindetuplata.source.ValidationFlag;
 import java.util.List;
 
 /**
- * An FCI-backed wallet with the latest quote of its fund class; the yield itself is computed in T4 from
+ * An FCI-backed wallet with the latest quote of its fund class; the yield itself is computed later from
  * cuotaparte deltas. {@code quote} is {@code null} when the class is absent from the response.
  */
 public record FciBackedWallet(

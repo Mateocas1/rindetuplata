@@ -1,7 +1,7 @@
 package ar.rindetuplata.api.ratelimit;
 
 /**
- * What one plan of API key may do (T6d): a bucket of {@code capacity} tokens refilled {@code refillPerSecond} per
+ * What one plan of API key may do: a bucket of {@code capacity} tokens refilled {@code refillPerSecond} per
  * second, and {@code dailyQuota} counted requests per Argentine day.
  */
 public record ApiPlanLimits(int capacity, double refillPerSecond, long dailyQuota) {

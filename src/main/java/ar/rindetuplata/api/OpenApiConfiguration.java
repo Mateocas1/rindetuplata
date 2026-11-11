@@ -5,7 +5,7 @@ import io.swagger.v3.oas.models.info.Info;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** The published document: title, version and the informational, non-advice disclaimer (S8 L-G, S11). */
+/** The published document: title, version and the informational, non-advice disclaimer. */
 @Configuration(proxyBeanMethods = false)
 public class OpenApiConfiguration {
 

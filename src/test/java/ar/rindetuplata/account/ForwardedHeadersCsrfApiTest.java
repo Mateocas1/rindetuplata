@@ -12,7 +12,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 
 /**
- * T7a deployment rule (S16): Caddy terminates TLS on the VPS, so the API must trust the private-network proxy and
+ * Deployment rule: Caddy terminates TLS on the VPS, so the API must trust the private-network proxy and
  * read {@code X-Forwarded-Proto} ({@code server.forward-headers-strategy=native}); otherwise
  * {@code request.isSecure()} stays false and the {@code XSRF-TOKEN} cookie is not {@code Secure}. Real HTTP from
  * localhost, because the trusted-proxy decision depends on the connecting address.

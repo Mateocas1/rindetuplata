@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 /**
- * The dólar MEP quote a ranking measured its break-even against (S5, L24 b): the latest stored quote at or before
+ * The dólar MEP quote a ranking measured its break-even against: the latest stored quote at or before
  * {@code asOf}. {@code quoteDate} is the capture date it is stored under; {@code updatedAt} is the instant the source
  * reports for it, null when the source gave none.
  */

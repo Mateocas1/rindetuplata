@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Shared setup of the {@code curation} tests (T6b, S12): the whole application over a Testcontainers Postgres, a
+ * Shared setup of the {@code curation} tests: the whole application over a Testcontainers Postgres, a
  * frozen clock, a recording mailer, the scheduler disabled and one rolled-back transaction per test. Magic-link
  * requests and logins go through the real HTTP stack, so the admin API is exercised as an admin would.
  */

@@ -26,7 +26,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 /**
- * T4d unit rules of the rebuild hook (S16, S14): after a COMPLETED {@code dailyIngestionJob} exactly one POST goes
+ * Unit rules of the rebuild hook: after a COMPLETED {@code dailyIngestionJob} exactly one POST goes
  * to the deploy hook; a FAILED job and an unset or blank URL never call HTTP at all; a hook that answers an error
  * or times out is logged and the job status is untouched. The 10 s connect and read timeout comes from
  * {@code rindetuplata.ingest.rebuild-hook-timeout}.

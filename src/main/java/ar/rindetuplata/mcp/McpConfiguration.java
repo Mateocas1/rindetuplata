@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * The MCP server inside the API (T6e, S6, L32 c): the official MCP Java SDK, stateless Streamable HTTP at
+ * The MCP server inside the API: the official MCP Java SDK, stateless Streamable HTTP at
  * {@code POST /mcp}, registered as its own servlet next to Spring MVC. Stateless means no session, no
- * {@code Mcp-Session-Id} and nothing kept between two requests, so any request can reach the single instance (S16)
+ * {@code Mcp-Session-Id} and nothing kept between two requests, so any request can reach the single instance
  * and the endpoint needs neither CSRF nor a cookie. Spring Security still guards it: {@code SecurityConfiguration}
  * opens exactly {@code POST /mcp} and {@code ApiRateLimitFilter} limits it like the read API.
  */

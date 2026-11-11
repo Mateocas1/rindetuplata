@@ -1,4 +1,4 @@
-# VPS overlay (T7e): the production shape of the local `compose.yaml`, for one small box.
+# VPS overlay: the production shape of the local `compose.yaml`, for one small box.
 #
 #   docker compose -f compose.yaml -f deploy/compose.vps.yaml \
 #     --profile stack --env-file /srv/rindetuplata/api.env up -d --wait
@@ -19,8 +19,8 @@
 #   - the API runs with the `prod` profile (SPRING_PROFILES_ACTIVE=prod), whose startup guard refuses a configuration
 #     that still has a development default;
 #   - a `caddy` service terminates TLS for api.<domain> (deploy/Caddyfile.vps);
-#   - memory limits sized for a 2 GB box, 1,792m in total: postgres 512m, rabbitmq 384m, api 768m, caddy 128m
-#     (T4c, S4). The JVM sizes its heap from its container limit (`-XX:MaxRAMPercentage=75` in the
+#   - memory limits sized for a 2 GB box, 1,792m in total: postgres 512m, rabbitmq 384m, api 768m, caddy 128m.
+# The JVM sizes its heap from its container limit (`-XX:MaxRAMPercentage=75` in the
 #     Dockerfile), so the api heap is about 576m and it can no longer take memory from the database or the
 #     broker; the OOM killer now picks the container that overran, not a random neighbour;
 #   - json-file log rotation, 10m x 3, on every service: Docker's default driver never rotates, and a
@@ -99,10 +99,10 @@ services:
       RINDETUPLATA_INGEST_REBUILDHOOKURL: ${RINDETUPLATA_INGEST_REBUILDHOOKURL:?set the CDN deploy hook}
       # TLS terminates in front of the API: without this the session and CSRF cookies travel in clear.
       RINDETUPLATA_AUTH_SECURECOOKIE: "true"
-      # Optional (T1a): the shared secret the CDN site build sends as `X-Build-Token` (build-time env
+      # Optional: the shared secret the CDN site build sends as `X-Build-Token` (build-time env
       # `API_BUILD_TOKEN`) so its hundreds of calls skip the per-address rate limit. Blank disables it.
       RINDETUPLATA_API_RATELIMIT_BYPASSTOKEN: "${API_BUILD_TOKEN:-}"
-    # To replay the T9 archive (REPLAY mode of the daily job) mount a checkout of the `data` branch:
+    # To replay the archive (REPLAY mode of the daily job) mount a checkout of the `data` branch:
     # volumes:
     #   - ./archive:/app/archive:ro
 

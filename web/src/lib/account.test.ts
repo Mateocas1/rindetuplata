@@ -3,7 +3,7 @@ import { ApiProblem, createApiClient } from './api';
 import { createAccountApi } from './account';
 
 /**
- * Typed account calls over the shared fetch client (T7d). Every unsafe call
+ * Typed account calls over the shared fetch client. Every unsafe call
  * goes through the client, so the CSRF token is fetched first and a
  * ProblemDetail body becomes a typed `ApiProblem`; this file pins the exact
  * path, method and body of each call the three pages make.

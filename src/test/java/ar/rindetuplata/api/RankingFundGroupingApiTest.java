@@ -16,7 +16,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * T2c rules on the wire (S2, L5): {@code GET /api/v1/ranking} groups fund classes into one row per fund by default
+ * Rules on the wire: {@code GET /api/v1/ranking} groups fund classes into one row per fund by default
  * and reports {@code foldedClasses}; {@code groupFunds=false} lists every class; the exclusions keep their class.
  */
 class RankingFundGroupingApiTest extends RankingApiIntegrationTest {

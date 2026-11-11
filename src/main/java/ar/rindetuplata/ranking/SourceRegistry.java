@@ -12,7 +12,7 @@ import ar.rindetuplata.source.wallet.UalaWalletAdapter;
 import java.util.Map;
 
 /**
- * Reads a stored {@code source_id} back into the T3 {@code SourceRef} the API shows (S11): display name and
+ * Reads a stored {@code source_id} back into the {@code SourceRef} the API shows: display name and
  * official flag. The declaration lives with the adapter, so it is never duplicated; an id with no adapter here
  * falls back to itself, never invented as official.
  */

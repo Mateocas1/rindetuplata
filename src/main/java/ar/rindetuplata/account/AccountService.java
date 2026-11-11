@@ -13,10 +13,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * The magic-link flow of T6a (S13). A request never says whether the email is known: an invalid email is a 400,
+ * The magic-link flow. A request never says whether the email is known: an invalid email is a 400,
  * anything else is accepted, and the mail is skipped silently once the email holds
  * {@code rindetuplata.auth.max-active-tokens} unexpired tokens; counting and generating are one serialised step
- * per email (T11a), so simultaneous requests cannot exceed the cap. A login consumes the token once, creates the
+ * per email, so simultaneous requests cannot exceed the cap. A login consumes the token once, creates the
  * account on the first success, even when two logins of a new email race and returns the email with its authorities.
  */
 @Service

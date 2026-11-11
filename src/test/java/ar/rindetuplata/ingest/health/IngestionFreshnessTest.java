@@ -9,7 +9,7 @@ import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 
 /**
- * L33b: data is stale 36 hours after the expected 19:30 (America/Argentina/Buenos_Aires, UTC-3, no DST) run of its
+ * Data is stale 36 hours after the expected 19:30 (America/Argentina/Buenos_Aires, UTC-3, no DST) run of its
  * capture date. The expected run comes from the cron the scheduler uses, so the two can never disagree.
  */
 class IngestionFreshnessTest {

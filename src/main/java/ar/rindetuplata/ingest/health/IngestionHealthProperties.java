@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * {@code rindetuplata.ingest.stale-after}: how long after the expected daily run the newest successful ingestion
- * still counts as fresh (L33b). It lives next to, not inside, the scheduler's {@code IngestionProperties}: the two
+ * still counts as fresh. It lives next to, not inside, the scheduler's {@code IngestionProperties}: the two
  * records bind the same prefix and each ignores the other's keys.
  */
 @ConfigurationProperties("rindetuplata.ingest")

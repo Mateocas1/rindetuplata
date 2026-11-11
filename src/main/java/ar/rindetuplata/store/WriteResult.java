@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * What a writer did with one response: how many distinct rows it stored and which natural keys it kept only once
- * because a later record of the same response repeated them. Duplicates never fail the batch (T4 design notes);
+ * because a later record of the same response repeated them. Duplicates never fail the batch;
  * {@link #failureText()} renders them for {@code source_run.failure}.
  */
 public record WriteResult(int rows, List<String> duplicateKeys) {

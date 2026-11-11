@@ -1,6 +1,6 @@
 package ar.rindetuplata.report;
 
-/** Why an instrument is not in the report of a month: returned apart, never dropped silently (S15). */
+/** Why an instrument is not in the report of a month: returned apart, never dropped silently. */
 public enum LeftOutReason {
 	/** No rate was known on the first day of the month (a plazo fijo: none captured by the first business day). */
 	NOT_CAPTURED_AT_START,

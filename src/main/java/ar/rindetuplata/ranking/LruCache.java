@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A small least-recently-used cache with a fixed entry cap (T3a, L22), no dependency. Every method takes the same
+ * A small least-recently-used cache with a fixed entry cap, no dependency. Every method takes the same
  * monitor, so a lookup (which reorders the access list), an insert and an eviction never interleave; the critical
  * sections are a few hash operations, so the lock is held for nanoseconds and never across a computation.
  */

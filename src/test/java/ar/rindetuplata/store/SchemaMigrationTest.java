@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
-/** The Flyway schema of T4a: the domain tables of V1 and the Spring Batch metadata of V2 exist. */
+/** The Flyway schema: the domain tables of V1 and the Spring Batch metadata of V2 exist. */
 @Import(StoreTestConfiguration.class)
 @SpringBootTest
 class SchemaMigrationTest {

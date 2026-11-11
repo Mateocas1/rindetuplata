@@ -1,5 +1,5 @@
 /**
- * Status-code decisions and freshness copy for the account pages (T7d).
+ * Status-code decisions and freshness copy for the account pages.
  *
  * The API's ProblemDetail `detail` is developer-facing English, so it is never
  * rendered: each status maps to Spanish copy here, 401 routes back to

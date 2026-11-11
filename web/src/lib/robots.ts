@@ -1,9 +1,9 @@
 /**
- * `robots.txt` body (T7e, S14).
+ * `robots.txt` body.
  *
  * Built from the site URL Astro was configured with (`SITE_URL` in astro.config.mjs), so the sitemap
  * host follows the deployment instead of being hardcoded in a static file. The account pages carry
- * `noindex` (T7d) and stay out of the sitemap (`sitemapPaths.js`), but `robots.txt` allows them: a
+ * `noindex` and stay out of the sitemap (`sitemapPaths.js`), but `robots.txt` allows them: a
  * `Disallow` would stop the crawler before it could read that `noindex`, and the page would stay in
  * the index instead of dropping out of it.
  */

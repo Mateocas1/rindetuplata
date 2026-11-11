@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The alert-rules API of T6c (S3, S13): {@code GET/POST /api/v1/alerts} and {@code DELETE /api/v1/alerts/{id}},
- * all of them for the authenticated email only. Security (T6a) already requires a login on {@code /api/v1/alerts/**}
+ * The alert-rules API: {@code GET/POST /api/v1/alerts} and {@code DELETE /api/v1/alerts/{id}},
+ * all of them for the authenticated email only. Security already requires a login on {@code /api/v1/alerts/**}
  * and a CSRF token on every state-changing request.
  */
 @RestController

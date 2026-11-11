@@ -4,7 +4,7 @@ import java.time.Clock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** Wires the per-IP counter of the magic-link endpoint from {@link AccountProperties} (T11a). */
+/** Wires the per-IP counter of the magic-link endpoint from {@link AccountProperties}. */
 @Configuration(proxyBeanMethods = false)
 class MagicLinkRateLimitConfiguration {
 

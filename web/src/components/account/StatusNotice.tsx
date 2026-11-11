@@ -1,5 +1,5 @@
 /**
- * The one status surface of the account panels (T12c).
+ * The one status surface of the account panels.
  *
  * A failure, a result and a warning wear the same shape: an `aria-hidden` icon
  * and a visible title over a tinted surface, so what happened never rides on

@@ -4,10 +4,10 @@ import ar.rindetuplata.api.instrument.ValidationFlagView;
 import java.util.List;
 
 /**
- * The outcome of simulating one instrument by id (T5c): {@code status} is the discriminator, and exactly one of
+ * The outcome of simulating one instrument by id: {@code status} is the discriminator, and exactly one of
  * {@code entry}, {@code ineligible} or {@code excluded} carries the payload. An unknown id never reaches here; the
- * controller maps it to a 404 instead. {@code dollarMep} is the MEP quote {@code entry.breakEvenMep} used (S5,
- * L24 b): present only with a SIMULATED entry, and null when no quote is stored.
+ * controller maps it to a 404 instead. {@code dollarMep} is the MEP quote {@code entry.breakEvenMep} used:
+ * present only with a SIMULATED entry, and null when no quote is stored.
  */
 public record SimulationResponse(String status, MepQuoteView dollarMep, RankedEntryView entry,
 		IneligibleView ineligible, ExcludedView excluded) {

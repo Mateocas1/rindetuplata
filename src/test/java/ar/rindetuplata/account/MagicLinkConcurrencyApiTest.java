@@ -10,7 +10,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.junit.jupiter.api.Test;
 
 /**
- * T11a races (S4, S13): ten simultaneous magic-link requests for one email leave at most 3 unexpired tokens and send
+ * Races: ten simultaneous magic-link requests for one email leave at most 3 unexpired tokens and send
  * at most 3 mails, the mail goes out only after the token committed, and two simultaneous first logins of one email
  * both succeed and leave one account. Threads are released together and the assertions read the final rows.
  */

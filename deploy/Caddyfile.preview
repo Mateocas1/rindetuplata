@@ -1,4 +1,4 @@
-# Private preview (T14b, S20): `deploy/Caddyfile.local` plus "do not index this" and the Funnel's
+# Private preview: `deploy/Caddyfile.local` plus "do not index this" and the Funnel's
 # forwarded headers.
 #
 # Caddy serves the built Astro site (web/.site/current, mounted read-only on /srv) and reverse-proxies
@@ -10,7 +10,7 @@
 #   - an `X-Robots-Tag` on every response (the preview is unlisted but the URL is public, so a crawler
 #     that finds it must not index it; the header is the server-side half of `noindex`, whose meta tag
 #     only the account routes carry);
-#   - `trusted_proxies` plus `header_up X-Forwarded-Proto https` (fix A of the T14c review): Tailscale
+#   - `trusted_proxies` plus `header_up X-Forwarded-Proto https` (fix A of the review): Tailscale
 #     Funnel terminates TLS and connects from the loopback address with the real visitor in
 #     `X-Forwarded-For`. Without a trusted-proxy list Caddy ignores both incoming headers and forwards
 #     its own peer (the Funnel) as `http`, so the API rate-limits every visitor under one address and
@@ -31,8 +31,8 @@
 	# Every response of this stack, including the 404 page and the proxied API answers.
 	header X-Robots-Tag "noindex, nofollow"
 
-	# The API: its routes, the OpenAPI document and the MCP endpoint (T6e), all named by llms.txt, and the two
-	# health URLs a monitor reads (T4c, F1; the rest of /actuator/* stays unproxied).
+	# The API: its routes, the OpenAPI document and the MCP endpoint, all named by llms.txt, and the two
+	# health URLs a monitor reads (F1; the rest of /actuator/* stays unproxied).
 	@api path /api/* /mcp /v3/api-docs /actuator/health /actuator/health/ingestion
 	handle @api {
 		# Funnel terminates TLS in front of this container, so the API is the last place that can still

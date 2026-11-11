@@ -1,5 +1,5 @@
 /**
- * Edit form for one curated wallet rate (S12, T7d).
+ * Edit form for one curated wallet rate.
  *
  * The saved document is the API's percent shape: base tiers, optional labeled
  * conditions with their own tiers, and a note. Saving stamps today as the

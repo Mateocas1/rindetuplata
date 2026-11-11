@@ -77,7 +77,7 @@ abstract class ApiIntegrationTest {
 				Instant.parse("2026-10-14T19:30:00Z").plusSeconds(RUNS.incrementAndGet()));
 	}
 
-	/** Seeds every kind from the recorded 2026-10-14 fixtures through the T4 store writers. */
+	/** Seeds every kind from the recorded 2026-10-14 fixtures through the store writers. */
 	protected void seedAll() {
 		officialWriter.write(ApiFixtures.official(), ApiFixtures.CAPTURE);
 		bankWriter.write(ApiFixtures.banks(), ApiFixtures.CAPTURE);

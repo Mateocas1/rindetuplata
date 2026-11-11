@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Memory limits and log rotation of the VPS overlay (T4c, S4).
+# Memory limits and log rotation of the VPS overlay.
 #
 #   deploy/test/compose-limits-test.sh
 #

@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 /**
- * T3a rules (S3, L22) for the bounded in-process cache behind the public ranking: it never holds more than its
+ * Rules for the bounded in-process cache behind the public ranking: it never holds more than its
  * cap, evicts the least recently used entry first (a read counts as a use), replaces an existing key in place, and
  * stays consistent under concurrent use.
  */

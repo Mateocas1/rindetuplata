@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Private preview (T14b, S20): the whole product on this machine, published through Tailscale Funnel.
+# Private preview: the whole product on this machine, published through Tailscale Funnel.
 #
 #   deploy/preview.sh up          # build the API image, start the stack, build the site via the sidecar
 #   deploy/preview.sh funnel-on   # serve it on the public Funnel URL (prints the URL)
@@ -143,7 +143,7 @@ load_settings() {
 # interpolates the raw value into the magic link, the alert page and the allowed browser origin, so a
 # trailing slash turns the link into `...//ingresar` and makes the allowed origin disagree with the
 # page's, and a non-https value means the session and CSRF cookies are not `Secure` (fix D of the
-# T14c review).
+# review).
 require_valid_preview_url() {
   case "$PREVIEW_URL_VALUE" in
     '') return 0 ;;                             # an absent key is `require_env_file`'s job
@@ -247,7 +247,7 @@ cmd_up() {
 
   # The site is prerendered, so it does not exist until a build runs. The sidecar is the only builder:
   # `up` asks it for the first build and waits, so the Funnel never serves a half-written directory, and
-  # the startup ingestion of T14a can trigger its own rebuild without racing this one.
+  # the startup ingestion can trigger its own rebuild without racing this one.
   echo "== building the site through the rebuild sidecar (SITE_URL=$PREVIEW_URL_VALUE) =="
   if ! rebuilder_build_and_wait "$BUILD_TIMEOUT_SECONDS"; then
     echo >&2
@@ -266,7 +266,7 @@ cmd_up() {
 cmd_down() {
   # Stop sharing first and *before* the env file is read: a stack that is stopped under a live Funnel
   # answers errors to the internet, and an unreachable or broken secrets file must never be able to
-  # keep this machine exposed (fix C of the T14c review).
+  # keep this machine exposed (fix C of the review).
   if ! cmd_funnel_off; then
     echo "warning: could not turn the Funnel off; check 'tailscale funnel status'." >&2
   fi
@@ -357,7 +357,7 @@ cmd_funnel_off() {
   # `tailscale funnel reset` drops the Funnel configuration (the docs pair it with `serve reset` for
   # tailnet-only sharing, which the preview never uses). It runs unconditionally: `funnel status` is
   # not a reliable gate, and resetting what is already off is harmless, while failing to reset a live
-  # Funnel leaves the machine exposed (fix C of the T14c review).
+  # Funnel leaves the machine exposed (fix C of the review).
   # The failure is returned explicitly: `down` calls this inside `if !`, where errexit does not apply.
   if ! tailscale funnel reset; then
     echo "tailscale funnel reset failed: the Funnel may still be on." >&2

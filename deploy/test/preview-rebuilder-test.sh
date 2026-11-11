@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
-# Tests of the preview rebuild sidecar (`deploy/rebuilder/server.mjs`, T14b/T14c).
+# Tests of the preview rebuild sidecar (`deploy/rebuilder/server.mjs`).
 #
 #   deploy/test/preview-rebuilder-test.sh
 #
-# The sidecar is what answers the T4d rebuild hook, so what it must never do is run two builds at once,
+# The sidecar is what answers the rebuild hook, so what it must never do is run two builds at once,
 # silently swallow a failure, or let a visitor see a half-written site. These tests run it for real on a
 # loopback port with a fake `web/` directory (no Compose, no network beyond 127.0.0.1, no Astro build)
 # and check:
@@ -12,7 +12,7 @@
 #   - a POST answers 202 immediately with `started`;
 #   - POSTs during a build collapse into exactly one queued rerun (two further POSTs, one rerun);
 #   - every build writes `web/.site/build-<n>` through `astro build --outDir`, inheriting API_URL and
-#     SITE_URL, and the project's own `build:api` script is never used (fix B of the T14c review);
+#     SITE_URL, and the project's own `build:api` script is never used (fix B of the review);
 #   - `web/.site/current` is repointed only when a build exited 0, so a build in flight and a failed
 #     build both leave the previous site serving atomically;
 #   - only the two newest builds are kept;

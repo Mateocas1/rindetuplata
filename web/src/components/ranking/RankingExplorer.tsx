@@ -1,5 +1,5 @@
 /**
- * RankingExplorer (S15, S10, S19) — the only island on the site.
+ * RankingExplorer — the only island on the site.
  *
  * It is server-rendered with the build-time default ranking, so the table works
  * with JavaScript disabled; once hydrated it re-queries `/api/v1/ranking` for the
@@ -7,7 +7,7 @@
  * (`?monto=&dias=&tipo=&cliente=`) and reports loading, error and empty states
  * through an always-rendered `role="status"` region.
  *
- * T13b: the hero of the page is this island's first band — the two capsule
+ * The hero of the page is this island's first band — the two capsule
  * segmented controls (the prototype's amounts and terms) on one side and the
  * one frosted-glass card with the best option of the current query on the
  * other. The presets are shortcuts over the same query state as the free
@@ -41,7 +41,7 @@ export interface RankingExplorerProps {
   /** The default ranking, rendered on the server. */
   initialRanking: Ranking;
   initialQuery: RankingQueryState;
-  /** Banks that report a plazo fijo rate, for "soy cliente de…" (S19). */
+  /** Banks that report a plazo fijo rate, for "soy cliente de…". */
   banks: BankOption[];
   /** Slugs the build produced; rows outside it render as plain text, never a 404 link. */
   pageSlugs: string[];
@@ -50,7 +50,7 @@ export interface RankingExplorerProps {
 const DEBOUNCE_MS = 400;
 /** The board is the day's best eight; the rest follow behind a disclosure. */
 const BOARD_SIZE = 8;
-// One recipe, one place (T12a): the field shape comes from `field`, the layout
+// One recipe, one place: the field shape comes from `field`, the layout
 // width from here.
 const inputClass = 'field max-w-56 tabular-nums';
 const labelClass = 'type-label';

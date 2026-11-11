@@ -1,7 +1,7 @@
 package ar.rindetuplata.alert;
 
 /**
- * The Spanish pieces every alert email shares (T6c, L32 a): the filter a rule watches and the closing block with the
+ * The Spanish pieces every alert email shares: the filter a rule watches and the closing block with the
  * rule number, the link to manage the alerts and the informational disclaimer. The wording of the original
  * {@link AlertEmailComposer} stays in that class; these are the pieces its three siblings reuse.
  */

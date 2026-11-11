@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
 /**
- * T1a follow-up (S1, verifier finding F1): Spring parses {@code amount} with {@code new BigDecimal(String)}, so a
+ * Follow-up (verifier finding F1): Spring parses {@code amount} with {@code new BigDecimal(String)}, so a
  * request can send {@code 1e999999999}. The 400 message echoes the value, and its plain form would be a billion
  * characters, so a huge exponent is echoed in scientific notation while ordinary values keep their plain form.
  */

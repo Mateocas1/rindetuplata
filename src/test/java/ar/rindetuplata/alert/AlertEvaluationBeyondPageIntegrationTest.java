@@ -30,7 +30,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T1b (S1): the alert evaluation sees every ranked entry, not only the public page. The live ranking holds hundreds
+ * The alert evaluation sees every ranked entry, not only the public page. The live ranking holds hundreds
  * of instruments (398 on the recorded day) while the public API caps a page at {@link RankingQuery#MAX_LIMIT}, so
  * a rule on an instrument ranked beyond that position must still fire, and a match on such an instrument that is
  * still above the threshold must not be deleted as if it had dropped out of the ranking. The test seeds

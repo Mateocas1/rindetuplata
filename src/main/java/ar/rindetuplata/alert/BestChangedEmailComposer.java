@@ -4,7 +4,7 @@ import ar.rindetuplata.account.MailMessage;
 import org.springframework.stereotype.Component;
 
 /**
- * The email of a BEST_CHANGED rule (T6c, L32 a): the new best option of the rule's filter with its rate, the one it
+ * The email of a BEST_CHANGED rule: the new best option of the rule's filter with its rate, the one it
  * replaced and when the data last showed it, and the data date and source behind the number. Plain text, in Spanish.
  */
 @Component

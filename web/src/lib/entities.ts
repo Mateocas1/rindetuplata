@@ -1,5 +1,5 @@
 /**
- * Bank entity pages data (T6b, S6).
+ * Bank entity pages data.
  *
  * Build-time only, like `data.ts`: pages read `GET /api/v1/entities/banks` while building (`API_URL`); with
  * `WEB_FIXTURES=1` they read the synthetic recordings under `web/fixtures/entities/` instead (see its README), so

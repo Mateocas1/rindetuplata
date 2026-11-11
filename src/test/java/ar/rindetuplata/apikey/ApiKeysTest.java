@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
-/** T6d (S6, L32b): the shape of a key, the display prefix and the one-way hash that is all the database keeps. */
+/** The shape of a key, the display prefix and the one-way hash that is all the database keeps. */
 class ApiKeysTest {
 
 	@Test

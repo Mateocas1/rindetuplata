@@ -1,10 +1,10 @@
 /**
- * Real-return readout (S10): the sign is text, never color alone, and the
+ * Real-return readout: the sign is text, never color alone, and the
  * readout names the index that produced the number in its accessible name. When
  * the API has no inflation observation it says so instead of inventing a value.
  *
- * T13b: the prototype's "delta" — an arrow, the signed percent and the word
- * "real" in one line — instead of the T12 chip, so the row's grey register
+ * The prototype's "delta" — an arrow, the signed percent and the word
+ * "real" in one line — instead of the chip, so the row's grey register
  * stays thin and the pesos earned keeps dominating the row.
  */
 import { formatSignedPercent } from '../../lib/format';

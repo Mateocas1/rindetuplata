@@ -15,8 +15,8 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * The JSON presentation of the T5a ranking records (S15, S10): money at scale 2 and rates and returns at scale 6
- * {@code HALF_EVEN} through {@link JsonScales}, dates ISO, and the source and flags of every row (S11). The
+ * The JSON presentation of the ranking records: money at scale 2 and rates and returns at scale 6
+ * {@code HALF_EVEN} through {@link JsonScales}, dates ISO, and the source and flags of every row. The
  * request echo names the effective defaults, so a caller sees the amount, term and kinds that were actually used.
  */
 final class RankingApiPresenter {

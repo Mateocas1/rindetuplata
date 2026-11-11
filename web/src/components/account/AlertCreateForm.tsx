@@ -1,5 +1,5 @@
 /**
- * The create-alert form of `/alertas` (T12c).
+ * The create-alert form of `/alertas`.
  *
  * It owns the view's one primary action, so it is a component of its own: the
  * panel holds the state and the request, this form renders the card and the
@@ -7,7 +7,7 @@
  * the control with `aria-describedby`, and the instrument list comes in as a
  * prop because the panel is the one that fetches it.
  *
- * The first field is the type of alert (T6c, L32 a) and each type shows only the
+ * The first field is the type of alert and each type shows only the
  * fields it takes: a threshold rule keeps the original kind, optional instrument
  * and rate; "cambió la mejor opción" and the weekly digest ask for a kind; "bajó
  * una tasa" asks for the one bank or wallet to follow.

@@ -9,7 +9,7 @@ import {
 } from './fetchRetry';
 
 /**
- * The build's HTTP discipline (T4d, L36a): every request has a deadline, only
+ * The build's HTTP discipline: every request has a deadline, only
  * transient failures are retried (network errors, timeouts, 5xx, 429), the wait
  * grows exponentially from one second and honors `Retry-After` up to 30 s, and
  * an identical GET is sent once per build.

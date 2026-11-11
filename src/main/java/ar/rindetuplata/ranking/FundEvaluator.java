@@ -11,13 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Fund class evaluation (T5 design notes, T2b): the TNA-equivalent over the trailing
+ * Fund class evaluation: the TNA-equivalent over the trailing
  * {@value ValidationRules#FUND_YIELD_WINDOW_DAYS}-day window. The yield runs from the newest non-invalid quote back to
  * the newest non-invalid one dated at least that many days earlier; when none is that old it runs back to the oldest
  * non-invalid quote available and carries a {@link FlagCode#SHORT_YIELD_WINDOW} warning. A class with fewer than two
  * valid quotes has no yield yet, one whose latest valid quote is more than {@value ValidationRules#FUND_STALE_DAYS}
  * days before the query date is stale, and a class whose cuotaparte fell has a negative return, no TNA-equivalent
- * and must never be ranked (T4 note).
+ * and must never be ranked.
  */
 final class FundEvaluator {
 

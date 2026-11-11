@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.testcontainers.rabbitmq.RabbitMQContainer;
 
 /**
- * The T6d broker: a real RabbitMQ with the management plugin, so the topology, the publisher confirms and the
+ * The broker: a real RabbitMQ with the management plugin, so the topology, the publisher confirms and the
  * dead-lettering are observed where they actually happen. The container is exported as a bean as well, because the
  * topology assertions read the management HTTP API.
  */

@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * T6d failure rule (S4): when the broker cannot be reached the outbox row must survive, so the alert is delivered
+ * Failure rule: when the broker cannot be reached the outbox row must survive, so the alert is delivered
  * later instead of being lost. There is no RabbitMQ container here on purpose: the connection factory points at a
  * closed port, which is the unreachable broker of the rule. The row stays unpublished, its {@code attempts} goes up
  * and {@code last_error} keeps the reason.

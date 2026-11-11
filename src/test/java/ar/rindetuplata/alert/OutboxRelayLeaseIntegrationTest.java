@@ -28,7 +28,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 /**
- * T11b relay rule (S4): the relay claims a row with a lease in a short transaction and publishes after it
+ * Relay rule: the relay claims a row with a lease in a short transaction and publishes after it
  * committed, so no row lock is held while it waits for the broker. The publish is parked on a latch: meanwhile the
  * row carries a lease, a second relay run skips it, and another connection can lock it without waiting.
  */

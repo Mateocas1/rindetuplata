@@ -22,7 +22,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 /**
- * T4a (L33 a): the dated FCI endpoint {@code /fci/mercadoDinero/yyyy/MM/dd}. A day without quotes (weekend or
+ * The dated FCI endpoint {@code /fci/mercadoDinero/yyyy/MM/dd}. A day without quotes (weekend or
  * holiday) is a 404 {@code {"error":"Not found"}} from the live API, which is "no data that day", not a failure; the
  * staleness of a backfilled class is measured against the requested day, never against today.
  */

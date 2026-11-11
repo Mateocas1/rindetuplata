@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The account API of T6a (S13): request a magic link, log in with its token, and read the current user. The login
+ * The account API: request a magic link, log in with its token, and read the current user. The login
  * authenticates by consuming the one-time token and stores the context in the Spring Session, so the session
  * cookie it returns identifies the following requests. Like Spring Security's login filters, it changes the session
  * id and the CSRF token on success.
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AccountController {
 
 	/**
-	 * The T7a contract the SPA is written against: the login rotates the CSRF token, so the client refetches
+	 * The contract the SPA is written against: the login rotates the CSRF token, so the client refetches
 	 * {@code GET /api/v1/auth/csrf} instead of reusing the token it used for the login itself.
 	 */
 	private static final String LOGIN_DESCRIPTION = "Consumes the one-time token of the magic link and starts the "

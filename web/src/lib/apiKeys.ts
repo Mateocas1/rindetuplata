@@ -1,5 +1,5 @@
 /**
- * Typed API-key calls and copy for `/claves-api/` (T6d, S6, L32 b).
+ * Typed API-key calls and copy for `/claves-api/`.
  *
  * They go through the shared client in `api.ts`, so the session cookie, the CSRF token before unsafe methods and the
  * ProblemDetail -> `ApiProblem` mapping are handled once. The shapes follow `ApiKeyResponse` and

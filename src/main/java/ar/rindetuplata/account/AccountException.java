@@ -3,7 +3,7 @@ package ar.rindetuplata.account;
 import org.springframework.http.HttpStatus;
 
 /**
- * An account failure the API turns into an RFC 9457 {@code ProblemDetail}: T6a uses it for a magic link that is
+ * An account failure the API turns into an RFC 9457 {@code ProblemDetail}: the login uses it for a magic link that is
  * unknown, already used or expired (401) and for a remote address over its magic-link rate limit (429). Values the caller got wrong are {@code ar.rindetuplata.api.ApiException}
  * 400s, so both failures share the same error contract.
  */

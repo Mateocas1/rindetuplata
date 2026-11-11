@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 
 /**
- * `scripts/build-api.mjs` (T7e, finding R3).
+ * `scripts/build-api.mjs` (finding R3).
  *
  * The production build entrypoint is what keeps a fixture build out of
  * production, and it talks to `astro` through a child process. Both the

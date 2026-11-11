@@ -31,10 +31,10 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 /**
- * T6c end-to-end proof of the registration (S3, S4): the real {@code dailyIngestionJob} replays the recorded
+ * End-to-end proof of the registration: the real {@code dailyIngestionJob} replays the recorded
  * 2026-10-14 archive and the listener registered on it evaluates that same day, so the matches and their
  * {@code AlertTriggered} events exist without anybody calling the evaluator. A job that FAILS (a day with no
- * manifest) never evaluates: no match, no event. T4a (L33 a): the evaluation happens only when the job's data date is
+ * manifest) never evaluates: no match, no event. The evaluation happens only when the job's data date is
  * today in Buenos Aires, so the same replay of a day that is not today (here the 13th, a copy of the recorded
  * archive) COMPLETES and writes no match and no outbox event.
  */

@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 /**
- * The email of a WEEKLY_DIGEST rule (T6c, L32 a): the top entries of the rule's filter in ranking order, each with
+ * The email of a WEEKLY_DIGEST rule: the top entries of the rule's filter in ranking order, each with
  * its TNA, real return, source and capture date, and a line when the top differs from the previous digest's. Plain
  * text, in Spanish.
  */

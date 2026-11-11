@@ -15,7 +15,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * T5a pure mapping rules: stored wallet tiers and conditions become domain brackets that cover the whole balance
+ * Pure mapping rules: stored wallet tiers and conditions become domain brackets that cover the whole balance
  * (a floor or a gap earns nothing, a bounded top earns nothing above it), a crypto APY becomes its TNA-equivalent
  * for daily compounding, and a bank term band is chosen by days and amount windows. Hand-computed values.
  */

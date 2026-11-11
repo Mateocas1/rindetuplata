@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * The payload of a {@code BEST_CHANGED} outbox event (T6c, L32 a): the new top of the rule's filter and the top it
+ * The payload of a {@code BEST_CHANGED} outbox event: the new top of the rule's filter and the top it
  * replaced. {@code ruleKind} is the rule's kind filter (null for every kind), {@code kind} the new top's own kind;
  * {@code previousObservedOn} is the data date of the last evaluation that still saw the previous top. {@code type}
  * is the discriminator the consumer reads ({@code BEST_CHANGED}); events stored before the alert types have none.

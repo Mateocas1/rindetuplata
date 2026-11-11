@@ -18,7 +18,7 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 /**
- * T5b rules for {@code GET /api/v1/instruments/{id}/history}: the default window of the last 90 days ending today
+ * Rules for {@code GET /api/v1/instruments/{id}/history}: the default window of the last 90 days ending today
  * in America/Argentina/Buenos_Aires, the maximum of 366 days, the rate snapshots of a rate instrument, the
  * TNA-equivalent between consecutive fund quotes (null when the vcp fell) and the INDEC monthly inflation series
  * (variable 27) labeled {@code INDEC_CPI_MONTHLY}.

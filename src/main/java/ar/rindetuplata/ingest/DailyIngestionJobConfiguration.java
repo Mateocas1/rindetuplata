@@ -21,7 +21,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * {@code dailyIngestionJob}: one step per data kind, in the order the kinds are ranked. Each step is a tasklet that
  * reads {@code dataDate} and {@code mode} from its job parameters, so a restart re-runs only the steps that did not
  * finish. Steps never fail because a source failed: {@link IngestionSteps} records that as a FAILED
- * {@code source_run} row and the job still COMPLETES (S5).
+ * {@code source_run} row and the job still COMPLETES.
  */
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(IngestionProperties.class)

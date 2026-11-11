@@ -1,8 +1,8 @@
 /**
- * The monthly "who beat inflation" report (T6a, S6, L29 a): types, build-time loaders and Spanish copy.
+ * The monthly "who beat inflation" report: types, build-time loaders and Spanish copy.
  *
  * Like `data.ts`, pages read the Java API while building (`API_URL`) and, with `WEB_FIXTURES=1`, the files in
- * `web/fixtures/reports/` (synthetic, see their README: the recorded fixtures cannot cover a whole month, L16).
+ * `web/fixtures/reports/` (synthetic, see their README: the recorded fixtures cannot cover a whole month).
  * `WEB_REPORTS_FIXTURES_DIR` points a build at another directory with the same layout, which is how the empty state is
  * tested. Build-time only: it reads the file system in fixture mode and is never imported by a client component.
  *

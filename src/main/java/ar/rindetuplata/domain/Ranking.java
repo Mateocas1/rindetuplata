@@ -6,7 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Personalized ranking (S15): every instrument is simulated for the user's amount and days, sorted by final
+ * Personalized ranking: every instrument is simulated for the user's amount and days, sorted by final
  * amount descending. Ineligible instruments are returned separately with the reason, never dropped.
  */
 public record Ranking(Money amount, int days, BigDecimal inflationOverHorizon, List<Entry> ranked,

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * "Mi banco bajó la tasa" (T6c, L32 a): fires when the TNA the ranking used for the rule's instrument is strictly
+ * "Mi banco bajó la tasa": fires when the TNA the ranking used for the rule's instrument is strictly
  * below the one stored by the previous evaluation. The first evaluation stores the baseline and fires nothing; the
  * stored rate follows the ranking on every evaluation (a rise too), so each new drop below the last seen rate fires
  * once; a day on which the instrument is not ranked changes nothing, state included.

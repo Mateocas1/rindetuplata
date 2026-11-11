@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A small least-recently-used cache with a fixed entry cap, no dependency (T4a, L33 a). It is the same few lines as the
+ * A small least-recently-used cache with a fixed entry cap, no dependency. It is the same few lines as the
  * ranking's cache: that one is package private to {@code ranking}, which this package does not touch. Every method takes
  * the same monitor, so a lookup (which reorders the access list), an insert and an eviction never interleave; the
  * critical sections are a few hash operations and the lock is never held across a computation.

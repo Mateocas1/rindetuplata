@@ -16,11 +16,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * What a presented {@code X-Api-Key} is worth on the public read API (T6d, S6, L32b). The key is resolved on every
+ * What a presented {@code X-Api-Key} is worth on the public read API. The key is resolved on every
  * request against the database, so a revoked key stops working at once and no cache can outlive it. A valid key gets
  * a token bucket of its own, sized by its plan, and a quota of counted requests per day in
  * {@code America/Argentina/Buenos_Aires}; a request the bucket refuses does not count towards the quota. Both live
- * in memory because the API runs as one instance (S16): a restart resets the quotas and a second instance would
+ * in memory because the API runs as one instance: a restart resets the quotas and a second instance would
  * need a shared store. Quota entries of past days are dropped the first time a request sees a new day.
  */
 public final class ApiKeyAdmission {

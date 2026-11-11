@@ -1,4 +1,4 @@
-# Build context of the API image (T7e). The Maven build needs the wrapper, the POM and src/; everything
+# Build context of the API image. The Maven build needs the wrapper, the POM and src/; everything
 # else is dead weight, and the heavy or sensitive directories (the site with its node_modules and
 # dist, the captured raw data, the git metadata, the other checkouts under .worktrees) stay out.
 
@@ -19,6 +19,6 @@ compose.yaml
 skills-lock.json
 *.md
 
-# Database dumps kept inside the checkout by overriding BACKUP_DIR (T4c, F4) must never reach the build context.
+# Database dumps kept inside the checkout by overriding BACKUP_DIR (F4) must never reach the build context.
 backups
 **/backups

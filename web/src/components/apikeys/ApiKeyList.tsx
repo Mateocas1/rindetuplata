@@ -1,5 +1,5 @@
 /**
- * The active keys of `/claves-api/` (T6d).
+ * The active keys of `/claves-api/`.
  *
  * A list of one-line rows in the panel's card, in the shape of the alert list: label, then the display prefix in the
  * quiet mono `type-data` line (all the API keeps to show), the plan and the creation day. Revoking opens an inline

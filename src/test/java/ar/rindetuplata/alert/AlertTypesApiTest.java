@@ -17,7 +17,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.ResultActions;
 
 /**
- * T6c, L32 a: the alert-rules API takes a {@code type} next to today's THRESHOLD. A request without type is the
+ * The alert-rules API takes a {@code type} next to today's THRESHOLD. A request without type is the
  * old threshold rule; each type accepts exactly its own fields, and a field that does not belong to the type, a
  * missing required one or an instrument of the wrong kind is a 400 ProblemDetail naming that field and leaving
  * the stored rules untouched.

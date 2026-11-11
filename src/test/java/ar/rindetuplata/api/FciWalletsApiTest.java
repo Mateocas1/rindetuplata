@@ -18,7 +18,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * T5a on the wire (S5, L24): Personal Pay, the wallet of "Delta Pesos - Clase X", appears as a WALLET once, can be
+ * On the wire: Personal Pay, the wallet of "Delta Pesos - Clase X", appears as a WALLET once, can be
  * simulated through its class id, and reads FUND_CLASS_NOT_FOUND when the class is absent. Quotes are synthetic.
  */
 class FciWalletsApiTest extends RankingApiIntegrationTest {

@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The monthly "who beat inflation" report of the public API (T6a, S6, L29 a): which months have a report and, for one
+ * The monthly "who beat inflation" report of the public API: which months have a report and, for one
  * closed month, the nominal and real return each instrument delivered against the INDEC inflation of that month,
  * sorted by real return, with the instruments it could not measure and why. Read-only; every row states its source.
  */

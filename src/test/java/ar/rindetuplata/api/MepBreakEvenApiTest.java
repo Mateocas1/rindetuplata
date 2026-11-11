@@ -23,7 +23,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * T5b rules (S5, L24 b) for the dollar MEP break-even on {@code GET /api/v1/ranking} and
+ * Rules for the dollar MEP break-even on {@code GET /api/v1/ranking} and
  * {@code GET /api/v1/simulations}: every ranked and simulated entry carries {@code breakEvenMep}, the response
  * carries the MEP quote it used once ({@code dollarMep}), and without a stored quote both are null and nothing else
  * changes. The recorded quote is the repository fixture (buy 1534.20, sell 1539.40, reported 2026-10-13T20:57Z) and

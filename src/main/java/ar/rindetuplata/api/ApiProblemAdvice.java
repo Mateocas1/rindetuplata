@@ -12,7 +12,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
  * The shared error handling of the public API: failures become RFC 9457 {@code ProblemDetail} bodies that name the
  * offending parameter in {@code properties.parameter}. Spring flattens the problem's properties onto the body, so
  * the parameter arrives as a top-level {@code parameter} field. It handles this package's {@link ApiException} (an
- * invalid value or an unknown resource) and Spring's own binding failures, so T5c gets the same contract for free.
+ * invalid value or an unknown resource) and Spring's own binding failures, so the ranking endpoints get the same contract for free.
  */
 @RestControllerAdvice
 public class ApiProblemAdvice {

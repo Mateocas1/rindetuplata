@@ -15,7 +15,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Reads the {@code jsonb} columns back into the T3 record shapes: {@code details} (tiers, conditions, terms,
+ * Reads the {@code jsonb} columns back into the record shapes: {@code details} (tiers, conditions, terms,
  * currency) and {@code flags}. The store writes them; the ranking must read them without reaching into
  * {@code store} internals.
  */

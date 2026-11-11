@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
 
 /**
- * The run body the daily cron (T4c) and the startup run (T14a) share: "today" is the day in the schedulers's zone,
+ * The run body the daily cron and the startup run share: "today" is the day in the schedulers's zone,
  * the outcome is logged in one line, and an exception is logged without ever reaching the caller.
  */
 class IngestionSchedulerTest {

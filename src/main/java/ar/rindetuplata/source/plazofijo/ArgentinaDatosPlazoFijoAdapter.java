@@ -35,7 +35,7 @@ public class ArgentinaDatosPlazoFijoAdapter implements BankPlazoFijoSource {
         return parse(SourceHttp.get(client, SOURCE, "/tasas/plazoFijo"), fetchedAt);
     }
 
-    /** Pure: raw body → records. Also used to replay the T9 archive. */
+    /** Pure: raw body → records. Also used to replay the archive. */
     public static List<BankPlazoFijoRate> parse(byte[] body, Instant fetchedAt) {
         JsonNode rows = JsonSupport.array(SOURCE, JsonSupport.readTree(SOURCE, body), null);
         LocalDate snapshotDate = ValidationRules.localDate(fetchedAt);
@@ -46,7 +46,7 @@ public class ArgentinaDatosPlazoFijoAdapter implements BankPlazoFijoSource {
             if (nonClientTna != null && nonClientTna.signum() == 0) {
                 nonClientTna = null;
             }
-            // A missing rate is absent (not offered), not invalid; a row needs at least one of the two (S19).
+            // A missing rate is absent (not offered), not invalid; a row needs at least one of the two.
             List<ValidationFlag> flags = new ArrayList<>();
             if (clientTna != null || nonClientTna == null) {
                 flags.addAll(ValidationRules.rateFlags(clientTna));

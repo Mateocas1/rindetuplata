@@ -1,5 +1,5 @@
 /**
- * The dólar MEP break-even of one entry (S5, L24 b), worded by `breakEvenNote` from the API's own numbers. The same
+ * The dólar MEP break-even of one entry, worded by `breakEvenNote` from the API's own numbers. The same
  * two lines serve the ranking row (inside its disclosure) and the simulator result; nothing renders without a
  * stored quote, and the lines are plain text, so their accessible name is what is on screen.
  */

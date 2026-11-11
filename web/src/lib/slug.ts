@@ -1,5 +1,5 @@
 /**
- * Instrument page URLs (T7c).
+ * Instrument page URLs.
  *
  * An instrument is identified by its API id; the URL adds the slugified display
  * name in front of it so a reader (and a search engine) sees what the page is

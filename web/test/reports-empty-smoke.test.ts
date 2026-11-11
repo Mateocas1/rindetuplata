@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 /**
- * The reports while no closed month is covered (T6a, L29 a): the history starts on 2026-10-14, so the first full month
+ * The reports while no closed month is covered: the history starts on 2026-10-14, so the first full month
  * is November 2026 and nothing can be reported before INDEC publishes it. `/informes/` must say so honestly instead of
  * showing an empty list, and no month page may exist. The build points `WEB_REPORTS_FIXTURES_DIR` at an empty month
  * list and writes to its own output directory, so it never shares `dist` with the other smoke test.

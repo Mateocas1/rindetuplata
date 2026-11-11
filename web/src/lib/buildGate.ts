@@ -1,5 +1,5 @@
 /**
- * Pre-render gate of the static build (T4d, L36a).
+ * Pre-render gate of the static build.
  *
  * Before Astro renders a single page, the default ranking must be fresh and big enough and every category page
  * must have rows. Otherwise the build fails naming the check, so a deploy keeps serving the previous site

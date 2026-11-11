@@ -1,10 +1,10 @@
 /**
- * Simulator outcome mapping (T7c, S11, S8 L-G).
+ * Simulator outcome mapping.
  *
  * The API answers a simulation with a status code plus one of entry /
  * ineligible / excluded. This module turns that into one Spanish, informational
  * message; ProblemDetail bodies become a plain Spanish sentence as well, so the
- * API's English `detail` never reaches the page (L52).
+ * API's English `detail` never reaches the page.
  */
 import { excludedReasonLabel, ineligibleExplanation } from './labels';
 import type { MepQuote, RankedEntry, Simulation } from './types';

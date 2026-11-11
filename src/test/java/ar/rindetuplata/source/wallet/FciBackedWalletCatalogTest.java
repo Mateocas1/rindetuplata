@@ -23,7 +23,7 @@ class FciBackedWalletCatalogTest {
     private final List<FundQuote> quotes =
             ArgentinaDatosFundAdapter.parse(Fixtures.bytes("argentinadatos/fci-mercado-dinero-ultimo.json"), FETCHED_AT);
 
-    /** The classes confirmed on 2026-11-01 (T5a, L24): verbatim rows of the live response, not a re-recording (L16). */
+    /** The classes confirmed on 2026-11-01: verbatim rows of the live response, not a re-recording. */
     private final List<FundQuote> confirmedClasses = ArgentinaDatosFundAdapter
             .parse(Fixtures.bytes("argentinadatos/fci-mercado-dinero-wallet-classes-2026-11-01.json"), FETCHED_AT);
 
@@ -54,7 +54,7 @@ class FciBackedWalletCatalogTest {
     @Test
     void everyClasspathMappingPointsAtAClassConfirmedInTheRecordedFundResponses() {
         // A class is mapped only once it is confirmed in a recorded response: the 2026-10-09 fixture or the
-        // 2026-11-01 excerpt of the classes T5a added. Neither is re-recorded to make a mapping pass (L16).
+        // 2026-11-01 excerpt of the added classes. Neither is re-recorded to make a mapping pass.
         List<FundQuote> recorded = new ArrayList<>(quotes);
         recorded.addAll(confirmedClasses);
 
@@ -115,7 +115,7 @@ class FciBackedWalletCatalogTest {
 
     @Test
     void theClassKeyIgnoresCaseAccentsAndWhitespace() {
-        // The source has no class id (L7), so the key is the normalized name.
+        // The source has no class id, so the key is the normalized name.
         String json = "{\"wallets\":[{\"id\":\"x\",\"name\":\"X\",\"fund\":\"  MERCADO   FONDO - clase a \"}]}";
 
         FciBackedWallet wallet = FciBackedWalletCatalog.fromJson(json.getBytes(StandardCharsets.UTF_8)).resolve(quotes).get(0);

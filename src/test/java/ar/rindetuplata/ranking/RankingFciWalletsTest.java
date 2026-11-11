@@ -22,8 +22,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T5a (S5, L24): Personal Pay is an FCI-backed wallet of the class "Delta Pesos - Clase X". The quotes are synthetic
- * (L16): the rules under test are the mapping and the once-only rule, not the numbers of a recorded day.
+ * Personal Pay is an FCI-backed wallet of the class "Delta Pesos - Clase X". The quotes are synthetic:
+ * the rules under test are the mapping and the once-only rule, not the numbers of a recorded day.
  */
 @Import(StoreTestConfiguration.class)
 @SpringBootTest

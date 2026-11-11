@@ -1,15 +1,15 @@
 /**
- * Component recipes (T12a): the one place a surface, button, field, chip or
+ * Component recipes: the one place a surface, button, field, chip or
  * link takes its shape. Components compose these with layout utilities and
  * never re-derive their values; every color still comes from a role token.
  *
- * Motion (T12d, `animate` + better-ui): buttons scale to 0.96 on press, the
+ * Motion (`animate` + better-ui): buttons scale to 0.96 on press, the
  * disclosure chevron rotates and its panel grows; every movement runs only
  * without a reduced-motion preference. Colors never transition, so an OS theme
  * switch cannot smear and the zero-JS pages need no suppression script.
  */
 
-/* A raised surface (T13a): one step up the surface ladder, bounded by a
+/* A raised surface: one step up the surface ladder, bounded by a
    hairline instead of a shadow; in dark the step adds a 1px inner top
    highlight. Nearly square, like every Cobalto Cristal panel. */
 @utility card {
@@ -20,7 +20,7 @@
 }
 
 /*
- * Text roles (T13a, L77: at most seven). Every text on a page takes one of
+ * Text roles (at most seven). Every text on a page takes one of
  * these; weight or the muted color may vary inside a role, size never does
  * except for the named steps (figure: hero and `text-figure-row`; body: prose
  * and `text-lead`).
@@ -109,7 +109,7 @@
 
 /*
  * The wordmark (header and footer): the ONE documented exception to the seven
- * text roles (T13e). The logotype reads as a single word, not as reading text,
+ * text roles. The logotype reads as a single word, not as reading text,
  * so it takes the display family at the body step's size and never a role's
  * own metrics. Everywhere else a page uses a `type-*` role.
  */
@@ -122,7 +122,7 @@
 }
 
 /*
- * Frosted glass (T13a): ONE element per page (the best-option card), placed
+ * Frosted glass: ONE element per page (the best-option card), placed
  * inside a `glass-field` that paints the cobalt glow and hairline grid it
  * blurs. Without backdrop-filter, or under reduced transparency, it is the
  * opaque raised card.
@@ -180,7 +180,7 @@
   }
 }
 
-/* The one filled action of a view. Archivo 600 at the body role's size (T13e). */
+/* The one filled action of a view. Archivo 600 at the body role's size. */
 @utility btn-primary {
   @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-accent-solid px-4 py-2 type-body font-semibold text-on-accent;
   @apply hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60;
@@ -217,7 +217,7 @@
 }
 
 /* Text inputs and selects: a 3:1 boundary, 16px at every width (the body role)
-   so iOS never zooms (T13e). */
+   so iOS never zooms. */
 @utility field {
   @apply w-full rounded-md border border-border-strong bg-surface-raised px-3 py-2 type-body text-text;
 }
@@ -229,7 +229,7 @@
 }
 
 /* Inline text link: ink, carried by the underline. Cobalt belongs to the one
-   leader rail of a view, never to prose (T13e). */
+   leader rail of a view, never to prose. */
 @utility link {
   @apply text-text underline decoration-border-strong underline-offset-2 hover:decoration-text;
 }

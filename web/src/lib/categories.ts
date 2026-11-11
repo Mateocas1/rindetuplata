@@ -1,9 +1,9 @@
 /**
- * Category landing pages (T7c, S14).
+ * Category landing pages.
  *
  * One page per ranked kind. The header nav, the category pages and the
  * instrument breadcrumbs all read this map, so the copy and the URLs stay in one
- * place. Spanish copy for Argentine savers, voseo, informational only (S8 L-G).
+ * place. Spanish copy for Argentine savers, voseo, informational only.
  */
 import type { RankedKind } from './types';
 

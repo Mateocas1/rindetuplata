@@ -54,7 +54,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * T5a ranking rules against a real Postgres, seeded through the T4 store writers. Every rule asserts the rate that
+ * Ranking rules against a real Postgres, seeded through the store writers. Every rule asserts the rate that
  * was used and its kind, the final amount, the reason of anything excluded, the totals and the dates of each entry.
  */
 @Import(StoreTestConfiguration.class)
@@ -311,7 +311,7 @@ class RankingServiceTest {
 		assertThat(result.totals()).isEqualTo(new RankingTotals(0, 0, 1));
 	}
 
-	// T2b: the yield is the trailing 7-day one, not the two latest quotes (one day of vcp change, noisy).
+	// The yield is the trailing 7-day one, not the two latest quotes (one day of vcp change, noisy).
 	@Test
 	void fundClassUsesTheYieldOfTheQuoteSevenDaysBeforeTheLatest() {
 		// Daily quotes 10-05..10-14. The base is 10-07 (exactly 7 days before 10-14), vcp 1000; the latest is 1001.4.
@@ -437,7 +437,7 @@ class RankingServiceTest {
 				tuple("Fondo Nuevo - Clase A", ExcludedReason.INSUFFICIENT_HISTORY));
 	}
 
-	// T2d: the wallet's fund class is matched by a normalized key (case, accents, whitespace), plus aliases.
+	// The wallet's fund class is matched by a normalized key (case, accents, whitespace), plus aliases.
 	@Test
 	void fciBackedWalletMatchesItsClassIgnoringCaseAndWhitespace() {
 		seedFund("MERCADO  FONDO - clase a", LocalDate.parse("2026-10-13"), "1000");
@@ -730,7 +730,7 @@ class RankingServiceTest {
 	}
 
 	/**
-	 * The catalog with Mercado Pago alone: these rules are about its mapping, and Personal Pay (T5a), another
+	 * The catalog with Mercado Pago alone: these rules are about its mapping, and Personal Pay, another
 	 * FCI-backed wallet of the classpath catalog, is covered by {@code RankingFciWalletsTest}.
 	 */
 	private RankingService mercadoPagoOnly() {

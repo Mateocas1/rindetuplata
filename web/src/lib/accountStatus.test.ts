@@ -13,7 +13,7 @@ import {
 import { ApiProblem } from './api';
 
 /**
- * Status-code decisions and staleness copy (T7d). The API's ProblemDetail
+ * Status-code decisions and staleness copy. The API's ProblemDetail
  * `detail` is developer-facing English, so it is never rendered: every status
  * maps to Spanish copy here, and the account pages route 401 to `/ingresar`
  * and show a "Sin permiso" state for 403.

@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * The T6d topology (S4): a durable topic exchange for the alert events, the durable email queue that consumes them,
+ * The topology: a durable topic exchange for the alert events, the durable email queue that consumes them,
  * and a dead-letter exchange with its own queue so a message the consumer finally rejects is kept for the operator
  * instead of looping. Boot's {@code RabbitAdmin} declares every one of these beans on the first connection, so the
  * broker and the application can never disagree about the names.
@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration;
 class OutboxConfiguration {
 
 	/**
-	 * T11b: a failure the consumer marks as final ({@link AmqpRejectAndDontRequeueException}, e.g. an unreadable
+	 * A failure the consumer marks as final ({@link AmqpRejectAndDontRequeueException}, e.g. an unreadable
 	 * payload) is not retried: the container's retry advice would otherwise repeat it three times before the
 	 * dead-lettering, which only delays the same outcome. The listener wraps the exception, so the whole cause chain
 	 * is checked.

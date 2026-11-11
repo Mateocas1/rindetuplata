@@ -1,5 +1,5 @@
 /**
- * Browser client for the rindetuplata API (T7b, L48 topology).
+ * Browser client for the rindetuplata API (one-origin topology).
  *
  * Same origin by default (`PUBLIC_API_URL` overrides it), session cookie always
  * sent (`credentials: 'include'`), RFC 9457 ProblemDetail bodies turned into a
@@ -65,7 +65,7 @@ export class ApiProblem extends Error {
 }
 
 export interface ApiClientOptions {
-  /** Empty (default) means same origin, which is how the site is deployed (L48). */
+  /** Empty (default) means same origin, which is how the site is deployed. */
   baseUrl?: string;
   fetch?: typeof fetch;
 }
@@ -78,7 +78,7 @@ export interface ApiClient {
   delete(path: string): Promise<void>;
   /**
    * Consumes a magic-link token and starts the session. A successful login
-   * rotates the CSRF token (T7a), so the cached one is dropped and the next
+   * rotates the CSRF token, so the cached one is dropped and the next
    * unsafe request fetches a fresh one.
    */
   login(token: string): Promise<CurrentUser>;

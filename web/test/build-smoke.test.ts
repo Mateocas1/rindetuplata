@@ -7,7 +7,7 @@ import { formatMoney } from '../src/lib/format';
 import { ACCOUNT_PATHS } from '../src/lib/sitemapPaths.js';
 
 /**
- * Build smoke test (T7b, T7e).
+ * Build smoke test.
  *
  * Builds the site in fixture mode (`WEB_FIXTURES=1 astro build`) and checks the
  * prerendered output: the ranking table is in the HTML in ranked order with the
@@ -90,7 +90,7 @@ describe('prerendered home page', () => {
   it('paints the best option as the only glass card, inside the field it blurs', () => {
     const page = html('index.html');
 
-    // One glass element per page (T13), over the cobalt glow and hairline grid
+    // One glass element per page, over the cobalt glow and hairline grid
     // its `glass-field` parent paints, with the cobalt rail of the leader.
     expect(page.match(/class="glass /g) ?? []).toHaveLength(1);
     expect(page).toContain('glass-field');
@@ -330,7 +330,7 @@ describe('stylesheet', () => {
 });
 
 /**
- * Monthly report pages (T6a, S6, L29 a). The fixture build reads the synthetic month in
+ * Monthly report pages. The fixture build reads the synthetic month in
  * `fixtures/reports/`: `/informes/` lists it and `/informes/2026-10/` renders its table. The empty state is checked by
  * `reports-empty-smoke.test.ts`, which builds with an empty month list.
  */

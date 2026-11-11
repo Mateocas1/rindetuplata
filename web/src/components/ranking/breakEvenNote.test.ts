@@ -1,8 +1,8 @@
 /**
- * Where the dólar MEP break-even shows (S5, L24 b): inside a closed disclosure of each ranked row, so the row keeps
+ * Where the dólar MEP break-even shows: inside a closed disclosure of each ranked row, so the row keeps
  * its figures, and under the result of the simulator. Both stay absent when the API sent no quote.
  *
- * Synthetic data on purpose (L16): the recorded ranking fixtures predate the fields. The disclosure's visible words
+ * Synthetic data on purpose: the recorded ranking fixtures predate the fields. The disclosure's visible words
  * are its accessible name (WCAG 2.5.3): no `aria-label` replaces them.
  */
 import { createElement as h } from 'react';

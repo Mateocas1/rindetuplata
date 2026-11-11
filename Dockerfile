@@ -1,4 +1,4 @@
-# API image (T7e, S16): the Spring Boot application, built with the Maven wrapper and run on a JDK 21
+# API image: the Spring Boot application, built with the Maven wrapper and run on a JDK 21
 # runtime as a non-root user. Configuration comes only from environment variables (Spring relaxed
 # binding), so the image holds no secrets: SPRING_DATASOURCE_URL, SPRING_RABBITMQ_HOST,
 # SPRING_MAIL_HOST, RINDETUPLATA_AUTH_MAGICLINKURL, RINDETUPLATA_WEB_ALLOWEDORIGINS and so on (see

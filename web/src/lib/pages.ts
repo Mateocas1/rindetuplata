@@ -1,5 +1,5 @@
 /**
- * The instrument page set (T7c, D1).
+ * The instrument page set (D1).
  *
  * A page must exist for every instrument any prerendered table can link to: the
  * union of the global ranking recording and every per-kind recording, because a
@@ -35,7 +35,7 @@ export interface InstrumentPages {
   pages: InstrumentPage[];
   /** Slugs in page order; the table gates its links on this set. */
   slugs: string[];
-  /** The REM observation the pages label their real return with (S10). */
+  /** The REM observation the pages label their real return with. */
   inflation: Inflation | null;
 }
 

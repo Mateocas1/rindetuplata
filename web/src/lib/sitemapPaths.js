@@ -1,12 +1,12 @@
 /**
- * Sitemap filter and account paths (T7c, T7d).
+ * Sitemap filter and account paths.
  *
  * Plain JavaScript on purpose: `astro.config.mjs` imports this module and that
  * file is loaded as JavaScript, so a TypeScript annotation here would break the
  * config load. The filter receives absolute page URLs from @astrojs/sitemap.
  *
- * Account pages are client-only and carry `noindex` (T7d): they never belong in
- * the sitemap, and only the exact paths are dropped. `robots.txt` (T7e) reads
+ * Account pages are client-only and carry `noindex`: they never belong in
+ * the sitemap, and only the exact paths are dropped. `robots.txt` reads
  * the same list, so the crawler rules and the sitemap cannot drift apart.
  */
 

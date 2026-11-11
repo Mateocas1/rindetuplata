@@ -1,22 +1,22 @@
 /**
- * The ranking board (S15, S11, S10, L-F).
+ * The ranking board.
  *
  * Semantic table, no JavaScript required: it is server-rendered and the island
  * only re-renders it with fresh data. The pesos earned for the reader's amount
  * and term is the protagonist of every row (`type-figure` at the row step); the
  * option's name is the reading step, the mono index gutter opens the row as
  * `01`-`08`, and the provenance is ONE quiet `type-data` line, never a stack of
- * small grey prose (T13b, L77).
+ * small grey prose.
  *
  * Narrow screens: the table keeps its semantics inside a labelled, focusable
  * scroll region with a sticky first column and a visible cue, rather than
- * dropping columns (S11 requires source and date on every row). Below `md` the
+ * dropping columns (every row must show its source and date). Below `md` the
  * pesos earned is repeated inside that sticky cell, under the name, and the
  * wide copy is hidden there: the protagonist figure of the row is on screen
- * from 320 up without a sideways drag, and is never announced twice (T13e).
+ * from 320 up without a sideways drag, and is never announced twice.
  * Row 01 carries the cobalt rail and the "Mejor" chip: the rail is the one
  * accent, doing the one job it shares with the headline and the glass card
- * (T13e: the chip itself is ink).
+ * (the chip itself is ink).
  *
  * The sticky cells stay at `z-0`: they must cover their own scrolled siblings,
  * but never the sticky site header above them (z-10), or a scrolled row would
@@ -49,10 +49,10 @@ function isStale(entry: RankedEntry): boolean {
 }
 
 /**
- * The one quiet provenance line of a row (S11, T13e): where the rate comes from
+ * The one quiet provenance line of a row: where the rate comes from
  * and the date of the data, on one line at 1280. The confidence level and the
  * verification date live on the instrument page and in the methodology, so the
- * row never becomes a wall of small grey prose (L77).
+ * row never becomes a wall of small grey prose.
  */
 function provenance(entry: RankedEntry): string {
   const source = entry.source.official
@@ -83,7 +83,7 @@ export default function RankingTable({
   const rows = limit === undefined ? ranked : ranked.slice(0, limit);
   const indexLabel =
     ranking.inflation === null ? 'sin dato de inflación' : inflationIndexLabel(ranking.inflation.index);
-  // S10: the badge column names the index it uses, visibly, right in the header.
+  // The badge column names the index it uses, visibly, right in the header.
   const indexHeader =
     ranking.inflation === null
       ? 'Real vs. inflación'
@@ -107,7 +107,7 @@ export default function RankingTable({
             {/* Fixed proportions: the option (with its index gutter) keeps the
                 widest column, so a long fund class never wraps one word a line,
                 the TNA kind fits in two or three words and the provenance line
-                holds its source and date together (T13e). */}
+                holds its source and date together. */}
             <colgroup>
               <col className="w-[30%]" />
               <col className="w-[18%]" />
@@ -196,8 +196,8 @@ export default function RankingTable({
                               </>
                             )}
                           </span>
-                          {/* The first column is the only one on screen below md
-                              (T13e): the row's protagonist figure lives here too. */}
+                          {/* The first column is the only one on screen below md:
+the row's protagonist figure lives here too. */}
                           <span className="mt-2 flex flex-wrap items-baseline gap-x-2 md:hidden">
                             <span className="type-label">Ganás en {formatDays(days)}</span>
                             <span className="type-figure text-figure-row">

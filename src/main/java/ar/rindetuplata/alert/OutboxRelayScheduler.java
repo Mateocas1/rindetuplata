@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 
 /**
- * T6d: the outbox relay on a timer (S4). Every run tries to publish what the alert evaluation enqueued; a failure
+ * The outbox relay on a timer. Every run tries to publish what the alert evaluation enqueued; a failure
  * is logged and never kills the scheduler, because the row is still there for the next run.
  */
 public class OutboxRelayScheduler {

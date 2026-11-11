@@ -43,9 +43,9 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 
 /**
- * T4a store rules, against a real Postgres: every writer stores what its record holds, re-running a date replaces
+ * Store rules, against a real Postgres: every writer stores what its record holds, re-running a date replaces
  * instead of duplicating, INVALID rows are kept, duplicates keep the first and are counted, and the instrument
- * window widens only. Records come from the recorded fixtures through the T3 parse methods.
+ * window widens only. Records come from the recorded fixtures through the parse methods.
  */
 @Import(StoreTestConfiguration.class)
 @SpringBootTest

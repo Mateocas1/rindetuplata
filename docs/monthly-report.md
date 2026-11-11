@@ -1,4 +1,4 @@
-# Monthly "who beat inflation" report (T6a, L29 a)
+# Monthly "who beat inflation" report
 
 `GET /api/v1/reports/monthly` lists the months that have a report (newest first) and
 `GET /api/v1/reports/monthly/{yyyy-MM}` returns one. The static site renders `/informes/` and `/informes/<yyyy-mm>/`.

@@ -3,7 +3,7 @@ package ar.rindetuplata.report;
 import java.time.YearMonth;
 import java.util.List;
 
-/** The "who beat inflation" report of one closed month (T6a, L29 a). Rows are sorted by real return, best first. */
+/** The "who beat inflation" report of one closed month. Rows are sorted by real return, best first. */
 public record MonthlyReport(YearMonth month, MonthlyInflation inflation, List<ReportRow> rows, List<LeftOut> leftOut) {
 
 	public MonthlyReport {

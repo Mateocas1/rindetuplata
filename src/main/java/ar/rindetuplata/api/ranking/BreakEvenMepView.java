@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 
 /**
- * When an instrument beats the dólar MEP (S5, L24 b). You buy dollars at the MEP {@code sell} today and leave them at
+ * When an instrument beats the dólar MEP. You buy dollars at the MEP {@code sell} today and leave them at
  * the MEP {@code buy} at the end of the term, so the instrument wins when the MEP buy price rises less than
  * {@code devaluation = (1 + nominalReturn) * sell / buy - 1} (a fraction at scale 6, so 0.023100 is 2,31%).
  * {@code price} is the break-even MEP buy price, {@code (1 + nominalReturn) * sell}, at scale 2. Both use the quote

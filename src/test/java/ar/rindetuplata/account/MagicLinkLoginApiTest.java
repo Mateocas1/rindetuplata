@@ -14,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * T6a login rules (S13): a valid token logs in and creates the account only then; an unknown, used or expired
+ * Login rules: a valid token logs in and creates the account only then; an unknown, used or expired
  * token is a 401 {@code ProblemDetail}. The token also works as a form parameter, because the magic-link page may
  * post a plain form.
  */

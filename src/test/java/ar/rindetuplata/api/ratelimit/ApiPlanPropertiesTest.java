@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 
-/** T6d (S6, L32b): the plans in configuration and the numbers they default to. */
+/** The plans in configuration and the numbers they default to. */
 class ApiPlanPropertiesTest {
 
 	private static ApiPlanProperties bind(Map<String, String> properties) {

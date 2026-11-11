@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Input of the personalized ranking (S15, T5 design notes): the user's amount and days, the banks the user is a
+ * Input of the personalized ranking: the user's amount and days, the banks the user is a
  * client of, the kinds to cover, the reference date and the page size. {@link #defaults()} is $1.000.000 for 30
  * days, every kind, today in {@code America/Argentina/Buenos_Aires} and 50 rows (max
  * {@value #MAX_LIMIT}). {@code groupFunds} (default true) folds the classes of one fund into its best class in

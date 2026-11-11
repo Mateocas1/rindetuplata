@@ -1,5 +1,5 @@
 /**
- * Value handling for the account pages (T7d).
+ * Value handling for the account pages.
  *
  * Components hold form state as strings, exactly what the user typed, and this
  * module is the only place those strings become numbers: percents stay percents
@@ -47,7 +47,7 @@ export interface AlertFormState {
 }
 
 /**
- * The alert types the form offers, in the order of the selector (T6c, L32 a). The first is the original rule and
+ * The alert types the form offers, in the order of the selector. The first is the original rule and
  * the form's default; the description sits under the selector and says what the rule watches.
  */
 export const ALERT_TYPE_OPTIONS: Array<{ value: AlertType; label: string; description: string }> = [

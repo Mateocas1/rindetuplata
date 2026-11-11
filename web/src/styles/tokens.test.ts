@@ -4,7 +4,7 @@
  * 2.2 threshold (better-colors: "never report a contrast value you did not measure"),
  * and no component may hard-code a color outside the token file.
  *
- * Two appearances (T12a): the `@theme` block holds the light values and one
+ * Two appearances: the `@theme` block holds the light values and one
  * `@media (prefers-color-scheme: dark)` block repoints the roles, so every pair is
  * measured once per scheme against the tokens that scheme actually resolves.
  */
@@ -196,23 +196,23 @@ const contrastPairs: Array<[string, string, string, number]> = [
   ['border-strong on surface-raised', '--color-border-strong', '--color-surface-raised', 3],
   ['border-strong on surface', '--color-border-strong', '--color-surface', 3],
   ['border-strong on subtle-surface (input on a panel)', '--color-border-strong', '--color-subtle-surface', 3],
-  // T12c status surfaces: the destructive confirmation fills with the loss role
+  // Status surfaces: the destructive confirmation fills with the loss role
   // and every notice borders its own tint, so each combination is measured too.
   ['on-accent on loss (destructive confirmation)', '--color-on-accent', '--color-loss', 4.5],
   ['loss on loss-surface (notice border)', '--color-loss', '--color-loss-surface', 3],
   ['gain on gain-surface (notice border)', '--color-gain', '--color-gain-surface', 3],
   ['warning on warning-surface (notice border)', '--color-warning', '--color-warning-surface', 3],
-  // T13a segmented control: the selected thumb is a shape on the track (subtle-surface)
-  // and carries its own ink (L81: the dark prototype read grey-on-grey).
+  // Segmented control: the selected thumb is a shape on the track (subtle-surface)
+  // and carries its own ink (the dark prototype read grey-on-grey).
   ['on-thumb on thumb (selected segment)', '--color-on-thumb', '--color-thumb', 4.5],
   ['thumb on subtle-surface (segment track)', '--color-thumb', '--color-subtle-surface', 3],
   ['muted on subtle-surface (unselected segment)', '--color-muted', '--color-subtle-surface', 4.5],
 ];
 
-/** T13a glass: tokens declared outside @theme, repointed in the dark block. */
+/** Glass: tokens declared outside @theme, repointed in the dark block. */
 const glassTokens = ['--glass-fill', '--glass-line', '--glass-lift', '--glow', '--grid-line', '--surface-lift'];
 
-/** The seven text roles of Cobalto Cristal (L77: at most 7), each one `@utility type-*`. */
+/** The seven text roles of Cobalto Cristal (at most 7), each one `@utility type-*`. */
 const textRoles = ['label', 'display', 'section', 'figure', 'body', 'data', 'index'];
 
 function sourceFiles(dir: string): string[] {

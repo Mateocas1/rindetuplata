@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# End-to-end smoke of the whole product on the local Compose stack (T7e).
+# End-to-end smoke of the whole product on the local Compose stack.
 #
 #   deploy/e2e.sh
 #
@@ -17,7 +17,7 @@
 # 5432 while the smoke runs. What is still published on the host is checked below and named when taken.
 #
 # The site is built from the recorded fixtures (`WEB_FIXTURES=1`), not against the stack's API: the stack is
-# freshly created and has ingested nothing, so the build gate (T4d: `min-ranked`, `category-rankings`) would
+# freshly created and has ingested nothing, so the build gate (`min-ranked`, `category-rankings`) would
 # refuse a `build:api` build, rightly, and the smoke tests sign-in and alerts, not rankings. Fixture mode only
 # changes where the static pages get their data; the account pages in the browser call the API of their own
 # origin (`PUBLIC_API_URL` is unset, so Caddy proxies `/api/*` to this stack's API). The gate itself stays

@@ -21,13 +21,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The single-instrument simulator of the public API (S3, S15): {@code GET /api/v1/simulations} answers one entry
+ * The single-instrument simulator of the public API: {@code GET /api/v1/simulations} answers one entry
  * for the user's amount and term, or the reason the instrument is ineligible or excluded, under a {@code status}
- * discriminator. {@code client} offers the S19 "soy cliente de…" personalization. An unknown id is a 404
+ * discriminator. {@code client} offers the "soy cliente de…" personalization. An unknown id is a 404
  * {@code ProblemDetail}.
  *
  * <p>The simulation reads only the requested instrument and carries the same weak {@code ETag} and
- * {@code Cache-Control: public, no-cache} as the ranking (T3a, S3); a matching {@code If-None-Match} is a
+ * {@code Cache-Control: public, no-cache} as the ranking; a matching {@code If-None-Match} is a
  * {@code 304} before any simulation, and an unknown id is a 404 with neither header.
  */
 @RestController

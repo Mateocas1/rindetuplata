@@ -21,11 +21,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /**
- * Starts {@code historyBackfillJob} for the admin endpoint (T4a, L33 a). A request is checked first (inclusive range,
+ * Starts {@code historyBackfillJob} for the admin endpoint. A request is checked first (inclusive range,
  * at most {@value #MAX_DAYS} days, {@code to} not after yesterday in the application's Argentine day), then the job
  * runs on its own thread so the endpoint answers 202 with the job id while it goes on. One run at a time: a second
  * start while one runs is a {@link BackfillAlreadyRunningException}. The guard is in memory, which fits the single API
- * instance (S16) and cannot be stuck by a crashed run, because it dies with the process. Every run is a new job
+ * instance and cannot be stuck by a crashed run, because it dies with the process. Every run is a new job
  * instance (a random {@code runId} identifies it), so repeating a range is allowed and idempotent by its insert-only
  * writes, never a "job instance already complete" error.
  */

@@ -19,7 +19,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 /**
- * The read queries behind the monthly report (T6a): the INDEC monthly inflation observations, the rate snapshots of
+ * The read queries behind the monthly report: the INDEC monthly inflation observations, the rate snapshots of
  * plazo fijo, wallets and ARS crypto around one month, and the fund quotes around its two month ends. Every query is
  * bounded by the month, so its cost does not grow with the history stored.
  */

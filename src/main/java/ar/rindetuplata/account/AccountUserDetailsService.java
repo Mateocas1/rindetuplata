@@ -8,9 +8,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
- * Loads an account for Spring Security. T6a logs in through a consumed one-time token, so this service is what
+ * Loads an account for Spring Security. Login goes through a consumed one-time token, so this service is what
  * gives the context a real {@code UserDetailsService} (no generated default user) and the roles of an email;
- * T6c reuses it for the alert API.
+ * The alert API reuses it.
  */
 @Service
 public class AccountUserDetailsService implements UserDetailsService {

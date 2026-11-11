@@ -1,4 +1,4 @@
-# MCP server (T6e, S6, L32 c)
+# MCP server
 
 The API embeds a read-only [Model Context Protocol](https://modelcontextprotocol.io) server, so an AI assistant can
 ask the same ranking the site shows. It uses the official MCP Java SDK 2.1.0 (`io.modelcontextprotocol.sdk:mcp-core`

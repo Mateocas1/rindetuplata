@@ -12,7 +12,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 /**
- * The V4 tables of T6b (S12) through {@link JdbcClient}: the curated wallet rates the adapter and the ranking read,
+ * The V4 tables through {@link JdbcClient}: the curated wallet rates the adapter and the ranking read,
  * and their audit trail. Writes are upserts, so a save replaces a row and re-running an action changes nothing else.
  */
 @Component

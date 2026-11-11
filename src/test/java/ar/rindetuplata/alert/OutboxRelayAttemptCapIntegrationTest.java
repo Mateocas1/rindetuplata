@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * T11b relay rule (S4): after {@code rindetuplata.outbox.max-attempts} failed publishes a row is no longer claimed
+ * Relay rule: after {@code rindetuplata.outbox.max-attempts} failed publishes a row is no longer claimed
  * and is logged at ERROR exactly once; it stays in the table for the operator. The broker is unreachable on purpose
  * (a closed port), so every run is a failure; a failure also releases the lease so the next run may retry at once.
  */

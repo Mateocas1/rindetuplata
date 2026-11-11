@@ -47,7 +47,7 @@ public class MacroObservationWriter {
 	}
 
 	/**
-	 * Insert-only variant for the backfill (T4a, L33 a): an observation already stored is skipped, so live data
+	 * Insert-only variant for the backfill: an observation already stored is skipped, so live data
 	 * always wins. The result counts the rows this call really inserted.
 	 */
 	@Transactional

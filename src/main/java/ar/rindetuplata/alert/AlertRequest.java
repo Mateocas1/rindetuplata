@@ -3,7 +3,7 @@ package ar.rindetuplata.alert;
 import java.math.BigDecimal;
 
 /**
- * The body of {@code POST /api/v1/alerts} (T6c, S3, L32 a). {@code type} is optional and defaults to
+ * The body of {@code POST /api/v1/alerts}. {@code type} is optional and defaults to
  * {@code THRESHOLD}, the original rule "avisame si alguna billetera pasa del X% anual"; {@code BEST_CHANGED},
  * {@code RATE_DROP} and {@code WEEKLY_DIGEST} are the others, and each accepts only its own fields. {@code type}
  * and {@code kind} arrive as text so an unknown one is a 400 naming the field instead of a deserialization failure

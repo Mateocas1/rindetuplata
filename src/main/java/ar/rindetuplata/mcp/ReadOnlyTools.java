@@ -42,7 +42,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * The read-only tools of the MCP server (T6e, S6, L32 c), over the very services the REST API uses:
+ * The read-only tools of the MCP server, over the very services the REST API uses:
  * {@link PublicRanking} and {@link RankingService} for the ranking and the simulation, {@link InstrumentService}
  * for the history and {@link MonthlyReportService} for the monthly reports. No tool writes. Every answer states the
  * {@code dataDate} it rests on and its {@code source} ({@link ToolResults}); a bad or unknown argument is an MCP

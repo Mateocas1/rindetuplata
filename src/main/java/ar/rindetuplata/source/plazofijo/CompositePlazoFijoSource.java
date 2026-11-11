@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * BCRA transparency (primary) plus ArgentinaDatos (secondary). When one fails the other is returned with a
- * {@link SourceStatus#DEGRADED} status naming the failed source; it fails only when both fail (S5).
+ * {@link SourceStatus#DEGRADED} status naming the failed source; it fails only when both fail.
  */
 public class CompositePlazoFijoSource implements PlazoFijoSource {
 

@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 /**
- * T6d end to end (S4, S13): one row in the transactional outbox becomes one email in the saver's inbox, through
+ * End to end: one row in the transactional outbox becomes one email in the saver's inbox, through
  * the real relay, the real broker and the real consumer. This is the rule that proves the three pieces fit.
  */
 @SpringBootTest(properties = {

@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { inSitemap } from './sitemapPaths.js';
 
 /**
- * Sitemap filter (T7c, D2).
+ * Sitemap filter (D2).
  *
  * Lives in a plain JavaScript module because `astro.config.mjs` imports it and
  * that file is loaded as JavaScript. Account pages are client-only and carry
- * `noindex` (T7d), so they must stay out of the sitemap.
+ * `noindex`, so they must stay out of the sitemap.
  */
 const SITE = 'https://rindetuplata.ar';
 

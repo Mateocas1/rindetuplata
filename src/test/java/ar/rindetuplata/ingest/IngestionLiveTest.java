@@ -53,10 +53,10 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 /**
- * T4c live rules: a LIVE run writes every kind and records one {@code source_run} row per source; a failing port
+ * Live rules: a LIVE run writes every kind and records one {@code source_run} row per source; a failing port
  * never blocks the other kinds; re-running a COMPLETED date is a no-op; a FAILED instance restarts only its
- * unfinished steps; the scheduler ingests today in Buenos Aires; every wallet source bean is used. T4d adds the
- * rebuild hook: the listener registered on {@code dailyIngestionJob} POSTs once after a COMPLETED run. T14a keeps
+ * unfinished steps; the scheduler ingests today in Buenos Aires; every wallet source bean is used. The
+ * rebuild hook: the listener registered on {@code dailyIngestionJob} POSTs once after a COMPLETED run. The default keeps
  * the startup ingestion off unless {@code rindetuplata.ingest.run-on-startup=true}.
  */
 @Import({ StoreTestConfiguration.class, StubSourcesConfiguration.class, IngestionLiveTest.FixedClock.class,

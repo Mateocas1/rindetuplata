@@ -17,7 +17,7 @@ class WalletSourcesConfiguration {
         return new UalaWalletAdapter(SourceClients.create(properties, properties.ualaUrl()), Clock.systemUTC());
     }
 
-    /** The curated rates come from the V4 table, not from the retired classpath seed (T6b, S12). */
+    /** The curated rates come from the V4 table, not from the retired classpath seed. */
     @Bean
     CuratedWalletRateAdapter curatedWalletRateAdapter(JdbcClient jdbc, Clock clock) {
         return new CuratedWalletRateAdapter(jdbc, clock);

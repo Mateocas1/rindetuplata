@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Composes the magic-link email: the configured frontend link with the token appended, in Spanish and with the
- * informational wording the product requires (S8 L-G). Plain text, no HTML.
+ * informational wording the product requires. Plain text, no HTML.
  */
 @Component
 public class MagicLinkMailComposer {

@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The bank entity pages of the public API (T6b, S6): every bank with its latest plazo fijo rates, and one bank with
+ * The bank entity pages of the public API: every bank with its latest plazo fijo rates, and one bank with
  * its 90-day non-client TNA series and how often it paid the highest non-client TNA. Read-only, public and under the
- * read-API rate limit; the rates state their capture and data dates (S11).
+ * read-API rate limit; the rates state their capture and data dates.
  */
 @RestController
 @RequestMapping("/api/v1/entities/banks")

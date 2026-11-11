@@ -14,7 +14,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * T6d (S6, L32b): {@code X-Api-Key} on the public read paths. A valid key is limited by its own bucket instead of
+ * {@code X-Api-Key} on the public read paths. A valid key is limited by its own bucket instead of
  * the address, an unknown or revoked key is a 401 {@code ProblemDetail} (never a fall back to the address bucket),
  * and the header means nothing on any other path.
  */

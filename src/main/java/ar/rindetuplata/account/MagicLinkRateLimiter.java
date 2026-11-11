@@ -8,10 +8,10 @@ import java.util.OptionalLong;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A fixed-window counter per remote address for {@code POST /api/v1/auth/magic-link} (T11a, S4). The first request
+ * A fixed-window counter per remote address for {@code POST /api/v1/auth/magic-link}. The first request
  * of an address opens a window of {@code rindetuplata.auth.magic-link-per-ip-window}; it allows
  * {@code rindetuplata.auth.magic-link-per-ip-limit} requests, then answers how many seconds remain until the window
- * ends. State is in memory because the API runs as one instance (S16): a second instance would need a shared store.
+ * ends. State is in memory because the API runs as one instance: a second instance would need a shared store.
  * Expired windows are swept at most once per window, so memory is bounded by the addresses seen in one window.
  */
 class MagicLinkRateLimiter {

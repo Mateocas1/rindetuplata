@@ -11,7 +11,7 @@ import jakarta.servlet.http.Cookie;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 
-/** Helpers of the API-key tests (T6d): the real login of {@link AccountIntegrationTest} and the three endpoints. */
+/** Helpers of the API-key tests: the real login of {@link AccountIntegrationTest} and the three endpoints. */
 abstract class ApiKeyIntegrationTest extends AccountIntegrationTest {
 
 	static final String KEYS_PATH = "/api/v1/account/api-keys";

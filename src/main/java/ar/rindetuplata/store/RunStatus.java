@@ -8,6 +8,6 @@ public enum RunStatus {
 	DEGRADED,
 	/** No source of the kind answered. */
 	FAILED,
-	/** The T9 archive of that date has no capture of this source. */
+	/** The archive of that date has no capture of this source. */
 	MISSING_IN_ARCHIVE
 }

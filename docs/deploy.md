@@ -1,6 +1,6 @@
 # Deploy
 
-How rindetuplata runs, and what the owner has to decide before it runs in the real world (S16, T7e).
+How rindetuplata runs, and what the owner has to decide before it runs in the real world.
 Nothing here creates accounts or deploys anything: it is the shape of the deployment and the exact
 settings each piece needs.
 
@@ -10,10 +10,10 @@ settings each piece needs.
 |---|---|---|
 | Static site (`web/dist`) | CDN (Cloudflare Pages or equivalent) at the apex domain | Astro builds it to files; the CDN serves them, free TLS included, and the ingestion deploy hook triggers a rebuild |
 | API (`Dockerfile`) | VPS with Docker Compose, behind Caddy at `api.<domain>` | It needs the PostgreSQL data, the broker and the daily ingestion close to each other |
-| Postgres, RabbitMQ | Same VPS, same Compose project | One box, one `docker compose up` (S16: USD 5–8/month at launch) |
+| Postgres, RabbitMQ | Same VPS, same Compose project | One box, one `docker compose up` (USD 5–8/month at launch) |
 
 The site and the API share a registrable domain (`rindetuplata.ar` and `api.rindetuplata.ar`), which is
-what lets the `SameSite=Lax` session cookie travel on the browser's credentialed `fetch` (L48). The
+what lets the `SameSite=Lax` session cookie travel on the browser's credentialed `fetch`. The
 browser never reads cookies: it asks `GET /api/v1/auth/csrf` for the token and sends it as
 `X-XSRF-TOKEN`.
 
@@ -51,7 +51,7 @@ docker compose --profile stack up -d --wait
 
 ## CI for the deploy files
 
-Two GitHub Actions workflows and Dependabot watch what the Java and web test workflows do not (T4e, S4):
+Two GitHub Actions workflows and Dependabot watch what the Java and web test workflows do not:
 
 | Workflow | Runs when | What it proves |
 |---|---|---|
@@ -79,7 +79,7 @@ Two GitHub Actions workflows and Dependabot watch what the Java and web test wor
 ## Private preview (Tailscale Funnel)
 
 The whole product — login, alerts, simulator, daily ingestion — on the owner's own machine, published at
-one public HTTPS URL through Tailscale Funnel (S20): USD 0, no domain, no VPS, no CDN. It exists to test
+one public HTTPS URL through Tailscale Funnel: USD 0, no domain, no VPS, no CDN. It exists to test
 with a few people before spending money, so it is deliberately unlisted: every response carries
 `X-Robots-Tag: noindex, nofollow` (`deploy/Caddyfile.preview`), the site is the same Astro build but
 with its canonicals, sitemap and `robots.txt` pointing at the Funnel URL, and Mailpit is off, so magic
@@ -107,7 +107,7 @@ links and alert emails go to real inboxes through a real SMTP account.
   `SameSite=Lax` session cookie and the CSRF token travel exactly as in production.
 - `mailpit` is dropped (`profiles: !override`), and every service carries `restart: unless-stopped`.
 - `rebuilder`: a small Node sidecar (`deploy/rebuilder/server.mjs`, dependency-free) that answers the
-  T4d rebuild hook. It publishes no port; only the API reaches it. It mounts the host's `web/`, so the
+  rebuild hook. It publishes no port; only the API reaches it. It mounts the host's `web/`, so the
   build reuses `web/node_modules`, and it runs as the host user so the files it writes stay writable.
   Every build goes to its own directory `web/.site/build-<n>` (`node_modules/.bin/astro build --outDir
   .site/<build>`), and only a build that exited 0 is published, by swapping the `web/.site/current`
@@ -155,7 +155,7 @@ deploy/preview.sh down             # stop the stack and stop sharing; the volume
 `up` builds the API image, brings the stack up with `--wait`, and then asks the rebuild sidecar for the
 first site build and waits for it (up to `PREVIEW_BUILD_TIMEOUT` seconds, 600 by default). The host never
 runs the site build: one builder, one output directory, so the Funnel never serves a half-written
-directory and a startup ingestion (T14a) can trigger its own rebuild without racing anything. `funnel-off`
+directory and a startup ingestion can trigger its own rebuild without racing anything. `funnel-off`
 is the one command that reads no env file, and it always runs `tailscale funnel reset`: an unreachable or
 broken secrets file must never be able to keep the machine exposed. `down` turns the Funnel off first,
 before it validates the env file, and never passes `--volumes`, so the data survives stopping the
@@ -165,7 +165,7 @@ Trying it without the real SMTP account: the overlay drops Mailpit, but the `mai
 there. Add it with `PREVIEW_PROFILES=mailpit deploy/preview.sh up` (or `--profile mailpit` on a manual
 `docker compose` call — a `--profile` flag makes Compose ignore `COMPOSE_PROFILES`) and point the env
 file at it with `SPRING_MAIL_HOST=mailpit` and `SPRING_MAIL_PORT=1025`; magic links then land in
-Mailpit's UI on `127.0.0.1:8025` instead of real inboxes. That is how the T14c fix round dry-ran these
+Mailpit's UI on `127.0.0.1:8025` instead of real inboxes. That is how the fix round dry-ran these
 commands, on a scratch project name and a scratch env file, never on `rindetuplata-preview`.
 
 `/actuator/health` reports the database, the broker **and the mail server**, and `up -d --wait` waits
@@ -180,13 +180,13 @@ and `deploy/test/preview-script-test.sh`.
 ### What happens every day
 
 - **19:30 Argentina** (`rindetuplata.ingest.cron`): the daily ingestion runs in the API container. When
-  the job COMPLETES, the T4d hook POSTs `http://rebuilder:8787/` and the sidecar rebuilds the site, so the
+  the job COMPLETES, the hook POSTs `http://rebuilder:8787/` and the sidecar rebuilds the site, so the
   published ranking is today's a minute or two later. The sidecar runs one build at a time and collapses
   every request that arrives during a build into exactly one rerun; visitors keep getting the current
   build until the new one exits 0, so a slow or failed build costs nothing but a delay. Each run, its
   exit code and what it published are in `deploy/preview.sh logs rebuilder`, and `deploy/preview.sh
   status` reads the sidecar state (current build, kept builds, last run).
-- **After every restart** of the API, `RINDETUPLATA_INGEST_RUNONSTARTUP=true` (T14a) ingests today once
+- **After every restart** of the API, `RINDETUPLATA_INGEST_RUNONSTARTUP=true` ingests today once
   if it has not been ingested yet and triggers the same rebuild: a fresh volume has data before the
   evening, and a restart never leaves the site a day behind. The API does not retry its hook, and its
   startup ingestion can finish before the rebuilder listens, so the rebuilder also builds once when it
@@ -209,7 +209,7 @@ and `deploy/test/preview-script-test.sh`.
   revoking the device changes the URL, and every magic link already sent becomes wrong. Canonicals and the
   sitemap point at that name, not at `rindetuplata.ar`.
 - **Unlisted, not private.** Anyone with the URL can use the site (the Funnel is public by design);
-  access is the owner's control of who receives the link, exactly as S20 states. Everything else in the
+  access is the owner's control of who receives the link, by design. Everything else in the
   VPS section applies unchanged: single API instance, per-IP magic-link limit, admin role by email list.
 - **Not a launch.** Cloudflare Pages, the `api.` subdomain and a real domain stay the production plan
   (above); the preview only borrows their shape.
@@ -243,7 +243,7 @@ production-shaped (every statement below was checked with `docker compose config
   events.
 - Every service carries `restart: unless-stopped`, so a reboot or an OOM brings the API and its
   dependencies back without anyone running `up` again.
-- **Memory limits and log rotation (T4c).** The overlay splits a 2 GB box: Postgres 512m, RabbitMQ 384m, the API
+- **Memory limits and log rotation.** The overlay splits a 2 GB box: Postgres 512m, RabbitMQ 384m, the API
   768m and Caddy 128m (1,792m in all, the rest is for the OS and Docker). The JVM keeps
   `-XX:MaxRAMPercentage=75` and sizes its heap from the container limit, so the API heap is about 576m and it can no
   longer starve the database or the broker; an overrun is killed (and restarted) inside its own container. Every
@@ -295,7 +295,7 @@ with `--dry-run` against the template, and `backup.sh` and `restore.sh` with the
 - `RINDETUPLATA_AUTH_SECURECOOKIE=true` is set by the overlay and is mandatory once TLS terminates in
   front of the API: without it the session and the CSRF cookies travel in clear.
   `RINDETUPLATA_WEB_ALLOWEDORIGINS` must be the site's own origin, and nothing else.
-- **The `prod` profile (T4b).** The overlay sets `SPRING_PROFILES_ACTIVE=prod` on the API
+- **The `prod` profile.** The overlay sets `SPRING_PROFILES_ACTIVE=prod` on the API
   (`application-prod.properties`). Under that profile the API **refuses to start**, and its error lists every
   offending property at once, when any of these is still a development default:
   `rindetuplata.auth.secure-cookie` is `false`; `rindetuplata.web.allowed-origins`,
@@ -307,7 +307,7 @@ with `--dry-run` against the template, and `backup.sh` and `restore.sh` with the
   prints a token. The profile also turns `secure-cookie` on by default. Without the profile (local development,
   tests, the preview) nothing is checked. `deploy/test/prod-profile-test.sh` renders the overlay with fake values and
   asserts the profile reaches the container.
-- **Ingestion freshness and monitoring (T4b).** The `ingestionFreshness` health contributor reads the newest
+- **Ingestion freshness and monitoring.** The `ingestionFreshness` health contributor reads the newest
   `source_run` row that is `LIVE` and `OK` or `DEGRADED` (both stored rows from a source that answered; `FAILED`
   stored nothing, and `REPLAY` and backfill rows are old history that says nothing about today's fetch). Any source
   counts, so check `source_run` itself for a single failing source. The data is fresh until
@@ -336,13 +336,13 @@ with `--dry-run` against the template, and `backup.sh` and `restore.sh` with the
   first drops the buckets that have refilled completely and, if it is still full, answers the same 429 to
   any client it does not know yet, while the ones it already tracks keep being served. That fail-closed choice is a trade-off: a sustained flood from many addresses can keep new visitors out for as long as it lasts (each refused visitor gets a `Retry-After` of up to 60 s), while visitors already being served are unaffected. `clientOf` takes at most 100 ids (400 beyond that, repeats counted; the MCP tools refuse the same input), `POST /mcp` reads at most 64 KiB of body (413 beyond that), `days` is capped at 1825 and
   `amount` at 1000000000000 (a 400 naming the parameter), because the simulation cost grows with `days`.
-- **API keys and plans (T6d).** A request with a valid `X-Api-Key` on the public read API is limited by the plan of
+- **API keys and plans.** A request with a valid `X-Api-Key` on the public read API is limited by the plan of
   its key instead of its address: a bucket per key and a quota of counted requests per Argentine day
   (`America/Argentina/Buenos_Aires`). `FREE` is every key a user creates: a bucket of 600 refilled 10 per second and
   20000 requests per day. `PARTNER` is a key the operator promotes: 3000, 50 per second and 500000 per day. The
   anonymous plan (no key) is the per-address bucket above. Change the numbers with
   `RINDETUPLATA_API_PLANS_FREE_CAPACITY`, `..._REFILLPERSECOND`, `..._DAILYQUOTA` and the same three under
-  `RINDETUPLATA_API_PLANS_PARTNER_*`. Buckets and quotas live in the API's memory (single instance, S16): a restart
+  `RINDETUPLATA_API_PLANS_PARTNER_*`. Buckets and quotas live in the API's memory (single instance): a restart
   gives every key a full bucket and a fresh quota, and a second instance would need a shared store. The plan lives in
   the `api_key` table; promote a key by hand and the next request already uses the new plan (the key is looked up in
   Postgres on every request, which is also why a revoked key stops at once):
@@ -362,7 +362,7 @@ with `--dry-run` against the template, and `backup.sh` and `restore.sh` with the
   or the quota is a 429 `ProblemDetail` with `Retry-After` (seconds to the next token, or to midnight for the quota).
   The header is read only on the public read paths; a key never signs anyone in. Details in
   [`api-keys.md`](api-keys.md).
-- **Ranking cache and conditional requests (T3a).** `GET /api/v1/ranking` keeps up to
+- **Ranking cache and conditional requests.** `GET /api/v1/ranking` keeps up to
   `RINDETUPLATA_RANKING_CACHEMAXENTRIES` results in the API's memory (default 64, least recently used out
   first; one entry is a whole ranking, so the cap is a memory bound). An entry is reused only for the same data
   version and the same resolved query. The data version is read from Postgres on every request (one aggregate
@@ -378,11 +378,11 @@ with `--dry-run` against the template, and `backup.sh` and `restore.sh` with the
   the API as `RINDETUPLATA_API_RATELIMIT_BYPASSTOKEN`) and as a build-time env var `API_BUILD_TOKEN` of
   the CDN project: `web/src/lib/data.ts` then sends it as `X-Build-Token` and the API skips the limit for
   that request. Blank or unset disables the bypass, and the token is never logged.
-- The daily ingestion runs in LIVE mode and needs nothing extra. To replay a day of the T9 archive
+- The daily ingestion runs in LIVE mode and needs nothing extra. To replay a day of the archive
   (REPLAY mode) mount a checkout of the `data` branch at `/app/archive`: uncomment the `volumes:` line
   of the `api` service in `deploy/compose.vps.yaml`.
 - `RINDETUPLATA_INGEST_RUNONSTARTUP=true` makes the API ingest today's data once when it starts, in the
-  background (T14a): a stack that boots fresh shows a real ranking instead of waiting for the 19:30 cron.
+  background: a stack that boots fresh shows a real ranking instead of waiting for the 19:30 cron.
 
 ## CDN: the site
 
@@ -410,7 +410,7 @@ Authenticated flows (`/ingresar`, `/alertas`, `/admin/tasas`) need the site and 
 registrable domain: the `SameSite=Lax` session cookie does not travel from a `*.pages.dev` preview
 domain to `api.rindetuplata.ar`. Test the login on the production domain, not on a preview URL.
 
-### Build gate and API client (T4d)
+### Build gate and API client
 
 The build used to publish whatever the API answered: an empty or days-old ranking became an empty or stale
 site, and Google indexed it. Now `astro build` runs a **gate** before it renders a single page
@@ -440,8 +440,8 @@ requests the pages read, so it adds no fetch. Errors name the URL and the status
 ## History backfill
 
 `POST /api/v1/admin/backfill?from=&to=` (admin session, CSRF) fills up to 366 days of fund, MEP and macro history from
-the public sources, insert-only, so a fresh deploy gets a real 7-day fund yield and a monthly report without waiting
-(T4a). It starts nothing by itself, writes `source_run` rows with mode `BACKFILL`, and neither evaluates alerts nor
+the public sources, insert-only, so a fresh deploy gets a real 7-day fund yield and a monthly report without waiting.
+It starts nothing by itself, writes `source_run` rows with mode `BACKFILL`, and neither evaluates alerts nor
 calls the rebuild hook below: trigger that by hand after a large backfill. The polite delay between the per-day fund
 calls is `RINDETUPLATA_BACKFILL_DELAY` (default `500ms`); the monthly report cache holds
 `RINDETUPLATA_REPORT_CACHEMAXENTRIES` reports (default 24). Full description, probes and limits in
@@ -449,7 +449,7 @@ calls is `RINDETUPLATA_BACKFILL_DELAY` (default `500ms`); the monthly report cac
 
 ## Rebuild hook
 
-The daily ingestion POSTs once to `rindetuplata.ingest.rebuild-hook-url` after a COMPLETED job (T4d),
+The daily ingestion POSTs once to `rindetuplata.ingest.rebuild-hook-url` after a COMPLETED job,
 which is how the static site gets today's ranking. On Cloudflare Pages that URL is the project's deploy
 hook; set it as the `RINDETUPLATA_INGEST_REBUILDHOOKURL` environment variable of the API (see above).
 An empty value disables the call, which is the default locally. The private preview points the same hook
@@ -567,8 +567,8 @@ deploy/restore.sh --confirm rindetuplata-YYYY-MM-DD.dump
 2. **SMTP provider.** The VPS section above uses a placeholder. Any provider that speaks SMTP with a
    login works; the sender is `rindetuplata.mail.from` (default `rindetuplata <no-reply@rindetuplata.ar>`),
    and the domain needs SPF/DKIM records for the magic links to land in the inbox instead of spam.
-3. **VPS region.** L-H: the Argentine public APIs (BCRA, ArgentinaDatos) block some foreign IPs —
-   they did not block GitHub's US runners (L23), but the region must be checked from the actual box
+3. **VPS region.** The Argentine public APIs (BCRA, ArgentinaDatos) block some foreign IPs —
+   they did not block GitHub's US runners, but the region must be checked from the actual box
    before paying for it. Any provider with Docker and 2 GB of RAM is enough.
 4. **First admin.** `RINDETUPLATA_AUTH_ADMINEMAILS` must name a real mailbox before `/admin/tasas` is
    usable; the local default (`admin@example.com`) is a harmless placeholder.

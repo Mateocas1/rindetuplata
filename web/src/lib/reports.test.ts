@@ -13,7 +13,7 @@ import {
 } from './reports';
 
 /**
- * Build-time access to the monthly "who beat inflation" report (T6a). Like the other loaders it reads the API while
+ * Build-time access to the monthly "who beat inflation" report. Like the other loaders it reads the API while
  * building and, with `WEB_FIXTURES=1`, the synthetic files in `web/fixtures/reports/`. The fixture is checked
  * against the API's own rules so it cannot drift into data no API would return.
  */

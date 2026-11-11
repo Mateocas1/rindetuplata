@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 /**
- * The conditional-GET contract of the two public read endpoints (T3a, L22): a weak {@code ETag} built from the data
+ * The conditional-GET contract of the two public read endpoints: a weak {@code ETag} built from the data
  * version and the normalized request, {@code Cache-Control: public, no-cache} (a shared cache may store the answer
  * but must revalidate it, which is a 304 for the price of one version query), and a {@code 304} for a matching
  * {@code If-None-Match}. The tag is a digest, so nothing about the request or the database leaks through it, and it

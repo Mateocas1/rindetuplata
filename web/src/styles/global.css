@@ -9,7 +9,7 @@
 /**
  * Base layer only: color and type come from the tokens, component shapes from
  * the recipes, and the one global focus indicator is set here so every control
- * shares it. Motion lives in the recipes (T12d).
+ * shares it. Motion lives in the recipes.
  */
 @layer base {
   html {
@@ -33,7 +33,7 @@
     outline-offset: 2px;
   }
 
-  /* A region waiting for fresh data keeps full contrast (T12e: a 0.6 dim
+  /* A region waiting for fresh data keeps full contrast (a 0.6 dim
      dropped its text to 2.62:1); its status message carries the busy state. */
 
   ::selection {

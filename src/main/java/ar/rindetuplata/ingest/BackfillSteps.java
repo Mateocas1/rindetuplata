@@ -28,11 +28,11 @@ import java.util.function.Consumer;
 import org.springframework.stereotype.Component;
 
 /**
- * The body of every step of {@code historyBackfillJob} (T4a, L33 a), one method per data kind. Every write is
+ * The body of every step of {@code historyBackfillJob}, one method per data kind. Every write is
  * insert-only, so live data wins and a rerun never changes what is stored, and every source gets one {@code source_run}
  * row per day of the range with mode BACKFILL: {@code rows} is what this run inserted (0 when the day was already
  * stored), a day the source has nothing for is an OK row of 0 that says so, and a {@link SourceException} is the failure
- * of one source and day, recorded as FAILED without stopping the others (S5). Any other exception is a defect and
+ * of one source and day, recorded as FAILED without stopping the others. Any other exception is a defect and
  * fails its step.
  *
  * <p>A backfill row never replaces a live one, so a backfill that only fills gaps under days the daily job already

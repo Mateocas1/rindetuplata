@@ -3,7 +3,7 @@ import { ApiProblem, createApiClient, type ApiClientOptions } from './api';
 import { DEFAULT_RANKING_QUERY } from './rankingQuery';
 
 /**
- * The browser client (T7b/L48): it always talks to the API on the same origin
+ * The browser client: it always talks to the API on the same origin
  * (or `PUBLIC_API_URL`), sends the session cookie with `credentials: 'include'`,
  * turns a ProblemDetail body into a typed `ApiProblem`, and fetches the CSRF
  * token from `GET /api/v1/auth/csrf` before any unsafe method.

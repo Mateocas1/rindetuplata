@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Records what a source produced for one capture date: status, row count and, when it failed or held duplicates,
  * the failure text. Re-running a date replaces the row of the same source instead of adding one; the backfill
- * (T4a) records its own rows with {@link #recordBackfill} and never replaces a live or replayed one.
+ * records its own rows with {@link #recordBackfill} and never replaces a live or replayed one.
  */
 @Component
 public class SourceRunWriter {
@@ -26,7 +26,7 @@ public class SourceRunWriter {
 			""";
 
 	/**
-	 * The backfill's statement (T4a): one row per source and day with mode BACKFILL. It replaces an earlier BACKFILL
+	 * The backfill's statement: one row per source and day with mode BACKFILL. It replaces an earlier BACKFILL
 	 * row (a rerun after a failure) and never a LIVE or REPLAY one, which is what the live job recorded for that day.
 	 */
 	private static final String INSERT_BACKFILL = """

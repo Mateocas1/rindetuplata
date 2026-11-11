@@ -11,12 +11,12 @@ import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListener;
 
 /**
- * T6c: after {@code dailyIngestionJob} COMPLETES, evaluates the alert rules for the job's own data date (S3, S4),
+ * After {@code dailyIngestionJob} COMPLETES, evaluates the alert rules for the job's own data date,
  * so the day's ranking decides which rules fire. A FAILED ingestion is never evaluated, and an evaluation that
  * throws is logged and never changes the job, because the ingestion already wrote its data: the alerts are a
  * consequence of the day, not part of it.
  *
- * <p>T4a (L33 a): alerts are about today. A completed job whose data date is not today in
+ * <p>Alerts are about today. A completed job whose data date is not today in
  * America/Argentina/Buenos_Aires (a replay, a late run of a past date, a date in the future) is not evaluated, because
  * it would compare old data with the alert state of a newer day.
  */

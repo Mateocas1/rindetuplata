@@ -19,7 +19,7 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * ArgentinaDatos: {@code GET /cotizaciones/dolares/bolsa}, the whole MEP series with one row per calendar day
- * (2,926 rows from 2018-10-29 when probed on 2026-11-01). The backfill (T4a) reads it once per run and stores it
+ * (2,926 rows from 2018-10-29 when probed on 2026-11-01). The backfill reads it once per run and stores it
  * under its own source id, so it never collides with the {@code dolarapi-bolsa} rows of the daily job.
  */
 public class ArgentinaDatosDollarAdapter implements DollarHistorySource {

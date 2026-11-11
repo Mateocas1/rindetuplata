@@ -27,7 +27,7 @@ import java.util.List;
 import org.springframework.core.io.ClassPathResource;
 
 /**
- * The fixed records the LIVE port stubs answer with: the recorded fixtures through the same T3 static parsers the
+ * The fixed records the LIVE port stubs answer with: the recorded fixtures through the same static parsers the
  * archive replay uses, never live HTTP.
  */
 final class IngestFixtures {

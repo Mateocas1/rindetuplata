@@ -7,7 +7,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 /**
- * The {@code alert_state} table of V9 (T6c, L32 a): what a BEST_CHANGED or RATE_DROP rule remembers from the
+ * The {@code alert_state} table of V9: what a BEST_CHANGED or RATE_DROP rule remembers from the
  * previous evaluation, one row per rule. The row moves on every evaluation that has something to compare.
  */
 @Component

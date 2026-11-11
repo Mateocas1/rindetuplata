@@ -11,8 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.Test;
 
 /**
- * T5c rules for {@code GET /api/v1/simulations}: 200 with a {@code status} discriminator that is SIMULATED for an
- * eligible instrument (the S19 client switch included), INELIGIBLE for a term below the minimum and EXCLUDED for
+ * Rules for {@code GET /api/v1/simulations}: 200 with a {@code status} discriminator that is SIMULATED for an
+ * eligible instrument (the client switch included), INELIGIBLE for a term below the minimum and EXCLUDED for
  * a bank that does not offer its rate to non-clients; an unknown id is a 404 ProblemDetail naming instrumentId.
  */
 class SimulationApiTest extends RankingApiIntegrationTest {

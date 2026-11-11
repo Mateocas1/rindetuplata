@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * {@code historyBackfillJob(from, to)} (T4a, L33 a): fills the stored history of the days {@code from..to}, both
+ * {@code historyBackfillJob(from, to)}: fills the stored history of the days {@code from..to}, both
  * inclusive. Steps: the dated FCI endpoint (one transaction per day, with a cursor in the step's execution context so
  * a restart resumes at the next day instead of starting over), the ArgentinaDatos MEP series (read once), and BCRA
  * macro by date range (once per variable). Its only listener hands out the job id; there is no alert or rebuild

@@ -39,10 +39,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 /**
- * T6a security (S4, S13): one chain for the API, magic-link login over Spring Security's JDBC one-time-token
+ * Security: one chain for the API, magic-link login over Spring Security's JDBC one-time-token
  * service, JDBC sessions, SPA CSRF, CORS with credentials, and JSON {@code ProblemDetail} for 401/403. Public
- * reads stay open, behind a per-address rate limit (T1a); the authorities of a session are recomputed on every request ({@link RolesRefreshFilter});
- * {@code /api/v1/me}, {@code /api/v1/alerts/**} and {@code /api/v1/account/**} (API keys, T6d) need a login; {@code /api/v1/admin/**} needs
+ * reads stay open, behind a per-address rate limit; the authorities of a session are recomputed on every request ({@link RolesRefreshFilter});
+ * {@code /api/v1/me}, {@code /api/v1/alerts/**} and {@code /api/v1/account/**} (API keys) need a login; {@code /api/v1/admin/**} needs
  * {@code ROLE_ADMIN}; everything else is denied.
  */
 @Configuration(proxyBeanMethods = false)
@@ -63,7 +63,7 @@ public class SecurityConfiguration {
 				.addFilterAfter(new RolesRefreshFilter(accountRoles), SecurityContextHolderFilter.class)
 				.cors(cors -> cors.configurationSource(corsConfigurationSource))
 				.csrf(csrf -> csrf.spa().csrfTokenRepository(csrfTokenRepository)
-						// The MCP endpoint is stateless and cookie-free (T6e): no session means no CSRF to forge.
+						// The MCP endpoint is stateless and cookie-free: no session means no CSRF to forge.
 						.ignoringRequestMatchers("/mcp"))
 				.securityContext(context -> context
 						.securityContextRepository(securityContextRepository)
@@ -108,7 +108,7 @@ public class SecurityConfiguration {
 
 	/**
 	 * The SPA CSRF cookie ({@code XSRF-TOKEN}, readable by the frontend), shared with the login strategy.
-	 * {@code CookieCsrfTokenRepository} already marks it {@code Secure} on a secure request (T7a,
+	 * {@code CookieCsrfTokenRepository} already marks it {@code Secure} on a secure request (
 	 * {@code server.forward-headers-strategy=native} makes Caddy's terminated TLS visible); the customizer adds the
 	 * {@code rindetuplata.auth.secure-cookie} switch and pins {@code SameSite=Lax}, so the cookie travels on a
 	 * credentialed same-site {@code fetch} and never on a cross-site one.

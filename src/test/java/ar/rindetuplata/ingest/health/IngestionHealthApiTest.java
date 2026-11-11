@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * L33b (S4): the {@code ingestion} health indicator over the newest LIVE {@code source_run} that succeeded. Stale data
+ * The {@code ingestion} health indicator over the newest LIVE {@code source_run} that succeeded. Stale data
  * is the custom status {@code STALE}: HTTP 200 on {@code /actuator/health} (Docker's healthcheck and
  * {@code depends_on: service_healthy} keep passing, Caddy keeps serving) and HTTP 503 on the health group
  * {@code /actuator/health/ingestion} that an external monitor watches. The other indicators are switched off because

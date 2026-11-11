@@ -8,7 +8,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 /**
- * The V6 {@code processed_event} table (T6d, S4): the consumer's idempotence. The row is inserted only after the
+ * The V6 {@code processed_event} table: the consumer's idempotence. The row is inserted only after the
  * email went out, so "already processed" means "the saver already has that email", and a redelivery of the same
  * {@code AlertTriggered} event sends nothing.
  */

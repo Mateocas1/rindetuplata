@@ -1,5 +1,5 @@
 /**
- * `llms.txt` as a build-time endpoint (T6e, S6, L32 c), like `robots.txt`: prerendered in static output, with the
+ * `llms.txt` as a build-time endpoint, like `robots.txt`: prerendered in static output, with the
  * site host from `SITE_URL` (astro.config.mjs) and the API host from `PUBLIC_API_URL`, which is the site origin when
  * the stack is one origin. There is no localhost fallback: a build without `SITE_URL` fails here instead of
  * publishing links that point at the build machine.

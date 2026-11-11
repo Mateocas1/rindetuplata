@@ -1,6 +1,6 @@
 package ar.rindetuplata.store;
 
-/** How a source produced its rows: fetched live, or replayed from the T9 raw archive. */
+/** How a source produced its rows: fetched live, or replayed from the raw archive. */
 public enum RunMode {
 	LIVE,
 	REPLAY,

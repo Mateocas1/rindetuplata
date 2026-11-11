@@ -8,7 +8,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 /**
- * The read queries behind the bank entity endpoints, straight over the T4 tables with {@code JdbcClient}. A bank is a
+ * The read queries behind the bank entity endpoints, straight over the tables with {@code JdbcClient}. A bank is a
  * {@code PLAZO_FIJO_BANK} instrument; only valid (not INVALID) snapshots at or before the given day are read.
  */
 @Component

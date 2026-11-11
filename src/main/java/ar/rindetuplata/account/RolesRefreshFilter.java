@@ -13,7 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Recomputes the authorities of an authenticated session on every request (T11a, S4). The session stores the roles
+ * Recomputes the authorities of an authenticated session on every request. The session stores the roles
  * it was created with; this replaces them with {@link AccountRoles#of} for the current
  * {@code rindetuplata.auth.admin-emails}, so an email removed from that list loses {@code ROLE_ADMIN} on its next
  * request without logging in again. The refreshed token lives only for the request: it is never saved back to the

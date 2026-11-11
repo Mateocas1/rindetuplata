@@ -58,7 +58,7 @@ public class BcraMonetariasClient implements MacroSource, MacroHistorySource {
     }
 
     /**
-     * The observations of {@code variable} between {@code from} and {@code to}, both inclusive, in one call (T4a).
+     * The observations of {@code variable} between {@code from} and {@code to}, both inclusive, in one call.
      * The API takes {@code desde} and {@code hasta} and caps {@code limit} at {@value #MAX_LIMIT}, which a 366-day
      * range of a daily series never reaches (probed 2026-11-01). An inverted range is the typed {@link BcraApiException}.
      */

@@ -31,7 +31,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * T6b bank entity pages, through HTTP: {@code GET /api/v1/entities/banks} and {@code /{slug}}. "Today" is
+ * Bank entity pages, through HTTP: {@code GET /api/v1/entities/banks} and {@code /{slug}}. "Today" is
  * 2026-10-20 (the frozen clock), so the 90-day window is 2026-07-23..2026-10-20 inclusive. The properties are the
  * ones of {@link ApiRateLimitApiTest} on purpose: the same cached context serves both, and the rate limit of the
  * new path can be proven over real HTTP. Every request but the limit test carries the build token, so the three

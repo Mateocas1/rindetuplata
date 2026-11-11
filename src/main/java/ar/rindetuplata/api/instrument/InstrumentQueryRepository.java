@@ -14,7 +14,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Component;
 
 /**
- * The read queries behind the two instrument endpoints. It reads the T4 tables directly with {@code JdbcClient}
+ * The read queries behind the two instrument endpoints. It reads the tables directly with {@code JdbcClient}
  * (no JPA, no domain entities): the latest snapshot (or, for a fund class, the latest quote) per instrument, the
  * snapshots or quotes of a date range, and the macro series of that range.
  */

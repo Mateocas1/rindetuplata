@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 
 /**
- * Registers the {@link ProdProfileGuard} when the {@code prod} profile is active (L33b, S4). The bean factory
+ * Registers the {@link ProdProfileGuard} when the {@code prod} profile is active. The bean factory
  * post-processor is static so it runs before any other bean is created: a bad configuration is refused before
  * Flyway, the connection pool or the broker are touched.
  */

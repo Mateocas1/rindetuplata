@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Seeding support for the T5c endpoint tests: it writes one controlled row per kind through the T4 store writers,
+ * Seeding support for the endpoint tests: it writes one controlled row per kind through the store writers,
  * so every expected amount in a test can be hand-computed. The rows are captured on 2026-10-14, the day the
  * recorded fixtures use; the fixed clock makes the ranking's default {@code asOf} 2026-10-20.
  */

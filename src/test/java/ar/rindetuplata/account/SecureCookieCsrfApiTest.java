@@ -12,7 +12,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 
 /**
- * T7a browser-cookie rule (S4, S13, S16): with {@code rindetuplata.auth.secure-cookie=true} (the VPS setting) the
+ * Browser-cookie rule: with {@code rindetuplata.auth.secure-cookie=true} (the VPS setting) the
  * {@code XSRF-TOKEN} cookie must be {@code Secure} even though this test talks plain HTTP to localhost, and it must
  * keep {@code HttpOnly=false}, {@code Path=/} and {@code SameSite=Lax} so the SPA can read nothing but still gets a
  * same-site cookie. Real HTTP, because only the raw {@code Set-Cookie} header carries every attribute.

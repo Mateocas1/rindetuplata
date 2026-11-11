@@ -1,5 +1,5 @@
 /**
- * "Cerrar sesión" island (S13, T7d).
+ * "Cerrar sesión" island.
  *
  * Ends the session through `POST /api/v1/auth/logout` (204) and, on success,
  * drops the CSRF token the shared client had cached for the dead session before

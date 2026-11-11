@@ -1,5 +1,5 @@
 /**
- * The create-key form of `/claves-api/` (T6d).
+ * The create-key form of `/claves-api/`.
  *
  * One optional label and the view's one primary action. The panel holds the state and the request; this form renders
  * the card. When the three slots are taken the button is disabled and the sentence next to it says why, so the cap is

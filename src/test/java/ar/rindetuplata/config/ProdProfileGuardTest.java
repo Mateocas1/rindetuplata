@@ -21,7 +21,7 @@ import org.springframework.core.env.SystemEnvironmentPropertySource;
 import org.springframework.mock.env.MockEnvironment;
 
 /**
- * L33b (S4, risk items 2 and 5): the {@code prod} profile refuses to start, naming every offending property, when a
+ * The {@code prod} profile refuses to start, naming every offending property, when a
  * value is still the local-development default or is insecure. Each rule is asserted alone (so a message names only
  * what is wrong), together, through relaxed environment-variable names, through a context that has the profile, and
  * through the real application, which must fail before it touches any database.

@@ -2,7 +2,7 @@
 
 These files are **not recorded**: they are hand-made, with obviously fictional names, so builds with `WEB_FIXTURES=1`
 (tests and CI) can render the monthly report pages without a running API. The recorded fixtures of `web/fixtures/` start on
-2026-10-14 and cannot cover a whole month (L16 keeps them as they are).
+2026-10-14 and cannot cover a whole month (they stay as recorded).
 
 | File | Shape of |
 |---|---|

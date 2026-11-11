@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 
 /**
- * T6e (S6, L32 c): the MCP server of the API driven through the SDK's own client over real HTTP. It covers the
+ * The MCP server of the API driven through the SDK's own client over real HTTP. It covers the
  * handshake, the tool list, each of the five read-only tools (every answer states its data date and source), the
  * argument errors (a tool error that names the argument, never a stack trace) and the stateless, cookie-free surface
  * of {@code POST /mcp}.

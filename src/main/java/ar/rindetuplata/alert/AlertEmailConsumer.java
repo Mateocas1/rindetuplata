@@ -15,9 +15,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * T6d: the alert email consumer (S4, S13). T6c (L32 a) adds the rule types: the payload's {@code type} field picks the
+ * The alert email consumer. The payload's {@code type} field picks the
  * event and its composer ({@code BEST_CHANGED}, {@code RATE_DROP}, {@code WEEKLY_DIGEST}), and a payload with no
- * type is the {@link AlertTriggered} every outbox row held before them, delivered as it always was. The event id is the dedupe key and T11b makes the dedupe atomic with the
+ * type is the {@link AlertTriggered} every outbox row held before them, delivered as it always was. The event id is the dedupe key and the dedupe is atomic with the
  * send: the {@code processed_event} row is inserted ({@code on conflict do nothing}) in the same transaction as the
  * mail. An insert that changes no row is a duplicate and sends nothing; a concurrent redelivery waits on the row lock
  * of the first one and then sees the duplicate; a mail failure is thrown out of the listener on purpose, which rolls

@@ -43,7 +43,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Shared setup of the MCP tests (T6e, S6, L32 c): the whole application on a real port over a Testcontainers
+ * Shared setup of the MCP tests: the whole application on a real port over a Testcontainers
  * Postgres and the frozen 2026-10-20 clock of the {@code api} tests. Requests of the server threads cannot see the
  * rolled-back transaction of a test, so the data is committed once per class by idempotent writers and is only ever
  * read. The rate limit is lifted here (every request comes from 127.0.0.1); {@code McpRateLimitApiTest} owns the

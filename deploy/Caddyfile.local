@@ -1,4 +1,4 @@
-# Local stack (T7e, L48 topology).
+# Local stack (one-origin topology).
 #
 # Caddy serves the built Astro site (web/dist, mounted read-only on /srv) and reverse-proxies /api*
 # to the API container, so the local stack is one origin. Production keeps the same site identity —
@@ -9,8 +9,8 @@
 	encode zstd gzip
 	root * /srv
 
-	# The API: its routes, the OpenAPI document and the MCP endpoint (T6e), all named by llms.txt, and the two
-	# health URLs a monitor reads (T4c, F1; the rest of /actuator/* stays unproxied).
+	# The API: its routes, the OpenAPI document and the MCP endpoint, all named by llms.txt, and the two
+	# health URLs a monitor reads (F1; the rest of /actuator/* stays unproxied).
 	@api path /api/* /mcp /v3/api-docs /actuator/health /actuator/health/ingestion
 	handle @api {
 		reverse_proxy api:8080

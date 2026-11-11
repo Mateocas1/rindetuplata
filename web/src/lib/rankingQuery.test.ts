@@ -11,7 +11,7 @@ import {
 } from './rankingQuery';
 
 /**
- * Query-string state for the home ranking (T7b: `?monto=&dias=&tipo=&cliente=`,
+ * Query-string state for the home ranking (`?monto=&dias=&tipo=&cliente=`,
  * defaults 1000000 / 30). Values are always validated: anything unusable falls
  * back to the default, so a hand-edited URL can never send the API a bad request.
  */
