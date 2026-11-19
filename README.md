@@ -262,8 +262,9 @@ Each line reads as what was achieved, how it is measured, and how it was built:
 - **Alerts are delivered at least once, with deduplication**, by writing alert matches to a transactional
   outbox in the same transaction and relaying them to RabbitMQ (`FOR UPDATE SKIP LOCKED`) with publisher
   confirms, an idempotent consumer and a dead-letter queue. `OutboxRelay` documents the resend window.
-- **1,704 automated tests guard it** (905 JUnit 5 against real PostgreSQL and RabbitMQ in Testcontainers,
-  799 Vitest, plus a Playwright end-to-end over the full Compose stack), run in GitHub Actions.
+- **Tested against the real services:** JUnit 5 integration tests run against real PostgreSQL and RabbitMQ
+  in Testcontainers, the frontend has Vitest tests, and a Playwright end-to-end runs over the full Compose
+  stack, all in GitHub Actions.
 
 Case study: [mateocas1.github.io/portfolio/rindetuplata.html](https://mateocas1.github.io/portfolio/rindetuplata.html).
 I design, decide and verify: I define the tests, the review criteria and the measurements. AI agents write much of
