@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-21",
+  "captured_at": "2026-11-21T20:50:40Z",
+  "sources": [
+    {
+      "name": "bcra-transparencia-plazos-fijos",
+      "url": "https://api.bcra.gob.ar/transparencia/v1.0/PlazosFijos",
+      "status": "ok",
+      "sha256": "03fadafcf33b8e0783744157da97c11104ecdc4172e75353e3efb5dd6c4533a6",
+      "bytes": 371430
+    },
+    {
+      "name": "argentinadatos-plazo-fijo",
+      "url": "https://api.argentinadatos.com/v1/finanzas/tasas/plazoFijo",
+      "status": "ok",
+      "sha256": "620b55db9bdc70175aca5fa96974da003093b9d6d2d0966de11078209ba5f5e8",
+      "bytes": 22061
+    },
+    {
+      "name": "argentinadatos-rendimientos",
+      "url": "https://api.argentinadatos.com/v1/finanzas/rendimientos",
+      "status": "ok",
+      "sha256": "a1eb3c349a48cab5675455c01dba1c9cb0ea864e7d88ef54923ad912639b639d",
+      "bytes": 7450
+    },
+    {
+      "name": "uala-cuenta-remunerada",
+      "url": "https://www.uala.com.ar/inversiones/cuenta-remunerada",
+      "status": "ok",
+      "sha256": "249711e2bf0bfd0f23d57e04815d99109e4acc7cf0269771a7c247018dc85852",
+      "bytes": 765
+    }
+  ]
+}
