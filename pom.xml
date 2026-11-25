@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.2</version>
+		<version>4.2.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>ar.rindetuplata</groupId>
@@ -28,7 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-		<mcp-sdk.version>2.1.0</mcp-sdk.version>
+		<mcp-sdk.version>2.2.0</mcp-sdk.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -70,7 +70,7 @@
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>3.2.0</version>
+			<version>3.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
